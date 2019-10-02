@@ -1,2 +1,2 @@
 all: 
-	g++ *.cpp -o lang -std=c++17
+	g++ *.cpp -o lang -std=c++17 -DDEBUG
