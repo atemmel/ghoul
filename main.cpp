@@ -14,59 +14,59 @@
 #endif
 
 enum Type {
-	StringLiteral,		// ""
-	IntLiteral,			// 5
-	FloatLiteral,		// 15.7
+	StringLiteral,      // ""
+	IntLiteral,         // 5
+	FloatLiteral,       // 15.7
 
-	While,				// while
-	For,				// for
-	If,					// if
-	Else,				// else
-	ElseIf,				// else if
-	True,				// true
-	False,				// false
-	Null,				// null
-	Struct,				// struct
+	While,              // while
+	For,                // for
+	If,                 // if
+	Else,               // else
+	ElseIf,             // else if
+	True,               // true
+	False,              // false
+	Null,               // null
+	Struct,	            // struct
 
-	ParensOpen,			// (
-	ParensClose,		// )
-	BlockOpen,			// {
-	BlockClose,			// }
-	DynamicArrayStart,	// [
-	DynamicArrayEnd,	// ]
-	StaticArrayStart,	// [[
-	StaticArrayEnd,		// ]]
+	ParensOpen,         // (
+	ParensClose,        // )
+	BlockOpen,          // {
+	BlockClose,         // }
+	DynamicArrayStart,  // [
+	DynamicArrayEnd,    // ]
+	StaticArrayStart,   // [[
+	StaticArrayEnd,     // ]]
 
-	Add,				// +
-	Subtract,			// -
-	Multiply,			// *
-	Divide,				// /
-	And,				// &
-	Or,					// |
-	Xor,				// ^
-	Modulo,				// %
-	Less,				// <
-	Greater,			// >
+	Add,                // +
+	Subtract,           // -
+	Multiply,           // *
+	Divide,             // /
+	And,                // &
+	Or,                 // |
+	Xor,                // ^
+	Modulo,             // %
+	Less,               // <
+	Greater,            // >
 	
-	Equivalence,		// ==
-	NotEquivalence,		// !=
-	AddEquals,			// +=
-	SubtractEquals,		// -=
-	MutiplyEquals,		// *=
-	DivideEquals,		// /=
-	AndEquals,			// &=
-	OrEquals,			// |=
-	XorEquals,			// ^=
-	ModuloEquals,		// %=
-	LessEquals,			// <=
-	GreaterEquals,		// >=
+	Equivalence,        // ==
+	NotEquivalence,     // !=
+	AddEquals,          // +=
+	SubtractEquals,     // -=
+	MutiplyEquals,      // *=
+	DivideEquals,       // /=
+	AndEquals,          // &=
+	OrEquals,           // |=
+	XorEquals,          // ^=
+	ModuloEquals,       // %=
+	LessEquals,         // <=
+	GreaterEquals,      // >=
 	
-	AddressOf,			// &
-	Dereference,		// *
-	Inverse,			// !
-	Negate,				// -
+	AddressOf,          // &
+	Dereference,        // *
+	Inverse,            // !
+	Negate,             // -
 
-	Ternary				// ?
+	Ternary             // ?
 };
 
 enum NumValidity {
@@ -94,7 +94,6 @@ NumValidity isIntLiteral(const std::string &str, int &val) {
 	try {
 		std::size_t nRead;
 		val = std::stoi(str, &nRead);
-		std::cout << val << '\n';
 		if(nRead != str.size() ) {
 			return NumValidity::Invalid;
 		}
