@@ -4,6 +4,7 @@
 #include <fstream>
 #include <cassert>
 #include <string>
+#include <vector>
 #include <array>
 
 #ifdef DEBUG
@@ -105,6 +106,40 @@ NumValidity isIntLiteral(const std::string &str, int &val) {
 	return NumValidity::Ok;
 }
 
+std::string consumeFile(const char* path) {
+	std::ifstream file;
+	file.open(path, std::ios::in | std::ios::binary | std::ios::ate);
+	
+	auto size = file.tellg();
+	file.seekg(0, std::ios::beg);
+
+	std::vector<char> bytes(size);
+	file.read(bytes.data(), size);
+
+	return std::string(bytes.data(), size);
+}
+
+void displaySource(const std::string &str) {
+	int line = 1;
+	int column = 1;
+
+	for(const auto c : str) {
+		std::cout << "L: " << line << " C: " << column << ' ';
+
+		if(c == '\n') {
+			std::cout << "'\\n'\n";
+			++line;
+			column = 0;
+		} else if(c == ' ') {
+			std::cout << "' '\n";
+		} else {
+			std::cout << c << '\n';
+		}
+
+		++column;
+	}
+}
+
 int main() {
 #ifdef DEBUG
 	float f;
@@ -118,4 +153,7 @@ int main() {
 	verboseAssert(isIntLiteral("5000000000", i) == NumValidity::Range,   "Range test failed");
 	std::cout << "All assertions passed\n";
 #endif
+
+	auto str = consumeFile("main.scp");
+	displaySource(str);
 }
