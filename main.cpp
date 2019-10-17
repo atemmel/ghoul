@@ -122,9 +122,42 @@ std::string consumeFile(const char* path) {
 void displaySource(const std::string &str) {
 	int line = 1;
 	int column = 1;
+	int maxLine = 1;
+	int maxColumn = 0;
+	std::string lineStr;
+	std::string columnStr;
 
 	for(const auto c : str) {
-		std::cout << "L: " << line << " C: " << column << ' ';
+		if(c == '\n') {
+			++maxLine;
+			column = 0;
+		}
+		++column;
+
+		if(column > maxColumn) {
+			maxColumn = column;
+		}
+	}
+
+	column = 1;
+	auto lineDigits = std::to_string(maxLine).size();
+	auto columnDigits = std::to_string(maxColumn).size();
+
+	auto pad = [](const size_t n) {
+		for(size_t i = 0; i < n; i++) {
+			std::cout << ' ';
+		}
+	};
+
+	for(const auto c : str) {
+		lineStr = std::to_string(line);
+		columnStr = std::to_string(column);
+		std::cout << "L: ";
+		pad(lineDigits - lineStr.size() );
+		std::cout << lineStr;
+		std::cout << " C: ";
+		pad(columnDigits - columnStr.size() ); 
+		std::cout << columnStr << ' ';
 
 		if(c == '\n') {
 			std::cout << "'\\n'\n";
@@ -132,8 +165,10 @@ void displaySource(const std::string &str) {
 			column = 0;
 		} else if(c == ' ') {
 			std::cout << "' '\n";
+		} else if(c == '\t') {
+			std::cout << "'\\t'\n";
 		} else {
-			std::cout << c << '\n';
+			std::cout << '\'' << c << '\'' << '\n';
 		}
 
 		++column;
