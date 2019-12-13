@@ -249,7 +249,7 @@ void displaySource(const std::string &str) {
 
 template<typename ForwardIterator>
 std::string lexStrLiteral(ForwardIterator begin, ForwardIterator end) {
-	return std::string(std::next(begin), std::prev(std::find_if(std::next(begin), end, [](const char c) {
+	return std::string(begin, std::prev(std::find_if(begin, end, [](const char c) {
 		return c == '"';
 	})));
 }
@@ -266,7 +266,8 @@ Tokens lexTokens(const std::string &str) {
 	Tokens tokens;
 	auto it = str.cbegin();
 	auto start = it;
-	auto end = str.cend();
+	const auto begin = str.cbegin();
+	const auto end = str.cend();
 	Token current;
 
 	int idummy;
@@ -283,8 +284,19 @@ SEEK_NEXT_TOKEN:
 LEX_TOKEN:
 STRING_LITERAL_TEST:
 	if(*it == '"') {	
+		start = std::next(it);
+		it = std::find_if(start, end, [](const char c) {
+			return c == '"';
+		});
+
+		if(it == end) {	//TODO: Add error handling
+			goto DONE;
+		}
+
+		++it;
+
 		current.type = TokenType::StringLiteral;
-		current.value = lexStrLiteral(it, end);
+		current.value = std::string(start, it - 1);
 		goto INSERT_TOKEN;
 	}
 
