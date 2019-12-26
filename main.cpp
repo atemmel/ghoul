@@ -7,6 +7,8 @@
 #include <vector>
 #include <array>
 
+#include "llvm.hpp"
+
 #ifdef DEBUG
 #define verboseAssert(condition, strv) \
 	assert(condition && strv);
@@ -77,6 +79,8 @@ enum TokenType {
 	//Keep this one last
 	NTokenTypes
 };
+
+constexpr static auto onelineComment = "//";
 
 constexpr static std::array<std::string_view, TokenType::NTokenTypes> tokenStrings {
 	"",		//String literal
@@ -280,6 +284,13 @@ SEEK_NEXT_TOKEN:
 		if(it == end) goto DONE;
 		else goto SEEK_NEXT_TOKEN;
 	}
+	else if(auto next = std::next(it); next != end ) {
+		std::string sdummy(it, std::next(next) );
+		if(sdummy == onelineComment) {
+			for(; it != end && *it != '\n'; it++);
+			goto SEEK_NEXT_TOKEN;
+		}
+	}
 
 LEX_TOKEN:
 STRING_LITERAL_TEST:
@@ -381,8 +392,10 @@ int main() {
 #endif
 
 	auto str = consumeFile("main.scp");
-	displaySource(str);
+	//displaySource(str);
 
 	auto tokens = lexTokens(str);
-	displayTokens(tokens);
+	//displayTokens(tokens);
+
+	gen();
 }
