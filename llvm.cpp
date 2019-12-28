@@ -6,8 +6,6 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
@@ -29,40 +27,34 @@
 #include <string>
 #include <vector>
 
-static llvm::LLVMContext context;
-static llvm::IRBuilder<> bob(context);
-static std::unique_ptr<llvm::Module> module;
 //static std::map<std::string, llvm::Value*> values;
 
-void gen() {
+void gen(ModuleInfo *mi, Context *ctx) {
 	std::cout << "Generating...\n";
 
-	module = std::make_unique<llvm::Module>("biggie smalls", context);
+	mi->module = std::make_unique<llvm::Module>(mi->name, ctx->context);
 
-	llvm::FunctionType *funcType = llvm::FunctionType::get(bob.getVoidTy(), false);
-	llvm::Function *mainFunc = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", module.get() );
+	mi->ast.generateCode(*ctx, *mi);
 
-	llvm::BasicBlock *entry = llvm::BasicBlock::Create(context, "entrypoint", mainFunc);
-	bob.SetInsertPoint(entry);
-
-	llvm::Value *helloWorld = bob.CreateGlobalStringPtr("Hello world!\n");
+	/*
+	llvm::Value *helloWorld = ctx->builder.CreateGlobalStringPtr("Hello world!\n");
 
 	std::vector<llvm::Type*> putsArgs;
-	putsArgs.push_back(bob.getInt8Ty()->getPointerTo());
+	putsArgs.push_back(ctx->builder.getInt8Ty()->getPointerTo());
 
 	llvm::ArrayRef<llvm::Type*> argsRef(putsArgs);
 
-	llvm::FunctionType *putsType = llvm::FunctionType::get(bob.getInt32Ty(), argsRef, false);
-	auto putsFunc = module->getOrInsertFunction("puts", putsType);
+	llvm::FunctionType *putsType = llvm::FunctionType::get(ctx->builder.getInt32Ty(), argsRef, false);
+	auto putsFunc = mi->module->getOrInsertFunction("puts", putsType);
 
-	bob.CreateCall(putsFunc, helloWorld);
-	bob.CreateRetVoid();
+	ctx->builder.CreateCall(putsFunc, helloWorld);
+	*/
 
-	module->print(llvm::errs(), nullptr);
-	write();
+	mi->module->print(llvm::errs(), nullptr);
+	write(mi, ctx);
 }
 
-void write() {
+void write(ModuleInfo *mi, Context *ctx) {
 	llvm::InitializeAllTargetInfos();
 	llvm::InitializeAllTargets();
 	llvm::InitializeAllTargetMCs();
@@ -70,7 +62,7 @@ void write() {
 	llvm::InitializeAllAsmPrinters();
 
 	auto targetTriple = llvm::sys::getDefaultTargetTriple();
-	module->setTargetTriple(targetTriple);
+	mi->module->setTargetTriple(targetTriple);
 
 	std::string err;
 	auto target = llvm::TargetRegistry::lookupTarget(targetTriple, err);
@@ -86,13 +78,11 @@ void write() {
 	auto RM = llvm::Optional<llvm::Reloc::Model>();
 	auto theTargetMachine = target->createTargetMachine(targetTriple, cpu, features, opt, RM);
 
-	module->setDataLayout(theTargetMachine->createDataLayout() );
-	module->setTargetTriple(targetTriple);
+	mi->module->setDataLayout(theTargetMachine->createDataLayout() );
+	mi->module->setTargetTriple(targetTriple);
 
 	std::error_code ec;
-	std::string filename = "output";
-	std::string relocname = filename + ".o";
-	llvm::raw_fd_ostream dest(relocname, ec, llvm::sys::fs::F_None);
+	llvm::raw_fd_ostream dest(mi->objName, ec, llvm::sys::fs::F_None);
 
 	llvm::legacy::PassManager pass;
 	auto fileType = llvm::TargetMachine::CGFT_ObjectFile;
@@ -102,9 +92,14 @@ void write() {
 		return;
 	}
 
-	pass.run(*module);
+	pass.run(*mi->module);
 	dest.flush();
 
-	std::cout << "Object written to " << filename << '\n';
-	system((std::string("gcc -static ") + relocname + " -o " + filename).c_str() );
+	std::cout << "Object written to " << mi->objName << '\n';
+	link(mi, ctx);
+}
+
+void link(ModuleInfo *mi, Context *ctx) {
+	std::cout << "Linking to " << mi->name << '\n';
+	system((std::string("gcc -O0 -static ") + mi->objName + " -o " + mi->name).c_str() );
 }

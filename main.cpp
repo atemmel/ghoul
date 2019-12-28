@@ -8,6 +8,7 @@
 #include <array>
 
 #include "llvm.hpp"
+#include "token.hpp"
 
 #ifdef DEBUG
 #define verboseAssert(condition, strv) \
@@ -16,139 +17,11 @@
 #define verboseAssert(condition, strv)
 #endif
 
-enum TokenType {
-	StringLiteral,      // ""
-	IntLiteral,         // 5
-	FloatLiteral,       // 15.7
-
-	ParensOpen,         // (
-	ParensClose,        // )
-	BlockOpen,          // {
-	BlockClose,         // }
-	DynamicArrayStart,  // [
-	DynamicArrayEnd,    // ]
-	StaticArrayStart,   // [[
-	StaticArrayEnd,     // ]]
-
-	Add,                // +
-	Subtract,           // -
-	Multiply,           // *
-	Divide,             // /
-	And,                // &
-	Or,                 // |
-	Xor,                // ^
-	Modulo,             // %
-	Less,               // <
-	Greater,            // >
-	Assign,				// =
-	
-	Equivalence,        // ==
-	NotEquivalence,     // !=
-	AddEquals,          // +=
-	SubtractEquals,     // -=
-	MutiplyEquals,      // *=
-	DivideEquals,       // /=
-	AndEquals,          // &=
-	OrEquals,           // |=
-	XorEquals,          // ^=
-	ModuloEquals,       // %=
-	LessEquals,         // <=
-	GreaterEquals,      // >=
-	
-	AddressOf,          // &
-	Dereference,        // *
-	Inverse,            // !
-	Negate,             // -
-
-	Ternary,            // ?
-
-	//Reserved words
-	Function,           // fn
-	While,              // while
-	For,                // for
-	If,                 // if
-	Else,               // else
-	ElseIf,             // else if
-	True,               // true
-	False,              // false
-	Null,               // null
-	Struct,	            // struct
-
-	Identifier,			// main, x, y, etc
-
-	//Keep this one last
-	NTokenTypes
-};
-
-constexpr static auto onelineComment = "//";
-
-constexpr static std::array<std::string_view, TokenType::NTokenTypes> tokenStrings {
-	"",		//String literal
-	"",		//Int literal
-	"",		//Float literal
-	"(",
-	")",
-	"{",
-	"}",
-	"[",
-	"]",
-	"[[",
-	"]]",
-	"+",
-	"-",
-	"*",
-	"/",
-	"&",
-	"|",
-	"^",
-	"%",
-	"<",
-	">",
-	"=",
-	"==",
-	"!=",
-	"+=",
-	"-=",
-	"*=",
-	"/=",
-	"&=",
-	"|=",
-	"^=",
-	"%=",
-	"<=",
-	">=",
-	"&",
-	"*",
-	"!",
-	"-",
-	"?",
-
-	"fn",
-	"while",
-	"for",
-	"if",
-	"else",
-	"else if",
-	"true",
-	"false",
-	"null",
-	"struct",
-
-	""
-};
-
 enum NumValidity {
 	Ok,
 	Invalid,
 	Range
 };
-
-struct Token {
-	TokenType type;
-	std::string value;
-};
-
-using Tokens = std::vector<Token>;
 
 //TODO: Reconsider 'val' parameter
 NumValidity isFloatLiteral(const std::string &str, float &val) {
@@ -188,6 +61,8 @@ std::string consumeFile(const char* path) {
 	
 	auto size = file.tellg();
 	file.seekg(0, std::ios::beg);
+
+	if(size < 1) return std::string();
 
 	std::vector<char> bytes(size);
 	file.read(bytes.data(), size);
@@ -279,6 +154,7 @@ Tokens lexTokens(const std::string &str) {
 	NumValidity validity;
 
 SEEK_NEXT_TOKEN:
+	if(it == end) goto DONE;
 	if(std::isspace(*it) ) {
 		it++;
 		if(it == end) goto DONE;
@@ -391,11 +267,20 @@ int main() {
 	std::cout << "All assertions passed\n";
 #endif
 
-	auto str = consumeFile("main.scp");
+	ModuleInfo mi {
+		"main",
+		"main.scp",
+		"main.o"
+	};
+
+	static Context ctx;
+
+	auto str = consumeFile(mi.fileName.c_str() );
 	//displaySource(str);
 
 	auto tokens = lexTokens(str);
-	//displayTokens(tokens);
+	displayTokens(tokens);
+	mi.ast.buildTree(tokens);
 
-	gen();
+	gen(&mi, &ctx);
 }
