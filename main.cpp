@@ -7,6 +7,7 @@
 #include <vector>
 #include <array>
 
+#include "clock.hpp"
 #include "llvm.hpp"
 #include "token.hpp"
 
@@ -275,12 +276,27 @@ int main() {
 
 	static Context ctx;
 
+	float time;
+	Clock clock;
 	auto str = consumeFile(mi.fileName.c_str() );
+
+	time = clock.get();
+	std::cout << mi.fileName.c_str() << " read in " << time << " s\n";
 	//displaySource(str);
 
+	clock.restart();
 	auto tokens = lexTokens(str);
+	time = clock.get();
+	std::cout << mi.fileName.c_str() << " tokenized in " << time << " s\n";
 	displayTokens(tokens);
-	mi.ast.buildTree(tokens);
 
+	clock.restart();
+	mi.ast.buildTree(tokens);
+	time = clock.get();
+	std::cout << mi.fileName.c_str() << " ast built in " << time << " s\n";
+	displayTokens(tokens);
+
+	clock.restart();
 	gen(&mi, &ctx);
+	std::cout << mi.objName.c_str() << " object file built in " << time << " s\n";
 }
