@@ -2,45 +2,53 @@
 #include "llvm.hpp"
 
 void Ast::buildTree(const Tokens &tokens) {
-	auto it = tokens.cbegin();
-	auto end = tokens.cend();
+	auto it = tokens.begin();
+	auto end = tokens.end();
 
-	auto buildFunction = [&]() {
-		auto next = std::next(it);
-		if(next->type != TokenType::Identifier) {
-			//TODO: Error!
-			return;
-		}
-
-		//TODO: Generalize this
-		auto lparen = std::next(next);
-		auto rparen = std::next(lparen);
-		
-		if(lparen->type != TokenType::ParensOpen 
-				|| rparen->type != TokenType::ParensClose) {
-			return;
-		}
-
-		root = std::make_unique<FunctionAstNode>(next->value);
-
-		//TODO: Generalize this
-		auto lcurly = std::next(rparen);
-		auto rcurly = std::next(lcurly);
-
-		if(lcurly->type != TokenType::BlockOpen
-				|| rcurly->type != TokenType::BlockClose) {
-			return;
-		}
-
-		it = std::next(rcurly);
-	};
-
-	switch(it->type) {
-		case TokenType::Function: {
-			buildFunction();
-			break;
+	while(it != end) {
+		switch(it->type) {
+			case TokenType::Function: {
+				it = buildFunction(it, end);
+				break;
+			}
 		}
 	}
+}
+
+CTokenIterator Ast::buildFunction(CTokenIterator first, CTokenIterator last) {
+	auto next = std::next(first);
+	if(next->type != TokenType::Identifier) {
+		//TODO: Error!
+		return last;
+	}
+
+	//TODO: Generalize this
+	auto lparen = std::next(next);
+	auto rparen = std::next(lparen);
+	
+	if(lparen->type != TokenType::ParensOpen 
+			|| rparen->type != TokenType::ParensClose) {
+		return last;
+	}
+
+	auto node = std::make_unique<FunctionAstNode>(next->value);
+	if(!root) {	//TODO: Identify and separate main
+		root = std::move(node);
+	}
+	else {
+		//root->addChild(std::move(node) );
+	}
+
+	//TODO: Generalize this
+	auto lcurly = std::next(rparen);
+	auto rcurly = std::next(lcurly);
+
+	if(lcurly->type != TokenType::BlockOpen
+			|| rcurly->type != TokenType::BlockClose) {
+		return last;
+	}
+
+	return std::next(rcurly);
 }
 
 void Ast::generateCode(Context &ctx, ModuleInfo &mi) {

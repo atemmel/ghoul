@@ -132,3 +132,5 @@ struct Token {
 };
 
 using Tokens = std::vector<Token>;
+using TokenIterator = Tokens::iterator;
+using CTokenIterator = Tokens::const_iterator;

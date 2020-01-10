@@ -24,6 +24,7 @@ public:
 
 	void generateCode(Context &ctx, ModuleInfo &mi);
 private:
+	CTokenIterator buildFunction(CTokenIterator first, CTokenIterator Last);
 
 	std::unique_ptr<AstNode> root;
 };
@@ -31,6 +32,9 @@ private:
 class AstNode {
 public:
 	virtual void generateCode(Context &ctx, ModuleInfo &mi) = 0;
+	void addChild(std::unique_ptr<AstNode> && child) {
+		children.push_back(std::move(child) );
+	}
 protected:
 	std::string value;
 	std::vector<std::unique_ptr<AstNode>> children;
