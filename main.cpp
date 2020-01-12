@@ -7,8 +7,9 @@
 #include <vector>
 #include <array>
 
-#include "clock.hpp"
+#include "arg.hpp"
 #include "llvm.hpp"
+#include "clock.hpp"
 #include "token.hpp"
 
 #ifdef DEBUG
@@ -254,7 +255,22 @@ void displayTokens(const Tokens &tokens) {
 	}
 }
 
-int main() {
+bool endsWith(std::string_view sv, std::string_view end) {
+	return sv.rfind(end) + end.size() == sv.size();
+}
+
+void buildModuleInfo(ModuleInfo &mi, std::string_view sv) {
+	if(!endsWith(sv, ".scp") ) {	//TODO: Remove hardcoded constant ".scp"
+		std::cerr << "Invalid source file given\n";
+		std::exit(EXIT_FAILURE);
+	}
+
+	mi.fileName = sv;
+	mi.name = sv.substr(0, sv.size() - 4);	//TODO: Remove hardcoded constant 4
+	mi.objName = mi.name + ".o";
+}
+
+int main(int argc, char** argv) {
 #ifdef DEBUG
 	float f;
 	verboseAssert(isFloatLiteral("127.5", f) == NumValidity::Ok,      "Ok test failed");
@@ -268,11 +284,31 @@ int main() {
 	std::cout << "All assertions passed\n";
 #endif
 
-	ModuleInfo mi {
-		"main",
-		"main.scp",
-		"main.o"
-	};
+	ModuleInfo mi;
+
+	ArgParser argParser(argc, argv);
+	argParser.append(
+		"build",
+		{
+			[&](const ArgParser::Args &args) { 
+				std::cerr << args.front() << '\n';
+				buildModuleInfo(mi, args.front() );
+			},
+			1
+		}
+	);
+
+	argParser.append(
+		"--verbose",
+		{
+			[](const ArgParser::Args &args) { std::cerr << "Verbose flag set\n"; },
+			0
+		}
+	);
+
+	argParser.unwind();
+
+	std::cout << mi.name << '\n' << mi.fileName << '\n' << mi.objName << '\n';
 
 	static Context ctx;
 
@@ -294,7 +330,6 @@ int main() {
 	mi.ast.buildTree(tokens);
 	time = clock.getSeconds();
 	std::cout << mi.fileName.c_str() << " ast built in " << time << " s\n";
-	displayTokens(tokens);
 
 	clock.restart();
 	gen(&mi, &ctx);

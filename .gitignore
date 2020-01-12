@@ -1,3 +1,4 @@
 *.o
 lang
 output
+vgcore.*
