@@ -7,10 +7,10 @@
 #include <vector>
 #include <array>
 
-#include "arg.hpp"
 #include "llvm.hpp"
 #include "clock.hpp"
 #include "token.hpp"
+#include "argparser.hpp"
 
 #ifdef DEBUG
 #define verboseAssert(condition, strv) \
@@ -270,44 +270,7 @@ void buildModuleInfo(ModuleInfo &mi, std::string_view sv) {
 	mi.objName = mi.name + ".o";
 }
 
-int main(int argc, char** argv) {
-#ifdef DEBUG
-	float f;
-	verboseAssert(isFloatLiteral("127.5", f) == NumValidity::Ok,      "Ok test failed");
-	verboseAssert(isFloatLiteral("127r5", f) == NumValidity::Invalid, "Invalid test failed");
-	verboseAssert(isFloatLiteral("1e700", f) == NumValidity::Range,   "Range test failed");
-
-	int i;
-	verboseAssert(isIntLiteral("12345", i) == NumValidity::Ok,      "Ok test failed");
-	verboseAssert(isIntLiteral("123.4", i) == NumValidity::Invalid, "Invalid test failed");
-	verboseAssert(isIntLiteral("5000000000", i) == NumValidity::Range,   "Range test failed");
-	std::cout << "All assertions passed\n";
-#endif
-
-	ModuleInfo mi;
-
-	ArgParser argParser(argc, argv);
-	argParser.append(
-		"build",
-		{
-			[&](const ArgParser::Args &args) { 
-				std::cerr << args.front() << '\n';
-				buildModuleInfo(mi, args.front() );
-			},
-			1
-		}
-	);
-
-	argParser.append(
-		"--verbose",
-		{
-			[](const ArgParser::Args &args) { std::cerr << "Verbose flag set\n"; },
-			0
-		}
-	);
-
-	argParser.unwind();
-
+void compile(ModuleInfo &mi) {
 	std::cout << mi.name << '\n' << mi.fileName << '\n' << mi.objName << '\n';
 
 	static Context ctx;
@@ -335,4 +298,43 @@ int main(int argc, char** argv) {
 	gen(&mi, &ctx);
 	time = clock.getSeconds();
 	std::cout << mi.objName.c_str() << " object file built in " << time << " s\n";
+}
+
+int main(int argc, char** argv) {
+#ifdef DEBUG
+	float f;
+	verboseAssert(isFloatLiteral("127.5", f) == NumValidity::Ok,      "Ok test failed");
+	verboseAssert(isFloatLiteral("127r5", f) == NumValidity::Invalid, "Invalid test failed");
+	verboseAssert(isFloatLiteral("1e700", f) == NumValidity::Range,   "Range test failed");
+
+	int i;
+	verboseAssert(isIntLiteral("12345", i) == NumValidity::Ok,      "Ok test failed");
+	verboseAssert(isIntLiteral("123.4", i) == NumValidity::Invalid, "Invalid test failed");
+	verboseAssert(isIntLiteral("5000000000", i) == NumValidity::Range,   "Range test failed");
+	std::cout << "All assertions passed\n";
+#endif
+
+	ModuleInfo mi;
+
+	ArgParser argParser(argc, argv);
+	argParser.append(
+		"build",
+		{
+			[&](const ArgParser::Args &args) { 
+				buildModuleInfo(mi, args.front() );
+				compile(mi);
+			},
+			1
+		}
+	);
+
+	argParser.append(
+		"--verbose",
+		{
+			[](const ArgParser::Args &args) { std::cerr << "Verbose flag set\n"; },
+			0
+		}
+	);
+
+	argParser.unwind();
 }
