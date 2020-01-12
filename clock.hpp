@@ -6,7 +6,7 @@ using ClockType = std::chrono::high_resolution_clock;
 using TimeType = float;
 
 public:
-	float get() const {
+	float getSeconds() const {
 		auto end = ClockType::now();
 		std::chrono::duration<TimeType> dt = end - begin;
 		return dt.count();

@@ -48,7 +48,7 @@ NumValidity isIntLiteral(const std::string &str, int &val) {
 		if(nRead != str.size() ) {
 			return NumValidity::Invalid;
 		}
-	} catch(std::invalid_argument execpt ) {
+	} catch(std::invalid_argument except ) {
 		return NumValidity::Invalid;
 	} catch(std::out_of_range except) {
 		return NumValidity::Range;
@@ -280,23 +280,24 @@ int main() {
 	Clock clock;
 	auto str = consumeFile(mi.fileName.c_str() );
 
-	time = clock.get();
+	time = clock.getSeconds();
 	std::cout << mi.fileName.c_str() << " read in " << time << " s\n";
 	//displaySource(str);
 
 	clock.restart();
 	auto tokens = lexTokens(str);
-	time = clock.get();
+	time = clock.getSeconds();
 	std::cout << mi.fileName.c_str() << " tokenized in " << time << " s\n";
 	displayTokens(tokens);
 
 	clock.restart();
 	mi.ast.buildTree(tokens);
-	time = clock.get();
+	time = clock.getSeconds();
 	std::cout << mi.fileName.c_str() << " ast built in " << time << " s\n";
 	displayTokens(tokens);
 
 	clock.restart();
 	gen(&mi, &ctx);
+	time = clock.getSeconds();
 	std::cout << mi.objName.c_str() << " object file built in " << time << " s\n";
 }
