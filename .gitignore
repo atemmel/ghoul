@@ -1,4 +1,4 @@
+Makefile
+build/**
 *.o
-lang
-output
 vgcore.*
