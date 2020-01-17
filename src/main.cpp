@@ -259,6 +259,16 @@ bool endsWith(std::string_view sv, std::string_view end) {
 	return sv.rfind(end) + end.size() == sv.size();
 }
 
+std::string getFileName(std::string_view sv) {
+	auto index = sv.rfind('/');	//TODO: OS dependent(?)
+	return index == std::string::npos ? std::string(sv) : std::string(sv.substr(index + 1, sv.size() ) );
+}
+
+std::string removeStem(std::string_view sv) {
+	auto index = sv.rfind('.');
+	return index == std::string::npos ? std::string(sv) : std::string(sv.substr(0, index) );
+}
+
 void buildModuleInfo(ModuleInfo &mi, std::string_view sv) {
 	if(!endsWith(sv, ".scp") ) {	//TODO: Remove hardcoded constant ".scp"
 		std::cerr << "Invalid source file given\n";
@@ -266,7 +276,7 @@ void buildModuleInfo(ModuleInfo &mi, std::string_view sv) {
 	}
 
 	mi.fileName = sv;
-	mi.name = sv.substr(0, sv.size() - 4);	//TODO: Remove hardcoded constant 4
+	mi.name = removeStem(getFileName(sv) );
 	mi.objName = mi.name + ".o";
 }
 
@@ -315,8 +325,14 @@ int main(int argc, char** argv) {
 #endif
 
 	ModuleInfo mi;
+	std::string buildFlag;
+	bool verboseFlag = 0;
 
 	ArgParser argParser(argc, argv);
+	argParser.addString(&buildFlag, "build");
+	argParser.addBool(&verboseFlag, "--verbose");
+
+	/*
 	argParser.append(
 		"build",
 		{
@@ -335,6 +351,12 @@ int main(int argc, char** argv) {
 			0
 		}
 	);
+	*/
 
 	argParser.unwind();
+
+	if(!buildFlag.empty() ) {
+		buildModuleInfo(mi, buildFlag);
+		compile(mi);
+	}
 }

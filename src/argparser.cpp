@@ -1,35 +1,49 @@
 #include "argparser.hpp"
 
+#include <cassert>
 #include <iostream>
 #include <algorithm>
 
 ArgParser::ArgParser(int argc, char** argv) : args(argv + 1, argv + argc) {
 }
 
-void ArgParser::append(std::string_view key, const Command &command) {
-	commands.insert({key, command});
+void ArgParser::addBool(bool* var, std::string_view flag) {
+	assert(var);
+	flags.insert({flag, {static_cast<void*>(var), VarPtr::Type::Bool} });
+}
+
+void ArgParser::addString(std::string* var, std::string_view flag) {
+	assert(var);
+	flags.insert({flag, {static_cast<void*>(var), VarPtr::Type::String} });
 }
 
 void ArgParser::unwind() {
-	Args subArgs;
 	for(auto it = args.begin(); it != args.end(); it++) {
-		subArgs.clear();
-		auto hashIt = commands.find(*it);
-		if(hashIt == commands.end() ) {
+		auto hashIt = flags.find(*it);
+
+		if(hashIt == flags.end() ) {
 			std::cerr << "Unrecognized argument: " << *it << ", exiting...\n";
 			std::exit(EXIT_FAILURE);
 		}
-		
+		auto& var = hashIt->second;
+
 		int availableArgs = std::distance(std::next(it), args.end() );
-		if(availableArgs < hashIt->second.flags) {
+		if(availableArgs < 1 && var.type != VarPtr::Type::Bool) {
 			std::cerr << "Too few arguments for argument " << hashIt->first 
-				<< ", expected " << hashIt->second.flags << ", recieved " << availableArgs 
+				<< ", expected " << 1 << ", recieved " << availableArgs 
 				<< '\n';
 			std::exit(EXIT_FAILURE);
 		}
-		
-		subArgs.insert(subArgs.begin(), it + 1, it + 1 + hashIt->second.flags);
-		hashIt->second.callback(subArgs);
-		it += hashIt->second.flags;
+
+		switch(var.type) {
+			case VarPtr::Type::Bool:
+				*static_cast<bool*>(var.ptr) = true;
+				break;
+			case VarPtr::Type::String:
+				static_cast<std::string*>(var.ptr)->assign(*std::next(it) );
+				break;
+		}
+
+		if(var.type != VarPtr::Type::Bool) std::advance(it, 1);
 	}
 }
