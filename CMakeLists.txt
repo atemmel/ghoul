@@ -12,9 +12,10 @@ include_directories(${LLVM_INCLUDE_DIRS})
 include_directories(include)
 add_definitions(${LLVM_DEFINITIONS})
 
-llvm_map_components_to_libnames(llvm_libs all)
+#llvm_map_components_to_libnames(llvm_libs all)
 
 add_executable(lang ${SOURCES})
 set_property(TARGET lang PROPERTY CXX_STANDARD 17)
 add_compile_options(-Wall -Wextra -Wpedantic)
-target_link_libraries(lang ${llvm_libs})
+target_link_libraries(lang LLVM)
+#target_link_libraries(lang ${llvm_libs})
