@@ -1,6 +1,7 @@
 #include "argparser.hpp"
 
-#include <cassert>
+#include "utils.hpp"
+
 #include <iostream>
 #include <algorithm>
 
@@ -8,12 +9,12 @@ ArgParser::ArgParser(int argc, char** argv) : args(argv + 1, argv + argc) {
 }
 
 void ArgParser::addBool(bool* var, std::string_view flag) {
-	assert(var);
+	verboseAssert(var, "Adressed passed was nullptr");
 	flags.insert({flag, {static_cast<void*>(var), VarPtr::Type::Bool} });
 }
 
 void ArgParser::addString(std::string* var, std::string_view flag) {
-	assert(var);
+	verboseAssert(var, "Adressed passed was nullptr");
 	flags.insert({flag, {static_cast<void*>(var), VarPtr::Type::String} });
 }
 
