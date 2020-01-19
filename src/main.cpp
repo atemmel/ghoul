@@ -222,7 +222,7 @@ void compile(ModuleInfo &mi) {
 	displayTokens(tokens);
 
 	clock.restart();
-	mi.ast.buildTree(tokens);
+	mi.ast.buildTree(std::move(tokens) );
 	time = clock.getSeconds();
 	std::cout << mi.fileName.c_str() << " ast built in " << time << " s\n";
 

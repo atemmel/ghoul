@@ -16,19 +16,6 @@ struct Context {
 	llvm::IRBuilder<> builder;
 };
 
-class AstNode;
-
-class Ast {
-public:
-	void buildTree(const Tokens &tokens);
-
-	void generateCode(Context &ctx, ModuleInfo &mi);
-private:
-	CTokenIterator buildFunction(CTokenIterator first, CTokenIterator Last);
-
-	std::unique_ptr<AstNode> root;
-};
-
 class AstNode {
 public:
 	virtual void generateCode(Context &ctx, ModuleInfo &mi) = 0;
@@ -36,15 +23,29 @@ public:
 		children.push_back(std::move(child) );
 	}
 protected:
-	std::string value;
 	std::vector<std::unique_ptr<AstNode>> children;
+};
+
+class Ast : public AstNode {
+public:
+	void buildTree(Tokens &&tokens);
+
+	void generateCode(Context &ctx, ModuleInfo &mi) override;
+private:
+	bool expect(TokenType type);
+	void buildTree(CTokenIterator it);
+	CTokenIterator buildFunction(CTokenIterator it);
+	CTokenIterator buildFunction(CTokenIterator first, CTokenIterator Last);
+
+	TokenType expected;
+	Tokens tokens;
 };
 
 class FunctionAstNode : public AstNode {
 public:
-	FunctionAstNode(const std::string &value)  {
-		this->value = value;
-	}
+	FunctionAstNode(const std::string &identifier);
 
 	void generateCode(Context &ctx, ModuleInfo &mi) override;
+private:
+	std::string identifier;
 };
