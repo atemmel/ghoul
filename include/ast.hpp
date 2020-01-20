@@ -34,7 +34,7 @@ public:
 	void generateCode(Context &ctx, ModuleInfo &mi) override;
 private:
 	bool expect(TokenType type);
-	void buildTree(CTokenIterator it);
+	void buildTree();
 	CTokenIterator buildFunction(CTokenIterator it);
 	CTokenIterator buildStatement(CTokenIterator it);
 

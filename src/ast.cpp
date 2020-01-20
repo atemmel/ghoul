@@ -7,7 +7,7 @@ void Ast::buildTree(Tokens &&tokens) {
 
 	expectedArray.push(TokenType::Function);
 	expected = expectedArray.begin();
-	buildTree(it);
+	buildTree();
 }
 
 bool Ast::expect(TokenType type) {
@@ -22,49 +22,45 @@ bool Ast::expect(TokenType type) {
 	return true;
 }
 
-void Ast::buildTree(CTokenIterator it) {
-	if(it == tokens.cend() ) return;
-
-	if(expect(it->type) ) {
-		switch(*expected) {
-			case TokenType::Function:
-				expectedArray.push(TokenType::Identifier);
-				it = buildFunction(std::next(it) );
-				break;
+void Ast::buildTree() {
+	for(auto it = tokens.cbegin(); it != tokens.cend(); it++) {
+		if(expect(it->type) ) {
+			switch(*expected) {
+				case TokenType::Function:
+					expectedArray.push(TokenType::Identifier);
+					it = buildFunction(std::next(it) );
+					break;
+			}
 		}
 	}
-
-	if(it == tokens.cend() ) return;
-	buildTree(std::next(it) );
 }
 
 CTokenIterator Ast::buildFunction(CTokenIterator it) {
-	if(it == tokens.cend() ) return it;
-
-	if(expect(it->type) ) {
-		switch(*expected) {
-			case TokenType::Identifier:
-				addChild(std::move(std::make_unique<FunctionAstNode>(it->value) ) );
-				expectedArray.push(TokenType::ParensOpen);
-				break;
-			case TokenType::ParensOpen:
-				expectedArray.push(TokenType::ParensClose);
-				break;
-			case TokenType::ParensClose:
-				expectedArray.push(TokenType::BlockOpen);
-				break;
-			case TokenType::BlockOpen:
-				expectedArray.push(TokenType::BlockClose);
-				break;
-			case TokenType::BlockClose:
-				expectedArray.push(TokenType::Function);
-				return it;
-				break;
+	for(; it != tokens.cend(); it++) {
+		if(expect(it->type) ) {
+			switch(*expected) {
+				case TokenType::Identifier:
+					addChild(std::move(std::make_unique<FunctionAstNode>(it->value) ) );
+					expectedArray.push(TokenType::ParensOpen);
+					break;
+				case TokenType::ParensOpen:
+					expectedArray.push(TokenType::ParensClose);
+					break;
+				case TokenType::ParensClose:
+					expectedArray.push(TokenType::BlockOpen);
+					break;
+				case TokenType::BlockOpen:
+					expectedArray.push(TokenType::BlockClose);
+					break;
+				case TokenType::BlockClose:
+					expectedArray.push(TokenType::Function);
+					return it;
+					break;
+			}
 		}
 	}
 
-	if(it == tokens.cend() ) return it;
-	return buildFunction(std::next(it) );
+	return it;
 }
 
 //TODO: Work this through
