@@ -67,6 +67,25 @@ CTokenIterator Ast::buildFunction(CTokenIterator it) {
 	return buildFunction(std::next(it) );
 }
 
+//TODO: Work this through
+CTokenIterator Ast::buildStatement(CTokenIterator it) {
+	if(it == tokens.cend() ) return it;
+
+	if(expect(it->type) ) {
+		switch(*expected) {
+			case TokenType::Identifier:
+				break;
+
+			case TokenType::BlockClose:
+				return it;
+				break;
+		}
+	}
+
+	if(it == tokens.cend() ) return it;
+	return buildStatement(std::next(it) );
+}
+
 void Ast::generateCode(Context &ctx, ModuleInfo &mi) {
 	for(const auto &child : children) child->generateCode(ctx, mi);
 }
@@ -83,6 +102,15 @@ void FunctionAstNode::generateCode(Context &ctx, ModuleInfo &mi) {
 	ctx.builder.SetInsertPoint(entry);
 
 	//Content goes here
+	for(const auto &child : children) child->generateCode(ctx, mi);
 	
 	ctx.builder.CreateRetVoid();
+}
+
+CallAstNode::CallAstNode(const std::string &identifier) 
+	: identifier(identifier) {
+}
+
+void CallAstNode::generateCode(Context &ctx, ModuleInfo &mi) {
+	//TODO: Implement this
 }

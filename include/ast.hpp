@@ -36,7 +36,7 @@ private:
 	bool expect(TokenType type);
 	void buildTree(CTokenIterator it);
 	CTokenIterator buildFunction(CTokenIterator it);
-	CTokenIterator buildFunction(CTokenIterator first, CTokenIterator Last);
+	CTokenIterator buildStatement(CTokenIterator it);
 
 	DynamicArray<TokenType, 4> expectedArray;	//Preliminary number, take care
 	using Expected = decltype(expectedArray.begin() );
@@ -53,6 +53,11 @@ private:
 	std::string identifier;
 };
 
-class BlockAstNode : public AstNode {
+class CallAstNode : public AstNode {
+public:
+	CallAstNode(const std::string &identifier);
+
 	void generateCode(Context &ctx, ModuleInfo &mi) override;
+private:
+	std::string identifier;
 };
