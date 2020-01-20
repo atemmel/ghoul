@@ -1,5 +1,6 @@
 #pragma once
 #include "token.hpp"
+#include "dynamicarray.hpp"
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
@@ -37,7 +38,9 @@ private:
 	CTokenIterator buildFunction(CTokenIterator it);
 	CTokenIterator buildFunction(CTokenIterator first, CTokenIterator Last);
 
-	TokenType expected;
+	DynamicArray<TokenType, 4> expectedArray;	//Preliminary number, take care
+	using Expected = decltype(expectedArray.begin() );
+	Expected expected = expectedArray.begin();
 	Tokens tokens;
 };
 
@@ -48,4 +51,8 @@ public:
 	void generateCode(Context &ctx, ModuleInfo &mi) override;
 private:
 	std::string identifier;
+};
+
+class BlockAstNode : public AstNode {
+	void generateCode(Context &ctx, ModuleInfo &mi) override;
 };

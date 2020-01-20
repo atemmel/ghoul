@@ -5,16 +5,20 @@ void Ast::buildTree(Tokens &&tokens) {
 	this->tokens = tokens;
 	auto it = this->tokens.cbegin();
 
-	expected = TokenType::Function;
+	expectedArray.push(TokenType::Function);
+	expected = expectedArray.begin();
 	buildTree(it);
 }
 
 bool Ast::expect(TokenType type) {
-	if(type != expected) {
-		std::cerr << "Error! Expected " << tokenStrings[static_cast<size_t>(expected)]
+	expected = expectedArray.find(type);
+	if(expected == expectedArray.end() ) {
+		std::cerr << "Error! Expected " << tokenStrings[static_cast<size_t>(expectedArray.front() )]	//TODO: Reformulate output
 			<< " recieved " << tokenStrings[static_cast<size_t>(type)] << '\n';
+		expectedArray.clear();
 		return false;
 	} else std::cerr << "Good\n";
+	expectedArray.clear();
 	return true;
 }
 
@@ -22,9 +26,9 @@ void Ast::buildTree(CTokenIterator it) {
 	if(it == tokens.cend() ) return;
 
 	if(expect(it->type) ) {
-		switch(expected) {
+		switch(*expected) {
 			case TokenType::Function:
-				expected = TokenType::Identifier;
+				expectedArray.push(TokenType::Identifier);
 				it = buildFunction(std::next(it) );
 				break;
 		}
@@ -38,22 +42,22 @@ CTokenIterator Ast::buildFunction(CTokenIterator it) {
 	if(it == tokens.cend() ) return it;
 
 	if(expect(it->type) ) {
-		switch(expected) {
+		switch(*expected) {
 			case TokenType::Identifier:
 				addChild(std::move(std::make_unique<FunctionAstNode>(it->value) ) );
-				expected = TokenType::ParensOpen;
+				expectedArray.push(TokenType::ParensOpen);
 				break;
 			case TokenType::ParensOpen:
-				expected = TokenType::ParensClose;
+				expectedArray.push(TokenType::ParensClose);
 				break;
 			case TokenType::ParensClose:
-				expected = TokenType::BlockOpen;
+				expectedArray.push(TokenType::BlockOpen);
 				break;
 			case TokenType::BlockOpen:
-				expected = TokenType::BlockClose;
+				expectedArray.push(TokenType::BlockClose);
 				break;
 			case TokenType::BlockClose:
-				expected = TokenType::Function;
+				expectedArray.push(TokenType::Function);
 				return it;
 				break;
 		}
