@@ -6,6 +6,7 @@
 #include "utils.hpp"
 #include "clock.hpp"
 #include "token.hpp"
+#include "global.hpp"
 #include "argparser.hpp"
 
 void displaySource(const std::string &str) {
@@ -168,7 +169,7 @@ INTEGER_TEST:
 FLOAT_TEST:
 	validity = isFloatLiteral(current.value, fdummy);
 	if(validity == NumValidity::Ok) {
-		current.type == TokenType::FloatLiteral;
+		current.type = TokenType::FloatLiteral;
 		goto INSERT_TOKEN;
 	} else {	//TODO: Add error handling
 	}
@@ -203,8 +204,6 @@ void buildModuleInfo(ModuleInfo &mi, std::string_view sv) {
 }
 
 void compile(ModuleInfo &mi) {
-	std::cout << mi.name << '\n' << mi.fileName << '\n' << mi.objName << '\n';
-
 	static Context ctx;
 
 	float time;
@@ -219,7 +218,7 @@ void compile(ModuleInfo &mi) {
 	auto tokens = lexTokens(str);
 	time = clock.getSeconds();
 	std::cout << mi.fileName.c_str() << " tokenized in " << time << " s\n";
-	displayTokens(tokens);
+	if(Global::config.verbose) displayTokens(tokens);
 
 	clock.restart();
 	mi.ast.buildTree(std::move(tokens) );
@@ -248,11 +247,11 @@ int main(int argc, char** argv) {
 
 	ModuleInfo mi;
 	std::string buildFlag;
-	bool verboseFlag = 0;
+	Global::config.verbose = false;
 
 	ArgParser argParser(argc, argv);
 	argParser.addString(&buildFlag, "build");
-	argParser.addBool(&verboseFlag, "--verbose");
+	argParser.addBool(&Global::config.verbose, "--verbose");
 
 	argParser.unwind();
 

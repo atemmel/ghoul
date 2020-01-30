@@ -1,4 +1,5 @@
 #include "llvm.hpp"
+#include "global.hpp"
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
@@ -50,7 +51,7 @@ void gen(ModuleInfo *mi, Context *ctx) {
 	ctx->builder.CreateCall(putsFunc, helloWorld);
 	*/
 
-	mi->module->print(llvm::errs(), nullptr);
+	if(Global::config.verbose) mi->module->print(llvm::errs(), nullptr);
 	write(mi, ctx);
 }
 

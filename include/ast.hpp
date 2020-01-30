@@ -19,12 +19,13 @@ struct Context {
 
 class AstNode {
 public:
+	using Child = std::unique_ptr<AstNode>;
 	virtual void generateCode(Context &ctx, ModuleInfo &mi) = 0;
 	void addChild(std::unique_ptr<AstNode> && child) {
 		children.push_back(std::move(child) );
 	}
 protected:
-	std::vector<std::unique_ptr<AstNode>> children;
+	std::vector<Child> children;
 };
 
 class Ast : public AstNode {

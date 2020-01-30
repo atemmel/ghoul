@@ -17,7 +17,7 @@ bool Ast::expect(TokenType type) {
 			<< " recieved " << tokenStrings[static_cast<size_t>(type)] << '\n';
 		expectedArray.clear();
 		return false;
-	} else std::cerr << "Good\n";
+	} //else std::cerr << "Good\n";
 	expectedArray.clear();
 	return true;
 }
