@@ -8,13 +8,37 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <unordered_map>
 
 struct ModuleInfo {
 	std::string name;
 	std::string fileName;
 	std::string objName;
 	std::unique_ptr<llvm::Module> module;
-	Ast ast;
+	std::unordered_map<std::string, llvm::Value*> values;
+	std::unique_ptr<ToplevelAstNode> ast;
+};
+
+struct Context {
+	Context() : builder(context) {};
+	llvm::LLVMContext context;
+	llvm::IRBuilder<> builder;
+};
+
+
+class LLVMCodeGen : public AstVisitor {
+public:
+	void setModuleInfo(ModuleInfo *mi);
+	void setContext(Context *ctx);
+	virtual void visit(ToplevelAstNode &node) override;
+	virtual void visit(FunctionAstNode &node) override;
+	virtual void visit(StatementAstNode &node) override;
+	virtual void visit(CallAstNode &node) override;
+	virtual void visit(ExpressionAstNode &node) override;
+	virtual void visit(StringAstNode &node) override;
+private:
+	ModuleInfo *mi = nullptr;
+	Context *ctx = nullptr;
 };
 
 bool gen(ModuleInfo *mi, Context *ctx);

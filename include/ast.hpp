@@ -9,74 +9,80 @@
 #include <memory>
 #include <vector>
 
-struct ModuleInfo;
+class AstVisitor;
+class ToplevelAstNode;
 
-struct Context {
-	Context() : builder(context) {};
-	llvm::LLVMContext context;
-	llvm::IRBuilder<> builder;
-};
-
-class AstNode {
-public:
+struct AstNode {
 	using Child = std::unique_ptr<AstNode>;
-	virtual bool generateCode(Context &ctx, ModuleInfo &mi) = 0;
-	void addChild(std::unique_ptr<AstNode> && child) {
+	using Root = std::unique_ptr<ToplevelAstNode>;
+	//virtual bool generateCode(Context &ctx, ModuleInfo &mi) = 0;
+	virtual void accept(AstVisitor &visitor) = 0;
+	void addChild(Child && child) {
 		children.push_back(std::move(child) );
 	}
-protected:
 	std::vector<Child> children;
 };
 
-class Ast : public AstNode {
-public:
-	void buildTree(Tokens &&tokens);
+struct ToplevelAstNode : public AstNode {
+	void accept(AstVisitor &visitor) override;
+};
 
-	bool generateCode(Context &ctx, ModuleInfo &mi) override;
+struct FunctionAstNode : public AstNode {
+	FunctionAstNode(const std::string &identifier);
+	void accept(AstVisitor &visitor) override;
+	//bool generateCode(Context &ctx, ModuleInfo &mi) override;
+	std::string identifier;
+};
+
+struct StatementAstNode : public AstNode {
+	void accept(AstVisitor &visitor) override;
+	//bool generateCode(Context &ctx, ModuleInfo &mi) override;
+};
+
+struct CallAstNode : public AstNode {
+	CallAstNode(const std::string &identifier);
+	void accept(AstVisitor &visitor) override;
+
+	//bool generateCode(Context &ctx, ModuleInfo &mi) override;
+	std::string identifier;
+};
+
+struct ExpressionAstNode : public AstNode {
+	void accept(AstVisitor &visitor) override;
+	//bool generateCode(Context &ctx, ModuleInfo &mi) override;
+};
+
+struct StringAstNode : public AstNode {
+	StringAstNode(const std::string &value);
+	void accept(AstVisitor &visitor) override;
+
+	//bool generateCode(Context &ctx, ModuleInfo &mi) override;
+	std::string value;
+};
+
+class AstVisitor {
+public:
+	virtual void visit(ToplevelAstNode &node)	= 0;
+	virtual void visit(FunctionAstNode &node)	= 0;
+	virtual void visit(StatementAstNode &node)	= 0;
+	virtual void visit(CallAstNode &node)		= 0;
+	virtual void visit(ExpressionAstNode &node)	= 0;
+	virtual void visit(StringAstNode &node)		= 0;
+};
+
+class AstParser {
+public:
+	AstNode::Root buildTree(Tokens &&tokens);
+
+	//bool generateCode(Context &ctx, ModuleInfo &mi) override;
 private:
 	Token *getIf(TokenType type);
-	void buildTree();
-	Child buildFunction();
-	Child buildStatement();
-	Child buildCall(const std::string &identifier);
-	Child buildExpr();
+	AstNode::Root buildTree();
+	AstNode::Child buildFunction();
+	AstNode::Child buildStatement();
+	AstNode::Child buildCall(const std::string &identifier);
+	AstNode::Child buildExpr();
 	Tokens tokens;
 	Tokens::iterator iterator;
 };
 
-class FunctionAstNode : public AstNode {
-public:
-	FunctionAstNode(const std::string &identifier);
-
-	bool generateCode(Context &ctx, ModuleInfo &mi) override;
-private:
-	std::string identifier;
-};
-
-class StatementAstNode : public AstNode {
-public:
-	bool generateCode(Context &ctx, ModuleInfo &mi) override;
-};
-
-class CallAstNode : public AstNode {
-public:
-	CallAstNode(const std::string &identifier);
-
-	bool generateCode(Context &ctx, ModuleInfo &mi) override;
-private:
-	std::string identifier;
-};
-
-class ExpressionAstNode : public AstNode {
-public:
-	bool generateCode(Context &ctx, ModuleInfo &mi) override;
-};
-
-class StringAstNode : public AstNode {
-public:
-	StringAstNode(const std::string &value);
-
-	bool generateCode(Context &ctx, ModuleInfo &mi) override;
-	std::string value;
-private:
-};

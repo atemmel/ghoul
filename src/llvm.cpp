@@ -24,21 +24,84 @@
 #include <llvm/Support/FileSystem.h>
 #include <llvm/IR/LegacyPassManager.h>
 
-#include <map>
 #include <string>
 #include <vector>
 
-//static std::map<std::string, llvm::Value*> values;
+void LLVMCodeGen::setModuleInfo(ModuleInfo *mi) {
+	this->mi = mi;
+}
+
+void LLVMCodeGen::setContext(Context *ctx) {
+	this->ctx = ctx;
+}
+
+void LLVMCodeGen::visit(ToplevelAstNode &node) {
+	for(const auto &child : node.children) {
+		if(child) {
+			child->accept(*this);
+		}
+	}
+}
+
+void LLVMCodeGen::visit(FunctionAstNode &node) {
+	llvm::FunctionType *funcType = llvm::FunctionType::get(ctx->builder.getVoidTy(), false);
+	llvm::Function *mainFunc = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, 
+			node.identifier, mi->module.get() );
+
+	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", mainFunc);
+	ctx->builder.SetInsertPoint(entry);
+
+	//Content goes here
+	for(const auto &child : node.children) {
+		if(child) {
+			child->accept(*this);
+		}
+	}
+	
+	ctx->builder.CreateRetVoid();
+}
+
+void LLVMCodeGen::visit(StatementAstNode &node) {
+	for(const auto &child : node.children) {
+		if(child) {
+			child->accept(*this);
+		}
+	}
+}
+
+void LLVMCodeGen::visit(CallAstNode &node) {
+	//TODO: Implement this
+	return;
+}
+
+void LLVMCodeGen::visit(ExpressionAstNode &node) {
+	for(const auto &child : node.children) {
+		if(child) {
+			child->accept(*this);
+		}
+	}
+}
+
+void LLVMCodeGen::visit(StringAstNode &node) {
+	//TODO: Implement this
+	return;
+}
+
 
 bool gen(ModuleInfo *mi, Context *ctx) {
 	std::cout << "Generating...\n";
 
 	mi->module = std::make_unique<llvm::Module>(mi->name, ctx->context);
 
-	if(!mi->ast.generateCode(*ctx, *mi) ) {
+	//if(!mi->ast.generateCode(*ctx, *mi) ) {
+	LLVMCodeGen codeGen;
+	codeGen.setContext(ctx);
+	codeGen.setModuleInfo(mi);
+	if(!mi->ast) {
 		std::cerr << "Code generation not successful, aborting...\n";
 		return false;
 	}
+	codeGen.visit(*mi->ast);
 
 	/*
 	llvm::Value *helloWorld = ctx->builder.CreateGlobalStringPtr("Hello world!\n");

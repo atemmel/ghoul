@@ -1,36 +1,30 @@
 #include "ast.hpp"
 #include "llvm.hpp"
 
-void Ast::buildTree(Tokens &&tokens) {
+AstNode::Root AstParser::buildTree(Tokens &&tokens) {
 	this->tokens = tokens;
 	iterator = this->tokens.begin();
-
-	buildTree();
+	return buildTree();
 }
 
-bool Ast::generateCode(Context &ctx, ModuleInfo &mi) {
-	for(const auto &child : children) {
-		if(child) {
-			child->generateCode(ctx, mi);
-		} else return false;;
-	}
-	return true;
-}
-
-Token *Ast::getIf(TokenType type) {
+Token *AstParser::getIf(TokenType type) {
 	if(iterator == tokens.end() || iterator->type != type) return nullptr;
 	return &*(iterator++);
 }
 
-void Ast::buildTree() {
+AstNode::Root AstParser::buildTree() {
+	auto toplevel = std::make_unique<ToplevelAstNode>();
 	for(;;) {
 		if(getIf(TokenType::Function) ) {
-			addChild(std::move(buildFunction() ) );
-		} else return;
+			toplevel->addChild(std::move(buildFunction() ) );
+		} else {
+			break;
+		}
 	}
+	return toplevel;
 }
 
-Ast::Child Ast::buildFunction() {
+AstNode::Child AstParser::buildFunction() {
 	Token *token = getIf(TokenType::Identifier);
 	if(!token) return nullptr;
 
@@ -58,7 +52,7 @@ Ast::Child Ast::buildFunction() {
 	return function;
 }
 
-Ast::Child Ast::buildStatement() {
+AstNode::Child AstParser::buildStatement() {
 	auto stmnt = std::make_unique<StatementAstNode>();
 	Token *token = getIf(TokenType::Identifier);
 	if(getIf(TokenType::ParensOpen) ) {
@@ -70,7 +64,7 @@ Ast::Child Ast::buildStatement() {
 	return nullptr;
 }
 
-Ast::Child Ast::buildCall(const std::string &identifier) {
+AstNode::Child AstParser::buildCall(const std::string &identifier) {
 	auto call = std::make_unique<CallAstNode>(identifier);
 	auto expr = buildExpr();	//TODO: Expand on this to allow for multiple parameters
 	if(expr) {
@@ -82,66 +76,44 @@ Ast::Child Ast::buildCall(const std::string &identifier) {
 	return call;
 }
 
-Ast::Child Ast::buildExpr() {
+AstNode::Child AstParser::buildExpr() {
 	//TODO: Expand this
 	auto str = getIf(TokenType::StringLiteral);
 	if(!str) return nullptr;
 	return std::make_unique<StringAstNode>(str->value);
 }
 
+void ToplevelAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
 FunctionAstNode::FunctionAstNode(const std::string &identifier) 
 	: identifier(identifier) {
 }
 
-bool FunctionAstNode::generateCode(Context &ctx, ModuleInfo &mi) {
-	llvm::FunctionType *funcType = llvm::FunctionType::get(ctx.builder.getVoidTy(), false);
-	llvm::Function *mainFunc = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, identifier, mi.module.get() );
-
-	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx.context, "entrypoint", mainFunc);
-	ctx.builder.SetInsertPoint(entry);
-
-	//Content goes here
-	for(const auto &child : children) {
-		if(!child->generateCode(ctx, mi) ) {
-			return false;
-		}
-	}
-	
-	ctx.builder.CreateRetVoid();
-	return true;
+void FunctionAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
 }
 
-bool StatementAstNode::generateCode(Context &ctx, ModuleInfo &mi) {
-	for(const auto &child : children) {
-		if(!child->generateCode(ctx, mi) ) {
-			return false;
-		}
-	}
-	return true;
+void StatementAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
 }
 
 CallAstNode::CallAstNode(const std::string &identifier) 
 	: identifier(identifier) {
 }
 
-bool CallAstNode::generateCode(Context &ctx, ModuleInfo &mi) {
-	//TODO: Implement this
-	return true;
+void CallAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
 }
 
-bool ExpressionAstNode::generateCode(Context &ctx, ModuleInfo &mi) {
-	for(const auto &child : children) {
-		if(!child->generateCode(ctx, mi) ) {
-			return false;
-		}
-	}
-	return true;
+void ExpressionAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
 }
 
 StringAstNode::StringAstNode(const std::string &value) : value(value) {
 }
 
-bool StringAstNode::generateCode(Context &ctx, ModuleInfo &mi) {
-	//TODO: Implement this
-	return true;
+void StringAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
 }
