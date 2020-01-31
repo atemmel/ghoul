@@ -30,12 +30,15 @@
 
 //static std::map<std::string, llvm::Value*> values;
 
-void gen(ModuleInfo *mi, Context *ctx) {
+bool gen(ModuleInfo *mi, Context *ctx) {
 	std::cout << "Generating...\n";
 
 	mi->module = std::make_unique<llvm::Module>(mi->name, ctx->context);
 
-	mi->ast.generateCode(*ctx, *mi);
+	if(!mi->ast.generateCode(*ctx, *mi) ) {
+		std::cerr << "Code generation not successful, aborting...\n";
+		return false;
+	}
 
 	/*
 	llvm::Value *helloWorld = ctx->builder.CreateGlobalStringPtr("Hello world!\n");
@@ -53,6 +56,7 @@ void gen(ModuleInfo *mi, Context *ctx) {
 
 	if(Global::config.verbose) mi->module->print(llvm::errs(), nullptr);
 	write(mi, ctx);
+	return true;
 }
 
 void write(ModuleInfo *mi, Context *ctx) {

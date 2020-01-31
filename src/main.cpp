@@ -226,7 +226,7 @@ void compile(ModuleInfo &mi) {
 	std::cout << mi.fileName.c_str() << " ast built in " << time << " s\n";
 
 	clock.restart();
-	gen(&mi, &ctx);
+	if(!gen(&mi, &ctx) ) return;
 	time = clock.getSeconds();
 	std::cout << mi.objName.c_str() << " object file built in " << time << " s\n";
 }

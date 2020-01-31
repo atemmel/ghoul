@@ -17,7 +17,7 @@ struct ModuleInfo {
 	Ast ast;
 };
 
-void gen(ModuleInfo *mi, Context *ctx);
+bool gen(ModuleInfo *mi, Context *ctx);
 
 void tokensToBuilder(ModuleInfo *mi, Context *ctx);
 
