@@ -12,6 +12,14 @@ public:
 		return dt.count();
 	}
 
+	float getMilliSeconds() const {
+		return getSeconds() * 1000.f;
+	}
+
+	float getNanoSeconds() const {
+		return getMilliSeconds() * 1000.f;
+	}
+
 	void restart() {
 		begin = ClockType::now();
 	}

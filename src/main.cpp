@@ -215,21 +215,21 @@ void compile(ModuleInfo &mi) {
 	Clock clock;
 	auto str = consumeFile(mi.fileName.c_str() );
 
-	time = clock.getSeconds();
-	std::cout << mi.fileName.c_str() << " read in " << time << " s\n";
+	time = clock.getNanoSeconds();
+	std::cout << mi.fileName.c_str() << " read in " << time << " ns\n";
 	//displaySource(str);
 
 	clock.restart();
 	auto tokens = lexTokens(str);
-	time = clock.getSeconds();
-	std::cout << mi.fileName.c_str() << " tokenized in " << time << " s\n";
+	time = clock.getMilliSeconds();
+	std::cout << mi.fileName.c_str() << " tokenized in " << time << " ms\n";
 	if(Global::config.verbose) displayTokens(tokens);
 
 	AstParser parser;
 	clock.restart();
 	mi.ast = std::move(parser.buildTree(std::move(tokens) ) );
-	time = clock.getSeconds();
-	std::cout << mi.fileName.c_str() << " ast built in " << time << " s\n";
+	time = clock.getNanoSeconds();
+	std::cout << mi.fileName.c_str() << " ast built in " << time << " ns\n";
 
 	clock.restart();
 	if(!gen(&mi, &ctx) ) return;
