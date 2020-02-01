@@ -70,8 +70,19 @@ void LLVMCodeGen::visit(StatementAstNode &node) {
 }
 
 void LLVMCodeGen::visit(CallAstNode &node) {
-	//TODO: Implement this
-	return;
+	std::vector<llvm::Type*> callArgs;
+	callArgs.push_back(ctx->builder.getInt8Ty()->getPointerTo());
+
+	llvm::ArrayRef<llvm::Type*> argsRef(callArgs);
+
+	llvm::FunctionType *putsType = llvm::FunctionType::get(ctx->builder.getInt32Ty(), argsRef, false);
+	auto putsFunc = mi->module->getOrInsertFunction(node.identifier, putsType);
+	for(const auto &child : node.children) {
+		if(child) {
+			child->accept(*this);
+		}
+	}
+	ctx->builder.CreateCall(putsFunc, activeValue->second);
 }
 
 void LLVMCodeGen::visit(ExpressionAstNode &node) {
@@ -83,8 +94,8 @@ void LLVMCodeGen::visit(ExpressionAstNode &node) {
 }
 
 void LLVMCodeGen::visit(StringAstNode &node) {
-	//TODO: Implement this
-	return;
+	mi->values[node.value] = ctx->builder.CreateGlobalStringPtr(node.value);
+	activeValue = mi->values.find(node.value);
 }
 
 
@@ -93,7 +104,6 @@ bool gen(ModuleInfo *mi, Context *ctx) {
 
 	mi->module = std::make_unique<llvm::Module>(mi->name, ctx->context);
 
-	//if(!mi->ast.generateCode(*ctx, *mi) ) {
 	LLVMCodeGen codeGen;
 	codeGen.setContext(ctx);
 	codeGen.setModuleInfo(mi);
@@ -102,20 +112,6 @@ bool gen(ModuleInfo *mi, Context *ctx) {
 		return false;
 	}
 	codeGen.visit(*mi->ast);
-
-	/*
-	llvm::Value *helloWorld = ctx->builder.CreateGlobalStringPtr("Hello world!\n");
-
-	std::vector<llvm::Type*> putsArgs;
-	putsArgs.push_back(ctx->builder.getInt8Ty()->getPointerTo());
-
-	llvm::ArrayRef<llvm::Type*> argsRef(putsArgs);
-
-	llvm::FunctionType *putsType = llvm::FunctionType::get(ctx->builder.getInt32Ty(), argsRef, false);
-	auto putsFunc = mi->module->getOrInsertFunction("puts", putsType);
-
-	ctx->builder.CreateCall(putsFunc, helloWorld);
-	*/
 
 	if(Global::config.verbose) mi->module->print(llvm::errs(), nullptr);
 	write(mi, ctx);

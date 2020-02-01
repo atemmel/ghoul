@@ -11,11 +11,13 @@
 #include <unordered_map>
 
 struct ModuleInfo {
+	using ValueMap = std::unordered_map<std::string, llvm::Value*>;
 	std::string name;
 	std::string fileName;
 	std::string objName;
 	std::unique_ptr<llvm::Module> module;
-	std::unordered_map<std::string, llvm::Value*> values;
+	ValueMap values;
+	std::unordered_map<std::string, llvm::FunctionCallee> functions;
 	std::unique_ptr<ToplevelAstNode> ast;
 };
 
@@ -39,6 +41,9 @@ public:
 private:
 	ModuleInfo *mi = nullptr;
 	Context *ctx = nullptr;
+
+	//TODO: Refactor this
+	ModuleInfo::ValueMap::iterator activeValue;
 };
 
 bool gen(ModuleInfo *mi, Context *ctx);
