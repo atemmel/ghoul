@@ -36,9 +36,11 @@ void LLVMCodeGen::setContext(Context *ctx) {
 }
 
 //TODO: Handling main redefintion is not the CodeGen's responsibility, move to AstParser
-//		Can also avoid a dynamic_cast after refactor
+//		Might also be able to avoid a dynamic_cast after refactor
 void LLVMCodeGen::visit(ToplevelAstNode &node) {
 	FunctionAstNode *main = nullptr;
+	auto funcs = getFuncsFromToplevel(node);
+	buildFunctionDefinitions(funcs);
 	for(const auto &child : node.children) {
 		if(auto func = dynamic_cast<FunctionAstNode*>(child.get()); func) {
 			if(func->identifier == "main") {
@@ -60,11 +62,9 @@ void LLVMCodeGen::visit(ToplevelAstNode &node) {
 }
 
 void LLVMCodeGen::visit(FunctionAstNode &node) {
-	llvm::FunctionType *funcType = llvm::FunctionType::get(ctx->builder.getVoidTy(), false);
-	llvm::Function *mainFunc = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, 
-			node.identifier, mi->module.get() );
 
-	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", mainFunc);
+	llvm::Function *func = mi->functions[node.identifier];
+	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", func);
 	ctx->builder.SetInsertPoint(entry);
 
 	//Content goes here
@@ -119,6 +119,26 @@ void LLVMCodeGen::visit(StringAstNode &node) {
 		callParams.push_back(value);
 	} else {
 		callParams.push_back(it->second);
+	}
+}
+
+std::vector<FunctionAstNode*> LLVMCodeGen::getFuncsFromToplevel(ToplevelAstNode &node) {
+	std::vector<FunctionAstNode*> funcs;
+	for(auto it = node.children.begin(); it != node.children.end(); it++) {
+		auto ptr = dynamic_cast<FunctionAstNode*>(it->get() );
+		if(ptr) {
+			funcs.push_back(ptr);
+		}
+	}
+	return funcs;
+}
+
+void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs) {
+	for(auto f : funcs) {
+		llvm::FunctionType *funcType = llvm::FunctionType::get(ctx->builder.getVoidTy(), false);
+		llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, 
+				f->identifier, mi->module.get() );
+		mi->functions.insert(std::make_pair(f->identifier, func) );
 	}
 }
 

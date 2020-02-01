@@ -19,7 +19,8 @@ struct ModuleInfo {
 	std::string objName;
 	std::unique_ptr<llvm::Module> module;
 	ValueMap values;
-	std::unordered_map<std::string, llvm::FunctionCallee> functions;
+	std::unordered_map<std::string, llvm::Function*> functions;
+	std::unordered_map<std::string, llvm::FunctionCallee> functionCallees;
 	std::unique_ptr<ToplevelAstNode> ast;
 };
 
@@ -41,6 +42,8 @@ public:
 	virtual void visit(ExpressionAstNode &node) override;
 	virtual void visit(StringAstNode &node) override;
 private:
+	std::vector<FunctionAstNode*> getFuncsFromToplevel(ToplevelAstNode &node);
+	void buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs);
 	ModuleInfo *mi = nullptr;
 	Context *ctx = nullptr;
 

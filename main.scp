@@ -1,11 +1,16 @@
 //extern puts(String str) int
 
+fn first() {
+	puts("Inside of first")
+	second()
+}
+
 fn main() {
 	puts("Hello World!")
 	puts("Hello World, again...")
-	lain()
+	first()
 }
 
-fn lain() {
-	puts("Inside of lain!")
+fn second() {
+	puts("Inside of second")
 }
