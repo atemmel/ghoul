@@ -70,6 +70,7 @@ void LLVMCodeGen::visit(StatementAstNode &node) {
 }
 
 void LLVMCodeGen::visit(CallAstNode &node) {
+	callParams.clear();
 	std::vector<llvm::Type*> callArgs;
 	callArgs.push_back(ctx->builder.getInt8Ty()->getPointerTo());
 
@@ -82,7 +83,8 @@ void LLVMCodeGen::visit(CallAstNode &node) {
 			child->accept(*this);
 		}
 	}
-	ctx->builder.CreateCall(putsFunc, activeValue->second);
+	llvm::ArrayRef<llvm::Value*> paramRef(callParams);
+	ctx->builder.CreateCall(putsFunc, paramRef);
 }
 
 void LLVMCodeGen::visit(ExpressionAstNode &node) {
@@ -94,8 +96,14 @@ void LLVMCodeGen::visit(ExpressionAstNode &node) {
 }
 
 void LLVMCodeGen::visit(StringAstNode &node) {
-	mi->values[node.value] = ctx->builder.CreateGlobalStringPtr(node.value);
-	activeValue = mi->values.find(node.value);
+	auto it = mi->values.find(node.value);
+	if(it == mi->values.end() ) {
+		auto value = ctx->builder.CreateGlobalStringPtr(node.value);
+		mi->values[node.value] = value;
+		callParams.push_back(value);
+	} else {
+		callParams.push_back(it->second);
+	}
 }
 
 

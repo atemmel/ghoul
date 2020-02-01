@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <vector>
+#include <stack>
 #include <string>
 #include <memory>
 #include <unordered_map>
@@ -43,8 +44,7 @@ private:
 	ModuleInfo *mi = nullptr;
 	Context *ctx = nullptr;
 
-	//TODO: Refactor this
-	ModuleInfo::ValueMap::iterator activeValue;
+	std::vector<llvm::Value*> callParams;
 };
 
 bool gen(ModuleInfo *mi, Context *ctx);
