@@ -35,11 +35,27 @@ void LLVMCodeGen::setContext(Context *ctx) {
 	this->ctx = ctx;
 }
 
+//TODO: Handling main redefintion is not the CodeGen's responsibility, move to AstParser
+//		Can also avoid a dynamic_cast after refactor
 void LLVMCodeGen::visit(ToplevelAstNode &node) {
+	FunctionAstNode *main = nullptr;
 	for(const auto &child : node.children) {
-		if(child) {
-			child->accept(*this);
+		if(auto func = dynamic_cast<FunctionAstNode*>(child.get()); func) {
+			if(func->identifier == "main") {
+				if(!main) {
+					main = func;
+					continue;
+				} else {
+					std::cerr << "Error: Redefinition of main.\n";
+					return;
+				}
+			}
 		}
+		child->accept(*this);
+	}
+
+	if(main) {
+		main->accept(*this);
 	}
 }
 

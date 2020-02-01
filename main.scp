@@ -3,8 +3,9 @@
 fn main() {
 	puts("Hello World!")
 	puts("Hello World, again...")
+	lain()
 }
 
 fn lain() {
-
+	puts("Inside of lain!")
 }
