@@ -1,6 +1,49 @@
 #include "ast.hpp"
 #include "llvm.hpp"
 
+void AstNode::addChild(Child && child) {
+	children.push_back(std::move(child) );
+}
+
+void ToplevelAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
+void ToplevelAstNode::addFunction(FunctionAstNode *func) {
+	functions.push_back(func);
+}
+
+FunctionAstNode::FunctionAstNode(const std::string &identifier) 
+	: identifier(identifier) {
+}
+
+void FunctionAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
+void StatementAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
+CallAstNode::CallAstNode(const std::string &identifier) 
+	: identifier(identifier) {
+}
+
+void CallAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
+void ExpressionAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
+StringAstNode::StringAstNode(const std::string &value) : value(value) {
+}
+
+void StringAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
 AstNode::Root AstParser::buildTree(Tokens &&tokens) {
 	this->tokens = tokens;
 	iterator = this->tokens.begin();
@@ -21,7 +64,11 @@ AstNode::Root AstParser::buildTree() {
 	for(;;) {
 		discardWhile(TokenType::Terminator);
 		if(getIf(TokenType::Function) ) {
-			toplevel->addChild(std::move(buildFunction() ) );
+			auto func = buildFunction();
+			//TODO: If func is empty, a parsing error has occured
+			//Log this somehow for error messages
+			toplevel->addFunction(static_cast<FunctionAstNode*>(func.get() ) );
+			toplevel->addChild(std::move(func) );
 		} else {
 			break;
 		}
@@ -92,37 +139,3 @@ AstNode::Child AstParser::buildExpr() {
 	return std::make_unique<StringAstNode>(str->value);
 }
 
-void ToplevelAstNode::accept(AstVisitor &visitor) {
-	visitor.visit(*this);
-}
-
-FunctionAstNode::FunctionAstNode(const std::string &identifier) 
-	: identifier(identifier) {
-}
-
-void FunctionAstNode::accept(AstVisitor &visitor) {
-	visitor.visit(*this);
-}
-
-void StatementAstNode::accept(AstVisitor &visitor) {
-	visitor.visit(*this);
-}
-
-CallAstNode::CallAstNode(const std::string &identifier) 
-	: identifier(identifier) {
-}
-
-void CallAstNode::accept(AstVisitor &visitor) {
-	visitor.visit(*this);
-}
-
-void ExpressionAstNode::accept(AstVisitor &visitor) {
-	visitor.visit(*this);
-}
-
-StringAstNode::StringAstNode(const std::string &value) : value(value) {
-}
-
-void StringAstNode::accept(AstVisitor &visitor) {
-	visitor.visit(*this);
-}

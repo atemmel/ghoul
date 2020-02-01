@@ -11,6 +11,16 @@ fn main() {
 	first()
 }
 
+fn third() {
+	puts("Inside of third")
+}
+
 fn second() {
 	puts("Inside of second")
+	third()
 }
+
+
+
+
+
