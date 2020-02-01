@@ -1,6 +1,8 @@
+//extern puts(String str) int
+
 fn main() {
-	puts("Yes")
-	puts("Waa")
+	puts("Hello World!")
+	puts("Hello World, again...")
 }
 
 fn lain() {

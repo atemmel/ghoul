@@ -12,6 +12,7 @@
 
 struct ModuleInfo {
 	using ValueMap = std::unordered_map<std::string, llvm::Value*>;
+
 	std::string name;
 	std::string fileName;
 	std::string objName;

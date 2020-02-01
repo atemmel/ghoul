@@ -12,9 +12,14 @@ Token *AstParser::getIf(TokenType type) {
 	return &*(iterator++);
 }
 
+void AstParser::discardWhile(TokenType type) {
+	while(getIf(type) );
+}
+
 AstNode::Root AstParser::buildTree() {
 	auto toplevel = std::make_unique<ToplevelAstNode>();
 	for(;;) {
+		discardWhile(TokenType::Terminator);
 		if(getIf(TokenType::Function) ) {
 			toplevel->addChild(std::move(buildFunction() ) );
 		} else {
@@ -44,6 +49,7 @@ AstNode::Child AstParser::buildFunction() {
 	}
 
 	while(!getIf(TokenType::BlockClose) ) {
+		discardWhile(TokenType::Terminator);
 		auto stmnt = buildStatement();
 		if(!stmnt) return nullptr;
 		function->addChild(std::move(stmnt) );
@@ -71,6 +77,9 @@ AstNode::Child AstParser::buildCall(const std::string &identifier) {
 		call->addChild(std::move(expr) );
 	}
 	if(!getIf(TokenType::ParensClose) ) {
+		return nullptr;
+	}
+	if(!getIf(TokenType::Terminator) ) {
 		return nullptr;
 	}
 	return call;

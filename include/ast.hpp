@@ -77,6 +77,7 @@ public:
 	//bool generateCode(Context &ctx, ModuleInfo &mi) override;
 private:
 	Token *getIf(TokenType type);
+	void discardWhile(TokenType type);
 	AstNode::Root buildTree();
 	AstNode::Child buildFunction();
 	AstNode::Child buildStatement();

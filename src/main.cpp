@@ -95,7 +95,12 @@ Tokens lexTokens(const std::string &str) {
 SEEK_NEXT_TOKEN:
 	if(it == end) goto DONE;
 	if(std::isspace(*it) ) {
-		it++;
+		if(*it++ == '\n') {
+			current.value = "\\n";
+			current.type = TokenType::Terminator;
+			goto INSERT_TOKEN;
+		}
+		//it++;
 		if(it == end) goto DONE;
 		else goto SEEK_NEXT_TOKEN;
 	}

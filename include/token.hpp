@@ -9,6 +9,7 @@ enum TokenType {
 	StringLiteral,      // ""
 	IntLiteral,         // 5
 	FloatLiteral,       // 15.7
+	Terminator,			// \n
 
 	ParensOpen,         // (
 	ParensClose,        // )
@@ -62,6 +63,7 @@ enum TokenType {
 	False,              // false
 	Null,               // null
 	Struct,	            // struct
+	Extern,				// extern
 
 	Identifier,			// main, x, y, etc
 
@@ -75,6 +77,8 @@ constexpr static std::array<std::string_view, TokenType::NTokenTypes> tokenStrin
 	"",		//String literal
 	"",		//Int literal
 	"",		//Float literal
+	"\n",	//Statement termination
+
 	"(",
 	")",
 	"{",
@@ -122,6 +126,7 @@ constexpr static std::array<std::string_view, TokenType::NTokenTypes> tokenStrin
 	"false",
 	"null",
 	"struct",
+	"extern",
 
 	""
 };
