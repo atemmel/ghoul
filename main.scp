@@ -2,6 +2,12 @@
 
 fn first() {
 	puts("Inside of first")
+
+
+
+
+
+
 	second()
 }
 
@@ -19,8 +25,3 @@ fn second() {
 	puts("Inside of second")
 	third()
 }
-
-
-
-
-

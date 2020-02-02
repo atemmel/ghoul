@@ -61,18 +61,29 @@ void AstParser::discardWhile(TokenType type) {
 
 AstNode::Root AstParser::buildTree() {
 	auto toplevel = std::make_unique<ToplevelAstNode>();
+	root = toplevel.get();
 	for(;;) {
 		discardWhile(TokenType::Terminator);
 		if(getIf(TokenType::Function) ) {
 			auto func = buildFunction();
 			//TODO: If func is empty, a parsing error has occured
 			//Log this somehow for error messages
-			toplevel->addFunction(static_cast<FunctionAstNode*>(func.get() ) );
+			auto fptr = static_cast<FunctionAstNode*>(func.get() );
+			if(toplevel->identifiers.find(fptr->identifier)
+					== toplevel->identifiers.end() ) {
+				toplevel->identifiers.insert(fptr->identifier);
+			} else {
+				//TODO: Move to separate logging implementation
+				std::cerr << "Function redefinition.\n";
+				return nullptr;
+			}
+			toplevel->addFunction(fptr);
 			toplevel->addChild(std::move(func) );
 		} else {
 			break;
 		}
 	}
+	root = nullptr;
 	return toplevel;
 }
 
@@ -98,8 +109,8 @@ AstNode::Child AstParser::buildFunction() {
 	while(!getIf(TokenType::BlockClose) ) {
 		discardWhile(TokenType::Terminator);
 		auto stmnt = buildStatement();
-		if(!stmnt) return nullptr;
-		function->addChild(std::move(stmnt) );
+		//if(!stmnt) return nullptr;
+		if(stmnt) function->addChild(std::move(stmnt) );
 	}
 
 	return function;
@@ -127,6 +138,8 @@ AstNode::Child AstParser::buildCall(const std::string &identifier) {
 		return nullptr;
 	}
 	if(!getIf(TokenType::Terminator) ) {
+		std::cerr << "Expected end of expression\n";
+		std::cerr << iterator->type << " : " << iterator->value << '\n';
 		return nullptr;
 	}
 	return call;
