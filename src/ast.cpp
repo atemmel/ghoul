@@ -139,7 +139,7 @@ AstNode::Child AstParser::buildCall(const std::string &identifier) {
 	}
 	if(!getIf(TokenType::Terminator) ) {
 		std::cerr << "Expected end of expression\n";
-		std::cerr << iterator->type << " : " << iterator->value << '\n';
+		std::cerr << static_cast<size_t>(iterator->type) << " : " << iterator->value << '\n';
 		return nullptr;
 	}
 	return call;

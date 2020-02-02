@@ -6,6 +6,8 @@ Tokens &&Lexer::lexTokens(const std::string &str) {
 	const auto begin = str.cbegin();
 	const auto end = str.cend();
 	Token current;
+	size_t row = 1;
+	size_t col = 1;
 
 	int idummy;
 	float fdummy;
@@ -66,7 +68,7 @@ SEEK_TOKEN_END:
 				goto TOKEN_TEST;
 			}
 			if(int index = lexToken(std::string(start, it) ); index != static_cast<int>(TokenType::NTokenTypes) ) {
-				current.value = tokenStrings[index];
+				current.value = Token::strings[index];
 				current.type = static_cast<TokenType>(index);
 				goto INSERT_TOKEN;
 			}
@@ -76,7 +78,7 @@ SEEK_TOKEN_END:
 TOKEN_TEST:
 	current.value = std::move(std::string(start, it) );
 	for(int i = 0; i < static_cast<int>(TokenType::NTokenTypes); i++) {
-		if(current.value == tokenStrings[i]) {
+		if(current.value == Token::strings[i]) {
 			current.type = static_cast<TokenType>(i);
 			goto INSERT_TOKEN;
 		}
@@ -102,6 +104,7 @@ IDENTIFIER_TOKEN:
 	current.type = TokenType::Identifier;
 
 INSERT_TOKEN:
+	current.index = std::distance(begin, start);
 	tokens.push_back(current);
 	goto SEEK_NEXT_TOKEN;
 
@@ -112,7 +115,7 @@ DONE:
 int Lexer::lexToken(const std::string &str) const {
 	int i = 0;
 	for(; i < static_cast<int>(TokenType::NTokenTypes); i++) {
-		if(str == tokenStrings[i]) break;
+		if(str == Token::strings[i]) break;
 	}
 	return i;
 }

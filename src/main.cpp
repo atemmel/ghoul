@@ -67,8 +67,10 @@ void displaySource(const std::string &str) {
 
 void displayTokens(const Tokens &tokens) {
 	for(const Token &token : tokens) {
-		std::cout << "Value: " << token.value << "\nType: " 
-			<< static_cast<int>(token.type) << "\n\n";
+		//std::cout << "Value: " << token.value << "\nType: " 
+			//<< static_cast<int>(token.type) << "\n\n";
+		std::cout << "Index: " << token.index << ", Type: " << token.getPrintString() << ", Value: "
+			<< token.value << '\n';
 	}
 }
 
@@ -129,7 +131,6 @@ int main(int argc, char** argv) {
 
 	ModuleInfo mi;
 	std::string buildFlag;
-	Global::config.verbose = false;
 
 	ArgParser argParser(argc, argv);
 	argParser.addString(&buildFlag, "build");

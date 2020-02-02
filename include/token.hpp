@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-enum TokenType {
+enum struct TokenType {
 	StringLiteral,      // ""
 	IntLiteral,         // 5
 	FloatLiteral,       // 15.7
@@ -73,67 +73,85 @@ enum TokenType {
 
 constexpr static auto onelineComment = "//";
 
-constexpr static std::array<std::string_view, TokenType::NTokenTypes> tokenStrings {
-	"",		//String literal
-	"",		//Int literal
-	"",		//Float literal
-	"\n",	//Statement termination
-
-	"(",
-	")",
-	"{",
-	"}",
-	"[",
-	"]",
-	"[[",
-	"]]",
-	"+",
-	"-",
-	"*",
-	"/",
-	"&",
-	"|",
-	"^",
-	"%",
-	"<",
-	">",
-	"=",
-	"==",
-	"!=",
-	"+=",
-	"-=",
-	"*=",
-	"/=",
-	"&=",
-	"|=",
-	"^=",
-	"%=",
-	"<=",
-	">=",
-	"&",
-	"*",
-	"!",
-	"-",
-	"?",
-
-	"fn",
-	"while",
-	"for",
-	"if",
-	"else",
-	"else if",
-	"true",
-	"false",
-	"null",
-	"struct",
-	"extern",
-
-	""
-};
-
 struct Token {
 	TokenType type;
 	std::string value;
+	size_t index;
+	size_t row;
+	size_t col;
+
+	constexpr static std::array<std::string_view, static_cast<size_t>(TokenType::NTokenTypes)> strings {
+		"",		//String literal
+		"",		//Int literal
+		"",		//Float literal
+		"\n",	//Statement termination
+
+		"(",
+		")",
+		"{",
+		"}",
+		"[",
+		"]",
+		"[[",
+		"]]",
+		"+",
+		"-",
+		"*",
+		"/",
+		"&",
+		"|",
+		"^",
+		"%",
+		"<",
+		">",
+		"=",
+		"==",
+		"!=",
+		"+=",
+		"-=",
+		"*=",
+		"/=",
+		"&=",
+		"|=",
+		"^=",
+		"%=",
+		"<=",
+		">=",
+		"&",
+		"*",
+		"!",
+		"-",
+		"?",
+
+		"fn",
+		"while",
+		"for",
+		"if",
+		"else",
+		"else if",
+		"true",
+		"false",
+		"null",
+		"struct",
+		"extern",
+
+		""
+	};
+
+	constexpr static std::array<std::string_view, 4> altStrs = {
+		"String literal",
+		"Integer literal",
+		"Floating point literal",
+		"\\n"
+	};
+
+	constexpr static std::string_view getPrintString(const size_t index) {
+		return index < altStrs.size() ? altStrs[index] : strings[index];
+	}
+
+	constexpr std::string_view getPrintString() const {
+		return getPrintString(static_cast<size_t>(type) );
+	}
 };
 
 using Tokens = std::vector<Token>;
