@@ -67,9 +67,9 @@ void displaySource(const std::string &str) {
 
 void displayTokens(const Tokens &tokens) {
 	for(const Token &token : tokens) {
-		//std::cout << "Value: " << token.value << "\nType: " 
-			//<< static_cast<int>(token.type) << "\n\n";
-		std::cout << "Index: " << token.index << ", Type: " << token.getPrintString() << ", Value: "
+		std::cout << "Index: " << token.index << ", Type: " 
+			<< token.getPrintString() << " (" 
+			<< static_cast<size_t>(token.type) << "), Value: "
 			<< token.value << '\n';
 	}
 }
@@ -103,8 +103,8 @@ void compile(ModuleInfo &mi) {
 	std::cout << mi.fileName.c_str() << " tokenized in " << time << " ms\n";
 	if(Global::config.verbose) displayTokens(tokens);
 
-	AstParser parser;
 	clock.restart();
+	AstParser parser;
 	mi.ast = std::move(parser.buildTree(std::move(tokens) ) );
 	time = clock.getNanoSeconds();
 	std::cout << mi.fileName.c_str() << " ast built in " << time << " ns\n";

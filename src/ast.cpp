@@ -66,6 +66,7 @@ AstNode::Root AstParser::buildTree() {
 		discardWhile(TokenType::Terminator);
 		if(getIf(TokenType::Function) ) {
 			auto func = buildFunction();
+			if(!func) continue;
 			//TODO: If func is empty, a parsing error has occured
 			//Log this somehow for error messages
 			auto fptr = static_cast<FunctionAstNode*>(func.get() );
@@ -84,6 +85,9 @@ AstNode::Root AstParser::buildTree() {
 		}
 	}
 	root = nullptr;
+	if(toplevel->children.empty() ) {
+		return nullptr;
+	}
 	return toplevel;
 }
 
@@ -109,8 +113,12 @@ AstNode::Child AstParser::buildFunction() {
 	while(!getIf(TokenType::BlockClose) ) {
 		discardWhile(TokenType::Terminator);
 		auto stmnt = buildStatement();
-		//if(!stmnt) return nullptr;
 		if(stmnt) function->addChild(std::move(stmnt) );
+		else {
+			//TODO: Move to logging
+			std::cerr << "Could not build valid statement\n";
+			return nullptr;
+		}
 	}
 
 	return function;

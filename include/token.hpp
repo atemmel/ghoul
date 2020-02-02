@@ -10,6 +10,7 @@ enum struct TokenType {
 	IntLiteral,         // 5
 	FloatLiteral,       // 15.7
 	Terminator,			// \n
+	Identifier,			// main, x, y, etc
 
 	ParensOpen,         // (
 	ParensClose,        // )
@@ -65,8 +66,6 @@ enum struct TokenType {
 	Struct,	            // struct
 	Extern,				// extern
 
-	Identifier,			// main, x, y, etc
-
 	//Keep this one last
 	NTokenTypes
 };
@@ -77,14 +76,15 @@ struct Token {
 	TokenType type;
 	std::string value;
 	size_t index;
-	size_t row;
-	size_t col;
+	size_t row;		//TODO: Implement this
+	size_t col;		//TODO: Implement this
 
 	constexpr static std::array<std::string_view, static_cast<size_t>(TokenType::NTokenTypes)> strings {
 		"",		//String literal
 		"",		//Int literal
 		"",		//Float literal
 		"\n",	//Statement termination
+		"",
 
 		"(",
 		")",
@@ -133,16 +133,15 @@ struct Token {
 		"false",
 		"null",
 		"struct",
-		"extern",
-
-		""
+		"extern"
 	};
 
-	constexpr static std::array<std::string_view, 4> altStrs = {
+	constexpr static std::array<std::string_view, 5> altStrs = {
 		"String literal",
 		"Integer literal",
 		"Floating point literal",
-		"\\n"
+		"\\n",
+		"Identifier"
 	};
 
 	constexpr static std::string_view getPrintString(const size_t index) {

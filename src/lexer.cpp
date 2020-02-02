@@ -1,5 +1,7 @@
 #include "lexer.hpp"
 
+#include <iostream>
+
 Tokens &&Lexer::lexTokens(const std::string &str) {
 	auto it = str.cbegin();
 	auto start = it;
@@ -17,15 +19,19 @@ SEEK_NEXT_TOKEN:
 	if(it == end) goto DONE;
 	if(std::isspace(*it) ) {
 		if(*it++ == '\n') {
+			//Discard consecutive terminator tokens
+			if(current.type == TokenType::Terminator) {	
+				goto SEEK_NEXT_TOKEN;
+			}
 			current.value = "\\n";
 			current.type = TokenType::Terminator;
 			goto INSERT_TOKEN;
 		}
-		//it++;
 		if(it == end) goto DONE;
 		else goto SEEK_NEXT_TOKEN;
 	}
 	else if(auto next = std::next(it); next != end ) {
+		//Detect single line comments and skip parsing them
 		std::string sdummy(it, std::next(next) );
 		if(sdummy == onelineComment) {
 			for(; it != end && *it != '\n'; it++);
@@ -34,7 +40,7 @@ SEEK_NEXT_TOKEN:
 	}
 
 LEX_TOKEN:
-STRING_LITERAL_TEST:
+STRING_LITERAL_TEST:	//Test if token is string literal
 	if(*it == '"') {	
 		start = std::next(it);
 		it = std::find_if(start, end, [](const char c) {
@@ -52,7 +58,7 @@ STRING_LITERAL_TEST:
 		goto INSERT_TOKEN;
 	}
 
-SEEK_TOKEN_END:
+SEEK_TOKEN_END:	//Iterate until end of token
 	start = it;
 	if(isalnum(*it) ) {
 		while(!std::isspace(*it) && isalnum(*it) ) {
@@ -75,7 +81,7 @@ SEEK_TOKEN_END:
 		}
 	}
 
-TOKEN_TEST:
+TOKEN_TEST:	//Test if token is valid token
 	current.value = std::move(std::string(start, it) );
 	for(int i = 0; i < static_cast<int>(TokenType::NTokenTypes); i++) {
 		if(current.value == Token::strings[i]) {
@@ -84,7 +90,7 @@ TOKEN_TEST:
 		}
 	}
 
-INTEGER_TEST:
+INTEGER_TEST:	//Test if token is integer literal
 	validity = isIntLiteral(current.value, idummy);
 	if(validity == NumValidity::Ok) {
 		current.type = TokenType::IntLiteral;
@@ -92,7 +98,7 @@ INTEGER_TEST:
 	} else {	//TODO: Add error handling
 	}
 
-FLOAT_TEST:
+FLOAT_TEST:	//Test if token is floating point literal
 	validity = isFloatLiteral(current.value, fdummy);
 	if(validity == NumValidity::Ok) {
 		current.type = TokenType::FloatLiteral;
@@ -100,12 +106,19 @@ FLOAT_TEST:
 	} else {	//TODO: Add error handling
 	}
 
-IDENTIFIER_TOKEN:
-	current.type = TokenType::Identifier;
+IDENTIFIER_TOKEN:	//Otherwise, must be an identifier
+	if(std::all_of(start, it, ::isalnum) ) {
+		current.type = TokenType::Identifier;
+	} else {
+		//TODO: Log error regarding unknown token
+		std::cerr << "Unrecognized token: " << current.value << '\n';
+		goto SEEK_NEXT_TOKEN;
+	}
 
 INSERT_TOKEN:
 	current.index = std::distance(begin, start);
 	tokens.push_back(current);
+	current.value.clear();
 	goto SEEK_NEXT_TOKEN;
 
 DONE:
