@@ -16,7 +16,7 @@ void ErrorStack::push(const std::string &str, const Token &token) {
 
 void ErrorStack::unwind() const {
 	for(const Error &error : stack) {
-		std::cerr << *file << error.token.row << ':' << error.token.col << '\n' 
+		std::cerr << *file << ':' << error.token.row << ':' << error.token.col << '\n' 
 			<< error.str << '\n';
 	}
 }

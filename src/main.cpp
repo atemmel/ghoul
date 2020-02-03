@@ -92,6 +92,11 @@ void compile(ModuleInfo &mi) {
 	float time;
 	Clock clock;
 	auto str = consumeFile(mi.fileName.c_str() );
+	if(str.empty() ) {
+		Global::errStack.push("File does not exist", Token() );
+		Global::errStack.unwind();
+		return;
+	}
 
 	time = clock.getNanoSeconds();
 	std::cout << mi.fileName.c_str() << " read in " << time << " ns\n";

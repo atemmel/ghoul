@@ -1,0 +1,5 @@
+extern fn puts(char &str) int
+
+fn main() {
+	puts("Extern works!")
+}

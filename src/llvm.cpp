@@ -73,6 +73,10 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 	ctx->builder.CreateRetVoid();
 }
 
+void LLVMCodeGen::visit(ExternAstNode &node) {
+	//TODO: This
+}
+
 void LLVMCodeGen::visit(StatementAstNode &node) {
 	for(const auto &child : node.children) {
 		if(child) {
@@ -105,6 +109,10 @@ void LLVMCodeGen::visit(ExpressionAstNode &node) {
 			child->accept(*this);
 		}
 	}
+}
+
+void LLVMCodeGen::visit(TypeAstNode &node) {
+	//TODO: This
 }
 
 void LLVMCodeGen::visit(StringAstNode &node) {

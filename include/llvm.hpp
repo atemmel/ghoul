@@ -35,12 +35,14 @@ class LLVMCodeGen : public AstVisitor {
 public:
 	void setModuleInfo(ModuleInfo *mi);
 	void setContext(Context *ctx);
-	virtual void visit(ToplevelAstNode &node) override;
-	virtual void visit(FunctionAstNode &node) override;
-	virtual void visit(StatementAstNode &node) override;
-	virtual void visit(CallAstNode &node) override;
-	virtual void visit(ExpressionAstNode &node) override;
-	virtual void visit(StringAstNode &node) override;
+	void visit(ToplevelAstNode &node) override;
+	void visit(FunctionAstNode &node) override;
+	void visit(ExternAstNode &node) override;
+	void visit(StatementAstNode &node) override;
+	void visit(CallAstNode &node) override;
+	void visit(ExpressionAstNode &node) override;
+	void visit(TypeAstNode &node) override;
+	void visit(StringAstNode &node) override;
 private:
 	std::vector<FunctionAstNode*> getFuncsFromToplevel(ToplevelAstNode &node);
 	void buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs);

@@ -22,6 +22,15 @@ void AstPrinter::visit(FunctionAstNode &node) {
 	}
 }
 
+void AstPrinter::visit(ExternAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Extern : " << node.identifier << '\n';
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
+}
+
 void AstPrinter::visit(StatementAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
@@ -47,6 +56,12 @@ void AstPrinter::visit(ExpressionAstNode &node) {
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}
+}
+
+void AstPrinter::visit(TypeAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Type : " << node.name << (node.isPtr ? " &" : "") << '\n';
 }
 
 void AstPrinter::visit(StringAstNode &node) {
