@@ -8,6 +8,7 @@
 #include "token.hpp"
 #include "global.hpp"
 #include "argparser.hpp"
+#include "astprint.hpp"
 
 void displaySource(const std::string &str) {
 	int line = 1;
@@ -104,6 +105,7 @@ void compile(ModuleInfo &mi) {
 	if(Global::config.verbose) displayTokens(tokens);
 	if(!Global::errStack.empty() ) {
 		Global::errStack.unwind();
+		std::cerr << "Tokenization step failed\n";
 		return;
 	}
 
@@ -112,15 +114,20 @@ void compile(ModuleInfo &mi) {
 	mi.ast = std::move(parser.buildTree(std::move(tokens) ) );
 	time = clock.getNanoSeconds();
 	std::cout << mi.fileName.c_str() << " ast built in " << time << " ns\n";
-	if(Global::errStack.empty() ) {
+	if(!Global::errStack.empty() ) {
 		Global::errStack.unwind();
+		std::cerr << "Parsing step failed\n";
 		return;
+	}
+
+	if(Global::config.verbose) {
+		AstPrinter().visit(*mi.ast);
 	}
 
 	clock.restart();
 	if(!gen(&mi, &ctx) ) return;
-	time = clock.getSeconds();
-	std::cout << mi.objName.c_str() << " object file built in " << time << " s\n";
+	time = clock.getMilliSeconds();
+	std::cout << mi.objName.c_str() << " object file built in " << time << " ms\n";
 }
 
 int main(int argc, char** argv) {

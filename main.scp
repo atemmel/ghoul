@@ -3,7 +3,6 @@
 fn first() {
 	puts("Inside of first")
 
-
 	second()
 }
 

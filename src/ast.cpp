@@ -1,4 +1,5 @@
 #include "ast.hpp"
+#include "global.hpp"
 #include "llvm.hpp"
 
 void AstNode::addChild(Child && child) {
@@ -116,7 +117,7 @@ AstNode::Child AstParser::buildFunction() {
 		if(stmnt) function->addChild(std::move(stmnt) );
 		else {
 			//TODO: Move to logging
-			std::cerr << "Could not build valid statement\n";
+			Global::errStack.push("File?", "Could not build valid statement", *iterator);
 			return nullptr;
 		}
 	}
@@ -129,7 +130,9 @@ AstNode::Child AstParser::buildStatement() {
 	Token *token = getIf(TokenType::Identifier);
 	if(getIf(TokenType::ParensOpen) ) {
 		auto call = buildCall(token->value);
-		if(!call) return nullptr;
+		if(!call) {
+			return nullptr;
+		}
 		stmnt->addChild(std::move(call) );
 		return stmnt;
 	}
