@@ -1,12 +1,14 @@
+#include "errstack.hpp"
+#include "global.hpp"
 #include "lexer.hpp"
 
 #include <iostream>
 
 Tokens &&Lexer::lexTokens(const std::string &str) {
-	auto it = str.cbegin();
-	auto start = it;
 	const auto begin = str.cbegin();
 	const auto end = str.cend();
+	iterator = str.cbegin();
+	auto start = iterator;
 	Token current;
 	size_t row = 1;
 	size_t col = 1;
@@ -16,9 +18,9 @@ Tokens &&Lexer::lexTokens(const std::string &str) {
 	NumValidity validity;
 
 SEEK_NEXT_TOKEN:
-	if(it == end) goto DONE;
-	if(std::isspace(*it) ) {
-		if(*it++ == '\n') {
+	if(iterator == end) goto DONE;
+	if(std::isspace(*iterator) ) {
+		if(step() == '\n') {
 			//Discard consecutive terminator tokens
 			if(current.type == TokenType::Terminator) {	
 				goto SEEK_NEXT_TOKEN;
@@ -27,53 +29,57 @@ SEEK_NEXT_TOKEN:
 			current.type = TokenType::Terminator;
 			goto INSERT_TOKEN;
 		}
-		if(it == end) goto DONE;
+		if(iterator == end) goto DONE;
 		else goto SEEK_NEXT_TOKEN;
 	}
-	else if(auto next = std::next(it); next != end ) {
+	else if(auto next = std::next(iterator); next != end ) {
 		//Detect single line comments and skip parsing them
-		std::string sdummy(it, std::next(next) );
+		std::string sdummy(iterator, std::next(next) );
 		if(sdummy == onelineComment) {
-			for(; it != end && *it != '\n'; it++);
+			while(iterator != end && step() != '\n');
 			goto SEEK_NEXT_TOKEN;
 		}
 	}
 
 LEX_TOKEN:
 STRING_LITERAL_TEST:	//Test if token is string literal
-	if(*it == '"') {	
-		start = std::next(it);
-		it = std::find_if(start, end, [](const char c) {
+	if(*iterator == '"') {	
+		current.col = col;
+		current.row = row;
+		start = std::next(iterator);
+		//TODO: Account for step
+		iterator = std::find_if(start, end, [&](const char c) {
 			return c == '"';
 		});
 
-		if(it == end) {	//TODO: Add error handling
+		if(iterator == end) {	//TODO: Add error handling
 			goto DONE;
 		}
 
-		++it;
+		++iterator;
 
 		current.type = TokenType::StringLiteral;
-		current.value = std::string(start, it - 1);
+		current.value = std::string(start, iterator - 1);
 		goto INSERT_TOKEN;
 	}
 
 SEEK_TOKEN_END:	//Iterate until end of token
-	start = it;
-	if(isalnum(*it) ) {
-		while(!std::isspace(*it) && isalnum(*it) ) {
-			if(++it == end) {
-				--it;
+	start = iterator;
+	if(isalnum(*iterator) ) {
+		//TODO: Account for step
+		while(!std::isspace(*iterator) && isalnum(*iterator) ) {
+			if(++iterator == end) {
+				--iterator;
 				goto TOKEN_TEST;
 			}
 		}
 	} else {
-		while(!std::isspace(*it) && !isalnum(*it) ) {
-			if(++it == end) {
-				--it;
+		while(!std::isspace(*iterator) && !isalnum(*iterator) ) {
+			if(++iterator == end) {
+				--iterator;
 				goto TOKEN_TEST;
 			}
-			if(int index = lexToken(std::string(start, it) ); index != static_cast<int>(TokenType::NTokenTypes) ) {
+			if(int index = lexToken(std::string(start, iterator) ); index != static_cast<int>(TokenType::NTokenTypes) ) {
 				current.value = Token::strings[index];
 				current.type = static_cast<TokenType>(index);
 				goto INSERT_TOKEN;
@@ -82,7 +88,7 @@ SEEK_TOKEN_END:	//Iterate until end of token
 	}
 
 TOKEN_TEST:	//Test if token is valid token
-	current.value = std::move(std::string(start, it) );
+	current.value = std::move(std::string(start, iterator) );
 	for(int i = 0; i < static_cast<int>(TokenType::NTokenTypes); i++) {
 		if(current.value == Token::strings[i]) {
 			current.type = static_cast<TokenType>(i);
@@ -107,11 +113,11 @@ FLOAT_TEST:	//Test if token is floating point literal
 	}
 
 IDENTIFIER_TOKEN:	//Otherwise, must be an identifier
-	if(std::all_of(start, it, ::isalnum) ) {
+	if(std::all_of(start, iterator, ::isalnum) ) {
 		current.type = TokenType::Identifier;
 	} else {
 		//TODO: Log error regarding unknown token
-		std::cerr << "Unrecognized token: " << current.value << '\n';
+		Global::errStack.push("File not reachable, oops:", "Unrecognized token", current);
 		goto SEEK_NEXT_TOKEN;
 	}
 
@@ -123,6 +129,14 @@ INSERT_TOKEN:
 
 DONE:
 	return std::move(tokens);
+}
+
+int Lexer::step() {
+	if(*iterator == '\n') {
+		row++;
+		col = 1;
+	} else col++;
+	return *iterator++;
 }
 
 int Lexer::lexToken(const std::string &str) const {

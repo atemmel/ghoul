@@ -99,15 +99,23 @@ void compile(ModuleInfo &mi) {
 	clock.restart();
 	Lexer lexer;
 	auto tokens = lexer.lexTokens(str);
-	time = clock.getMilliSeconds();
-	std::cout << mi.fileName.c_str() << " tokenized in " << time << " ms\n";
+	time = clock.getNanoSeconds();
+	std::cout << mi.fileName.c_str() << " tokenized in " << time << " ns\n";
 	if(Global::config.verbose) displayTokens(tokens);
+	if(!Global::errStack.empty() ) {
+		Global::errStack.unwind();
+		return;
+	}
 
 	clock.restart();
 	AstParser parser;
 	mi.ast = std::move(parser.buildTree(std::move(tokens) ) );
 	time = clock.getNanoSeconds();
 	std::cout << mi.fileName.c_str() << " ast built in " << time << " ns\n";
+	if(Global::errStack.empty() ) {
+		Global::errStack.unwind();
+		return;
+	}
 
 	clock.restart();
 	if(!gen(&mi, &ctx) ) return;
