@@ -2,7 +2,7 @@
 
 fn first() {
 	puts("Inside of first")
-
+	jonas
 	second()
 }
 

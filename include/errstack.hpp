@@ -7,15 +7,16 @@
 
 class ErrorStack {
 public:
+	void setFile(std::string *ptr);
 	bool empty() const;
-	void push(const std::string &file, const std::string &str, const Token &token);
-	void unwind();
+	void push(const std::string &str, const Token &token);
+	void unwind() const;
 private:
 	struct Error {
-		std::string file;
 		std::string str;
 		Token token;
 	};
 
+	std::string *file = nullptr;
 	std::vector<Error> stack;
 };

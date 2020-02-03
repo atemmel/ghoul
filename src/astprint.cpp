@@ -2,25 +2,7 @@
 
 #include <iostream>
 
-struct Scope {
-	Scope() {
-		depth++;
-	}
-
-	~Scope() {
-		depth--;
-	}
-
-	static unsigned depth;
-};
-
-unsigned Scope::depth = 0;
-
-void pad(unsigned i) {
-	for(unsigned j = 1; j < i; j++) {
-		std::cerr << "  ";
-	}
-}
+unsigned AstPrinter::Scope::depth = 0;
 
 void AstPrinter::visit(ToplevelAstNode &node) {
 	Scope scope;
@@ -71,4 +53,18 @@ void AstPrinter::visit(StringAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
 	std::cerr << "String : " << node.value << '\n';
+}
+
+void AstPrinter::pad(unsigned i) const {
+	for(unsigned j = 1; j < i; j++) {
+		std::cerr << "  ";
+	}
+}
+
+AstPrinter::Scope::Scope() {
+	depth++;
+}
+
+AstPrinter::Scope::~Scope() {
+	depth--;
 }

@@ -10,4 +10,10 @@ public:
 	void visit(ExpressionAstNode &node) override;
 	void visit(StringAstNode &node) override;
 private:
+	void pad(unsigned i) const;
+	struct Scope {
+		Scope();
+		~Scope();
+		static unsigned depth;
+	};
 };

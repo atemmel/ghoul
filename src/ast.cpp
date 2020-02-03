@@ -117,7 +117,7 @@ AstNode::Child AstParser::buildFunction() {
 		if(stmnt) function->addChild(std::move(stmnt) );
 		else {
 			//TODO: Move to logging
-			Global::errStack.push("File?", "Could not build valid statement", *iterator);
+			Global::errStack.push("Could not build valid statement", *iterator);
 			return nullptr;
 		}
 	}

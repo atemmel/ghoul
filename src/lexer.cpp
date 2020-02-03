@@ -117,7 +117,7 @@ IDENTIFIER_TOKEN:	//Otherwise, must be an identifier
 		current.type = TokenType::Identifier;
 	} else {
 		//TODO: Log error regarding unknown token
-		Global::errStack.push("File not reachable, oops:", "Unrecognized token", current);
+		Global::errStack.push("Unrecognized token", current);
 		goto SEEK_NEXT_TOKEN;
 	}
 
