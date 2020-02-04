@@ -44,6 +44,7 @@ public:
 	void visit(TypeAstNode &node) override;
 	void visit(StringAstNode &node) override;
 private:
+	llvm::Type *getTypeFromStr(const std::string &str, bool isPtr) const;
 	std::vector<FunctionAstNode*> getFuncsFromToplevel(ToplevelAstNode &node);
 	void buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs);
 	ModuleInfo *mi = nullptr;

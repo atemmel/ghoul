@@ -75,6 +75,17 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 
 void LLVMCodeGen::visit(ExternAstNode &node) {
 	//TODO: This
+	std::vector<llvm::Type*> callArgs;
+	auto resultNode = static_cast<TypeAstNode*>(node.children.back().get() );
+	auto result = getTypeFromStr(resultNode->name, resultNode->isPtr);
+	for(size_t i = 0; i < node.children.size() - 1; i++) {
+		auto type = static_cast<TypeAstNode*>(node.children[i].get() );
+		callArgs.push_back(getTypeFromStr(type->name, type->isPtr) );
+	}
+
+	llvm::ArrayRef<llvm::Type*> argsRef(callArgs);
+	llvm::FunctionType *funcType = llvm::FunctionType::get(result, argsRef, false);
+	mi->module->getOrInsertFunction(node.identifier, funcType);
 }
 
 void LLVMCodeGen::visit(StatementAstNode &node) {
@@ -85,6 +96,7 @@ void LLVMCodeGen::visit(StatementAstNode &node) {
 	}
 }
 
+//TODO: Remove things out of this function and make it more flexible
 void LLVMCodeGen::visit(CallAstNode &node) {
 	callParams.clear();
 	std::vector<llvm::Type*> callArgs;
@@ -94,6 +106,7 @@ void LLVMCodeGen::visit(CallAstNode &node) {
 
 	llvm::FunctionType *putsType = llvm::FunctionType::get(ctx->builder.getInt32Ty(), argsRef, false);
 	auto putsFunc = mi->module->getOrInsertFunction(node.identifier, putsType);
+	
 	for(const auto &child : node.children) {
 		if(child) {
 			child->accept(*this);
@@ -124,6 +137,19 @@ void LLVMCodeGen::visit(StringAstNode &node) {
 	} else {
 		callParams.push_back(it->second);
 	}
+}
+
+llvm::Type *LLVMCodeGen::getTypeFromStr(const std::string &str, bool isPtr) const {
+	llvm::Type *type = nullptr;
+	if(str == "char") {
+		type = ctx->builder.getInt8Ty();
+	} else if(str == "int") {
+		type = ctx->builder.getInt32Ty();
+	} else if(str == "void") {
+		type = ctx->builder.getVoidTy();
+	} else return nullptr;
+
+	return isPtr ? type->getPointerTo() : type;
 }
 
 std::vector<FunctionAstNode*> LLVMCodeGen::getFuncsFromToplevel(ToplevelAstNode &node) {

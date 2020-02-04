@@ -111,6 +111,7 @@ AstNode::Root AstParser::buildTree() {
 		} else if(getIf(TokenType::Extern) ) {
 			auto ext = buildExtern();
 			if(!ext) continue;
+			toplevel->identifiers.insert(static_cast<ExternAstNode*>(ext.get() )->identifier );
 			toplevel->addChild(std::move(ext) );
 		} else if(iterator == tokens.end() ) {
 			break;
