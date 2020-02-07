@@ -1,6 +1,7 @@
 #pragma once
 #include "ast.hpp"
 #include "token.hpp"
+#include "symtable.hpp"
 
 #include "llvm/IR/Module.h"
 
@@ -22,6 +23,7 @@ struct ModuleInfo {
 	std::unordered_map<std::string, llvm::Function*> functions;
 	std::unordered_map<std::string, llvm::FunctionCallee> functionCallees;
 	std::unique_ptr<ToplevelAstNode> ast;
+	SymTable symtable;
 };
 
 struct Context {
@@ -41,10 +43,9 @@ public:
 	void visit(StatementAstNode &node) override;
 	void visit(CallAstNode &node) override;
 	void visit(ExpressionAstNode &node) override;
-	void visit(TypeAstNode &node) override;
 	void visit(StringAstNode &node) override;
 private:
-	llvm::Type *getTypeFromStr(const std::string &str, bool isPtr) const;
+	llvm::Type *translateType(const Type &type) const;
 	std::vector<FunctionAstNode*> getFuncsFromToplevel(ToplevelAstNode &node);
 	void buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs);
 	ModuleInfo *mi = nullptr;

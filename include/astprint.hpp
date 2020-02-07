@@ -9,7 +9,6 @@ public:
 	void visit(StatementAstNode &node) override;
 	void visit(CallAstNode &node) override;
 	void visit(ExpressionAstNode &node) override;
-	void visit(TypeAstNode &node) override;
 	void visit(StringAstNode &node) override;
 private:
 	void pad(unsigned i) const;

@@ -13,7 +13,17 @@
 class AstVisitor;
 class ToplevelAstNode;
 class FunctionAstNode;
-class TypeAstNode;
+class ExternAstNode;
+
+struct Type {
+	std::string name;
+	bool isPtr = false;
+};
+
+struct FunctionSignature {
+	Type returnType;
+	std::vector<Type> parameters;
+};
 
 struct AstNode {
 	using Child = std::unique_ptr<AstNode>;
@@ -30,24 +40,24 @@ struct ToplevelAstNode : public AstNode {
 
 	void accept(AstVisitor &visitor) override;
 	void addFunction(FunctionAstNode *func);
-	bool typeExists(const std::string &str) const;
+	void addExtern(ExternAstNode *func);
 
 	std::vector<FunctionAstNode*> functions;
-
-	SymTable identifiers;
-	SymTable types;
+	std::vector<ExternAstNode*> externs;
 };
 
 struct FunctionAstNode : public AstNode {
 	FunctionAstNode(const std::string &identifier);
 	void accept(AstVisitor &visitor) override;
-	std::string identifier;
+	FunctionSignature signature;
+	std::string name;
 };
 
 struct ExternAstNode : public AstNode {
 	ExternAstNode(const std::string &identifier);
 	void accept(AstVisitor &visitor) override;
-	std::string identifier;
+	FunctionSignature signature;
+	std::string name;
 };
 
 struct StatementAstNode : public AstNode {
@@ -62,12 +72,6 @@ struct CallAstNode : public AstNode {
 
 struct ExpressionAstNode : public AstNode {
 	void accept(AstVisitor &visitor) override;
-};
-
-struct TypeAstNode : public AstNode {
-	void accept(AstVisitor &visitor) override;
-	std::string name;
-	bool isPtr = false;
 };
 
 struct StringAstNode : public AstNode {
@@ -85,7 +89,6 @@ public:
 	virtual void visit(StatementAstNode &node)	= 0;
 	virtual void visit(CallAstNode &node)		= 0;
 	virtual void visit(ExpressionAstNode &node)	= 0;
-	virtual void visit(TypeAstNode &node)		= 0;
 	virtual void visit(StringAstNode &node)		= 0;
 };
 

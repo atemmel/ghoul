@@ -14,12 +14,12 @@ void ToplevelAstNode::addFunction(FunctionAstNode *func) {
 	functions.push_back(func);
 }
 
-bool ToplevelAstNode::typeExists(const std::string &str) const {
-	return types.count(str) > 0;
+void ToplevelAstNode::addExtern(ExternAstNode *ext) {
+	externs.push_back(ext);
 }
 
 FunctionAstNode::FunctionAstNode(const std::string &identifier) 
-	: identifier(identifier) {
+	: name(identifier) {
 }
 
 void FunctionAstNode::accept(AstVisitor &visitor) {
@@ -27,7 +27,7 @@ void FunctionAstNode::accept(AstVisitor &visitor) {
 }
 
 ExternAstNode::ExternAstNode(const std::string &identifier)
-	:identifier(identifier) {
+	: name(identifier) {
 }
 
 void ExternAstNode::accept(AstVisitor &visitor) {
@@ -47,10 +47,6 @@ void CallAstNode::accept(AstVisitor &visitor) {
 }
 
 void ExpressionAstNode::accept(AstVisitor &visitor) {
-	visitor.visit(*this);
-}
-
-void TypeAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
@@ -83,10 +79,6 @@ void AstParser::discardWhile(TokenType type) {
 
 AstNode::Root AstParser::buildTree() {
 	auto toplevel = std::make_unique<ToplevelAstNode>();
-	toplevel->types.insert("void");
-	toplevel->types.insert("char");
-	toplevel->types.insert("int");
-	toplevel->types.insert("float");
 
 	root = toplevel.get();
 
@@ -98,20 +90,13 @@ AstNode::Root AstParser::buildTree() {
 			//TODO: If func is empty, a parsing error has occured
 			//Log this somehow for error messages
 			auto fptr = static_cast<FunctionAstNode*>(func.get() );
-			if(toplevel->identifiers.find(fptr->identifier)
-					== toplevel->identifiers.end() ) {
-				toplevel->identifiers.insert(fptr->identifier);
-			} else {
-				//TODO: Move to separate logging implementation
-				unexpected();
-				return nullptr;
-			}
 			toplevel->addFunction(fptr);
 			toplevel->addChild(std::move(func) );
 		} else if(getIf(TokenType::Extern) ) {
 			auto ext = buildExtern();
 			if(!ext) continue;
-			toplevel->identifiers.insert(static_cast<ExternAstNode*>(ext.get() )->identifier );
+			auto eptr = static_cast<ExternAstNode*>(ext.get() );
+			toplevel->addExtern(eptr);
 			toplevel->addChild(std::move(ext) );
 		} else if(iterator == tokens.end() ) {
 			break;
@@ -129,7 +114,8 @@ AstNode::Root AstParser::buildTree() {
 
 AstNode::Child AstParser::buildFunction() {
 	Token *token = getIf(TokenType::Identifier);
-	if(!token) return nullptr;
+
+	if(!token) return unexpected();
 
 	auto function = std::make_unique<FunctionAstNode>(token->value);
 
@@ -146,14 +132,18 @@ AstNode::Child AstParser::buildFunction() {
 		return unexpected();
 	}
 
+	//TODO: This is yucky
+	function->signature.returnType = {"void", false };
+
+	discardWhile(TokenType::Terminator);
 	while(!getIf(TokenType::BlockClose) ) {
-		discardWhile(TokenType::Terminator);
 		auto stmnt = buildStatement();
 		if(stmnt) function->addChild(std::move(stmnt) );
 		else {
 			Global::errStack.push("Could not build valid statement", *iterator);
 			return nullptr;
 		}
+		discardWhile(TokenType::Terminator);
 	}
 
 	return function;
@@ -174,24 +164,29 @@ AstNode::Child AstParser::buildExtern() {
 	}
 
 	auto ext = std::make_unique<ExternAstNode>(id->value);
-	for(auto child = buildType(); child;) {
-		ext->addChild(std::move(child) );
+	while(!getIf(TokenType::ParensClose) ) {
+		id = getIf(TokenType::Identifier);
+		if(!id) {
+			return unexpected();
+		}
+		Type type;
+		type.name = id->value;
+		type.isPtr = getIf(TokenType::And);
 		getIf(TokenType::Identifier);
+		ext->signature.parameters.push_back(type);
+		//TODO: Comma?
 	}
 
-	if(!getIf(TokenType::ParensClose) ) {
-		return unexpected();
-	}
-
-	auto result = buildType();
-	if(result) {
-		ext->addChild(std::move(result) );
+	Type result;
+	id = getIf(TokenType::Identifier);
+	if(id) {
+		result.name = id->value;
+		result.isPtr = getIf(TokenType::And);
 	} else {
-		//TODO: Shorten this a bit by adding a ctor to TypeAstNode
-		auto voidType = std::make_unique<TypeAstNode>();
-		voidType->name = "void";
-		ext->addChild(std::move(voidType) );
+		result.name = "void";
 	}
+
+	ext->signature.returnType = result;
 
 	if(!getIf(TokenType::Terminator) ) {
 		return unexpected();
@@ -206,12 +201,12 @@ AstNode::Child AstParser::buildStatement() {
 	if(getIf(TokenType::ParensOpen) ) {
 		auto call = buildCall(token->value);
 		if(!call) {
-			return nullptr;
+			return unexpected();
 		}
 		stmnt->addChild(std::move(call) );
 		return stmnt;
 	}
-	return nullptr;
+	return unexpected();
 }
 
 AstNode::Child AstParser::buildCall(const std::string &identifier) {
@@ -234,15 +229,18 @@ AstNode::Child AstParser::buildCall(const std::string &identifier) {
 AstNode::Child AstParser::buildExpr() {
 	//TODO: Expand this
 	auto str = getIf(TokenType::StringLiteral);
-	if(!str) return unexpected();
+	if(!str) return nullptr;
 	return std::make_unique<StringAstNode>(str->value);
 }
 
-AstNode::Child AstParser::buildType() {
+/*
+Type *AstParser::buildType() {
 	auto id = getIf(TokenType::Identifier);
 	if(!id) {
 		return unexpected();
 	}
+	//TODO: Ugh
+	/*
 	if(!root->typeExists(id->value) ) {
 		//TODO: This isn't really unexpected, but rather a consequence of types not existing
 		return unexpected();
@@ -252,3 +250,4 @@ AstNode::Child AstParser::buildType() {
 	type->isPtr = getIf(TokenType::And) != nullptr;
 	return type;
 }
+*/

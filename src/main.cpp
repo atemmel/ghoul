@@ -130,6 +130,16 @@ void compile(ModuleInfo &mi) {
 	}
 
 	clock.restart();
+	mi.symtable.visit(*mi.ast);
+	time = clock.getNanoSeconds();
+	std::cout << mi.fileName.c_str() << " symbol pass completed in " << time << " ns\n";
+	if(!Global::errStack.empty() ) {
+		Global::errStack.unwind();
+		std::cerr << "Symbol pass failed\n";
+		return;
+	}
+
+	clock.restart();
 	if(!gen(&mi, &ctx) ) return;
 	time = clock.getMilliSeconds();
 	std::cout << mi.objName.c_str() << " object file built in " << time << " ms\n";

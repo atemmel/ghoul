@@ -39,10 +39,11 @@ void LLVMCodeGen::visit(ToplevelAstNode &node) {
 	FunctionAstNode *main = nullptr;
 	buildFunctionDefinitions(node.functions);
 
+	/*
 	//TODO: Handling main redefintion is not the CodeGen's responsibility, move to AstParser
 	//		Might also be able to avoid a dynamic_cast after refactor
 	for(const auto f : node.functions) {
-		if(f->identifier == "main") {
+		if(f->name == "main") {
 			if(!main) {
 				main = f;
 			} else {
@@ -51,6 +52,7 @@ void LLVMCodeGen::visit(ToplevelAstNode &node) {
 			}
 		}
 	}
+	*/
 
 	for(const auto &child : node.children) {
 		child->accept(*this);
@@ -59,7 +61,7 @@ void LLVMCodeGen::visit(ToplevelAstNode &node) {
 
 void LLVMCodeGen::visit(FunctionAstNode &node) {
 
-	llvm::Function *func = mi->functions[node.identifier];
+	llvm::Function *func = mi->functions[node.name];
 	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", func);
 	ctx->builder.SetInsertPoint(entry);
 
@@ -76,16 +78,14 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 void LLVMCodeGen::visit(ExternAstNode &node) {
 	//TODO: This
 	std::vector<llvm::Type*> callArgs;
-	auto resultNode = static_cast<TypeAstNode*>(node.children.back().get() );
-	auto result = getTypeFromStr(resultNode->name, resultNode->isPtr);
-	for(size_t i = 0; i < node.children.size() - 1; i++) {
-		auto type = static_cast<TypeAstNode*>(node.children[i].get() );
-		callArgs.push_back(getTypeFromStr(type->name, type->isPtr) );
+	auto result = translateType(node.signature.returnType);
+	for(const auto &type : node.signature.parameters) {
+		callArgs.push_back(translateType(type) );
 	}
 
 	llvm::ArrayRef<llvm::Type*> argsRef(callArgs);
 	llvm::FunctionType *funcType = llvm::FunctionType::get(result, argsRef, false);
-	mi->module->getOrInsertFunction(node.identifier, funcType);
+	mi->module->getOrInsertFunction(node.name, funcType);
 }
 
 void LLVMCodeGen::visit(StatementAstNode &node) {
@@ -96,16 +96,18 @@ void LLVMCodeGen::visit(StatementAstNode &node) {
 	}
 }
 
-//TODO: Remove things out of this function and make it more flexible
 void LLVMCodeGen::visit(CallAstNode &node) {
 	callParams.clear();
 	std::vector<llvm::Type*> callArgs;
-	callArgs.push_back(ctx->builder.getInt8Ty()->getPointerTo());
+	auto sig = mi->symtable.hasFunc(node.identifier);
+	for(auto &p : sig->parameters) {
+		callArgs.push_back(translateType(p) );
+	}
 
 	llvm::ArrayRef<llvm::Type*> argsRef(callArgs);
 
-	llvm::FunctionType *putsType = llvm::FunctionType::get(ctx->builder.getInt32Ty(), argsRef, false);
-	auto putsFunc = mi->module->getOrInsertFunction(node.identifier, putsType);
+	llvm::FunctionType *callType = llvm::FunctionType::get(translateType(sig->returnType), argsRef, false);
+	auto putsFunc = mi->module->getOrInsertFunction(node.identifier, callType);
 	
 	for(const auto &child : node.children) {
 		if(child) {
@@ -124,10 +126,6 @@ void LLVMCodeGen::visit(ExpressionAstNode &node) {
 	}
 }
 
-void LLVMCodeGen::visit(TypeAstNode &node) {
-	//TODO: This
-}
-
 void LLVMCodeGen::visit(StringAstNode &node) {
 	auto it = mi->values.find(node.value);
 	if(it == mi->values.end() ) {
@@ -139,17 +137,17 @@ void LLVMCodeGen::visit(StringAstNode &node) {
 	}
 }
 
-llvm::Type *LLVMCodeGen::getTypeFromStr(const std::string &str, bool isPtr) const {
+llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
 	llvm::Type *type = nullptr;
-	if(str == "char") {
+	if(astType.name == "char") {
 		type = ctx->builder.getInt8Ty();
-	} else if(str == "int") {
+	} else if(astType.name == "int") {
 		type = ctx->builder.getInt32Ty();
-	} else if(str == "void") {
+	} else if(astType.name == "void") {
 		type = ctx->builder.getVoidTy();
 	} else return nullptr;
 
-	return isPtr ? type->getPointerTo() : type;
+	return astType.isPtr ? type->getPointerTo() : type;
 }
 
 std::vector<FunctionAstNode*> LLVMCodeGen::getFuncsFromToplevel(ToplevelAstNode &node) {
@@ -167,8 +165,8 @@ void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &
 	for(auto f : funcs) {
 		llvm::FunctionType *funcType = llvm::FunctionType::get(ctx->builder.getVoidTy(), false);
 		llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, 
-				f->identifier, mi->module.get() );
-		mi->functions.insert(std::make_pair(f->identifier, func) );
+				f->name, mi->module.get() );
+		mi->functions.insert(std::make_pair(f->name, func) );
 	}
 }
 

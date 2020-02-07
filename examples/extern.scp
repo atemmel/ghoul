@@ -1,5 +1,11 @@
-extern fn puts(char &str) int
 
 fn main() {
 	puts("Extern works!")
+	lain()
+}
+
+extern fn puts(char &str) int
+
+fn lain() {
+	puts("Uh oh?")
 }

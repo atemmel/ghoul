@@ -16,7 +16,7 @@ void AstPrinter::visit(ToplevelAstNode &node) {
 void AstPrinter::visit(FunctionAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
-	std::cerr << "Function : " << node.identifier << '\n';
+	std::cerr << "Function : " << node.name << '\n';
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}
@@ -25,7 +25,7 @@ void AstPrinter::visit(FunctionAstNode &node) {
 void AstPrinter::visit(ExternAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
-	std::cerr << "Extern : " << node.identifier << '\n';
+	std::cerr << "Extern : " << node.name << '\n';
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}
@@ -56,12 +56,6 @@ void AstPrinter::visit(ExpressionAstNode &node) {
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}
-}
-
-void AstPrinter::visit(TypeAstNode &node) {
-	Scope scope;
-	pad(scope.depth);
-	std::cerr << "Type : " << node.name << (node.isPtr ? " &" : "") << '\n';
 }
 
 void AstPrinter::visit(StringAstNode &node) {
