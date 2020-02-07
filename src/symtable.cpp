@@ -24,7 +24,6 @@ bool SymTable::hasType(const std::string &identifier) const {
 void SymTable::visit(ToplevelAstNode &node) {
 	//Look ahead at all function definitions
 	for(auto ptr : node.functions) {
-		std::cout << "Preevaling " << ptr->name << '\n';
 		if(!pushFunc(ptr->name, &ptr->signature) ) {
 			Global::errStack.push("Function redefinition \""
 					+ ptr->name + "\"", Token() );
@@ -32,7 +31,6 @@ void SymTable::visit(ToplevelAstNode &node) {
 	}
 	//Look ahead at all extern definitions
 	for(auto ptr : node.externs) {
-		std::cout << "Preevaling " << ptr->name << '\n';
 		if(!pushFunc(ptr->name, &ptr->signature) ) {
 			Global::errStack.push("Function redefinition \""
 					+ ptr->name + "\"", Token() );
