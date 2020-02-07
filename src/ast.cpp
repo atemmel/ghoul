@@ -230,24 +230,9 @@ AstNode::Child AstParser::buildExpr() {
 	//TODO: Expand this
 	auto str = getIf(TokenType::StringLiteral);
 	if(!str) return nullptr;
-	return std::make_unique<StringAstNode>(str->value);
+	auto expr = std::make_unique<ExpressionAstNode>();
+	//char&
+	expr->type = {"char", true};
+	expr->addChild(std::make_unique<StringAstNode>(str->value) );
+	return expr;
 }
-
-/*
-Type *AstParser::buildType() {
-	auto id = getIf(TokenType::Identifier);
-	if(!id) {
-		return unexpected();
-	}
-	//TODO: Ugh
-	/*
-	if(!root->typeExists(id->value) ) {
-		//TODO: This isn't really unexpected, but rather a consequence of types not existing
-		return unexpected();
-	}
-	auto type = std::make_unique<TypeAstNode>();
-	type->name = id->value;
-	type->isPtr = getIf(TokenType::And) != nullptr;
-	return type;
-}
-*/

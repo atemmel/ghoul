@@ -63,10 +63,44 @@ void SymTable::visit(CallAstNode &node) {
 		Global::errStack.push("Function \"" + node.identifier 
 				+ "\" does not exist", Token() );
 	}
-	//TODO: visit expr subnodes and match their types
+
+	for(const auto &node : node.children) {
+		node->accept(*this);
+	}
+
+	if(!std::equal(sig->parameters.cbegin(), sig->parameters.cend(),
+				callArgTypes.cbegin() ) ) {
+		std::string errString = "Function call \"" + node.identifier
+				+ '(';
+		for(int i = 0; i < callArgTypes.size(); i++) {
+			errString += callArgTypes[i].name;
+			if(callArgTypes[i].isPtr) errString.push_back('&');
+			if(i != callArgTypes.size() - 1) {
+				errString += ", ";
+			}
+		}
+		errString += ")\" does not match function signature of \""
+			+ node.identifier + '(';
+
+		for(int i = 0; i < sig->parameters.size(); i++) {
+			errString += sig->parameters[i].name;
+			if(sig->parameters[i].isPtr) errString.push_back('&');
+			if(i != sig->parameters.size() - 1) {
+				errString += ", ";
+			}
+		}
+
+		errString += ")\"";
+
+		Global::errStack.push(errString, Token() );
+	}
+
+	//Clear this before next call is made
+	callArgTypes.clear();
 }
 
 void SymTable::visit(ExpressionAstNode &node) {
+	callArgTypes.push_back(node.type);
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}

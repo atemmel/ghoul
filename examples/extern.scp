@@ -1,10 +1,9 @@
-
 fn main() {
 	puts("Extern works!")
 	lain()
 }
 
-extern fn puts(char &str) int
+extern fn puts(int &str) int
 
 fn lain() {
 	puts("Uh oh?")

@@ -16,6 +16,9 @@ class FunctionAstNode;
 class ExternAstNode;
 
 struct Type {
+	bool operator==(const Type &rhs) const {
+		return name == rhs.name && isPtr == rhs.isPtr;
+	}
 	std::string name;
 	bool isPtr = false;
 };
@@ -72,6 +75,7 @@ struct CallAstNode : public AstNode {
 
 struct ExpressionAstNode : public AstNode {
 	void accept(AstVisitor &visitor) override;
+	Type type;
 };
 
 struct StringAstNode : public AstNode {
