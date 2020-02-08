@@ -1,5 +1,5 @@
-extern fn printf(char &str, ...) int
+extern fn printf(char &str, int i) int
 
 fn main() {
-	printf("\tHello world!\n%d\n")
+	printf("\tHello world!\n%d\n", 42)
 }

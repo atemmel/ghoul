@@ -57,6 +57,18 @@ void StringAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
+IntAstNode::IntAstNode(const std::string &value) {
+	auto val = isIntLiteral(value, this->value);
+	if(val != NumValidity::Ok) {
+		Global::errStack.push("Integer literal \"" + value 
+				+ "\" could not be converted to type int", Token() );
+	}
+}
+
+void IntAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
 AstNode::Root AstParser::buildTree(Tokens &&tokens) {
 	this->tokens = tokens;
 	iterator = this->tokens.begin();
@@ -166,15 +178,24 @@ AstNode::Child AstParser::buildExtern() {
 	auto ext = std::make_unique<ExternAstNode>(id->value);
 	while(!getIf(TokenType::ParensClose) ) {
 		id = getIf(TokenType::Identifier);
-		if(!id) {
+		if(id) {
+			Type type;
+			type.name = id->value;
+			type.isPtr = getIf(TokenType::And);
+			getIf(TokenType::Identifier);
+			ext->signature.parameters.push_back(type);
+		} else if(getIf(TokenType::Variadic) ) {
+			ext->signature.parameters.push_back({"...", false});
+		} else {
 			return unexpected();
 		}
-		Type type;
-		type.name = id->value;
-		type.isPtr = getIf(TokenType::And);
-		getIf(TokenType::Identifier);
-		ext->signature.parameters.push_back(type);
-		//TODO: Comma?
+		if(!getIf(TokenType::Comma) ) {
+			if(getIf(TokenType::ParensClose) ) {
+				break;
+			} else {
+				return unexpected();
+			}
+		}
 	}
 
 	Type result;
@@ -212,12 +233,18 @@ AstNode::Child AstParser::buildStatement() {
 AstNode::Child AstParser::buildCall(const std::string &identifier) {
 	auto call = std::make_unique<CallAstNode>(identifier);
 	auto expr = buildExpr();	//TODO: Expand on this to allow for multiple parameters
-	if(expr) {
+	while(true) {
 		call->addChild(std::move(expr) );
+		if(!getIf(TokenType::Comma) ) {
+			if(getIf(TokenType::ParensClose) ) {
+				break;
+			} else {
+				return unexpected();
+			}
+		}
+		expr = buildExpr();
 	}
-	if(!getIf(TokenType::ParensClose) ) {
-		return unexpected();
-	}
+
 	if(!getIf(TokenType::Terminator) ) {
 		std::cerr << "Expected end of expression\n";
 		std::cerr << static_cast<size_t>(iterator->type) << " : " << iterator->value << '\n';
@@ -227,12 +254,21 @@ AstNode::Child AstParser::buildCall(const std::string &identifier) {
 }
 
 AstNode::Child AstParser::buildExpr() {
-	//TODO: Expand this
-	auto str = getIf(TokenType::StringLiteral);
-	if(!str) return nullptr;
 	auto expr = std::make_unique<ExpressionAstNode>();
-	//char&
-	expr->type = {"char", true};
-	expr->addChild(std::make_unique<StringAstNode>(str->value) );
-	return expr;
+	auto tok = getIf(TokenType::StringLiteral);
+	if(tok) {
+		//char&
+		expr->type = {"char", true};
+		expr->addChild(std::make_unique<StringAstNode>(tok->value) );
+		return expr;
+	}
+
+	tok = getIf(TokenType::IntLiteral);
+	if(tok) {
+		//int
+		expr->type = {"int", false};
+		expr->addChild(std::make_unique<IntAstNode>(tok->value) );
+		return expr;
+	}
+	return nullptr;
 }

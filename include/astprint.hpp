@@ -10,6 +10,7 @@ public:
 	void visit(CallAstNode &node) override;
 	void visit(ExpressionAstNode &node) override;
 	void visit(StringAstNode &node) override;
+	void visit(IntAstNode &node) override;
 private:
 	void pad(unsigned i) const;
 	struct Scope {

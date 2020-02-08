@@ -64,6 +64,12 @@ void AstPrinter::visit(StringAstNode &node) {
 	std::cerr << "String : " << node.value << '\n';
 }
 
+void AstPrinter::visit(IntAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Int : " << node.value << '\n';
+}
+
 void AstPrinter::pad(unsigned i) const {
 	for(unsigned j = 1; j < i; j++) {
 		std::cerr << "  ";

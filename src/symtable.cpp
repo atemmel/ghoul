@@ -6,6 +6,7 @@ SymTable::SymTable() {
 	types.insert("char");
 	types.insert("int");
 	types.insert("float");
+	types.insert("...");
 }
 
 const FunctionSignature *SymTable::hasFunc(const std::string &identifier) const {
@@ -109,5 +110,9 @@ void SymTable::visit(ExpressionAstNode &node) {
 }
 
 void SymTable::visit(StringAstNode &node) {
+
+}
+
+void SymTable::visit(IntAstNode &node) {
 
 }

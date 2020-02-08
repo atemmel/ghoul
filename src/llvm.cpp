@@ -19,6 +19,7 @@
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/ADT/Optional.h>
+#include <llvm/ADT/APInt.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/FormattedStream.h>
 #include <llvm/Support/FileSystem.h>
@@ -135,6 +136,12 @@ void LLVMCodeGen::visit(StringAstNode &node) {
 	} else {
 		callParams.push_back(it->second);
 	}
+}
+
+void LLVMCodeGen::visit(IntAstNode &node) {
+	auto type = llvm::IntegerType::getInt32Ty(ctx->context);
+	callParams.push_back(static_cast<llvm::Value*>(llvm::ConstantInt::get(type, 
+		llvm::APInt(32, std::to_string(node.value), 10) ) ) );
 }
 
 llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {

@@ -84,6 +84,12 @@ struct StringAstNode : public AstNode {
 	std::string value;
 };
 
+struct IntAstNode : public AstNode {
+	IntAstNode(const std::string &value);
+	void accept(AstVisitor &visitor) override;
+	int value;
+};
+
 class AstVisitor {
 public:
 	virtual ~AstVisitor() = default;
@@ -94,6 +100,7 @@ public:
 	virtual void visit(CallAstNode &node)		= 0;
 	virtual void visit(ExpressionAstNode &node)	= 0;
 	virtual void visit(StringAstNode &node)		= 0;
+	virtual void visit(IntAstNode &node)		= 0;
 };
 
 class AstParser {
