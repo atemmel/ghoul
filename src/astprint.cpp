@@ -40,6 +40,13 @@ void AstPrinter::visit(StatementAstNode &node) {
 	}
 }
 
+void AstPrinter::visit(VariableDeclareAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Decl : " << node.identifier << " as " 
+		<< node.type.name << (node.type.isPtr ? "&\n" : "\n");
+}
+
 void AstPrinter::visit(CallAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
@@ -56,6 +63,21 @@ void AstPrinter::visit(ExpressionAstNode &node) {
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}
+}
+
+void AstPrinter::visit(BinExpressionAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Binary Expression\n";
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
+}
+
+void AstPrinter::visit(VariableAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Variable : " << node.name << '\n';
 }
 
 void AstPrinter::visit(StringAstNode &node) {

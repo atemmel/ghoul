@@ -40,21 +40,6 @@ void LLVMCodeGen::visit(ToplevelAstNode &node) {
 	FunctionAstNode *main = nullptr;
 	buildFunctionDefinitions(node.functions);
 
-	/*
-	//TODO: Handling main redefintion is not the CodeGen's responsibility, move to AstParser
-	//		Might also be able to avoid a dynamic_cast after refactor
-	for(const auto f : node.functions) {
-		if(f->name == "main") {
-			if(!main) {
-				main = f;
-			} else {
-				std::cerr << "Error: Redefinition of main.\n";
-				return;
-			}
-		}
-	}
-	*/
-
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}
@@ -97,6 +82,10 @@ void LLVMCodeGen::visit(StatementAstNode &node) {
 	}
 }
 
+void LLVMCodeGen::visit(VariableDeclareAstNode &node) {
+	//TODO: This
+}
+
 void LLVMCodeGen::visit(CallAstNode &node) {
 	callParams.clear();
 	std::vector<llvm::Type*> callArgs;
@@ -125,6 +114,18 @@ void LLVMCodeGen::visit(ExpressionAstNode &node) {
 			child->accept(*this);
 		}
 	}
+}
+
+void LLVMCodeGen::visit(BinExpressionAstNode &node) {
+	for(const auto &child : node.children) {
+		if(child) {
+			child->accept(*this);
+		}
+	}
+}
+
+void LLVMCodeGen::visit(VariableAstNode &node) {
+	//TODO: This
 }
 
 void LLVMCodeGen::visit(StringAstNode &node) {

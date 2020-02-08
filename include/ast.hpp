@@ -67,6 +67,12 @@ struct StatementAstNode : public AstNode {
 	void accept(AstVisitor &visitor) override;
 };
 
+struct VariableDeclareAstNode : public AstNode {
+	void accept(AstVisitor &visitor) override;
+	Type type;
+	std::string identifier;
+};
+
 struct CallAstNode : public AstNode {
 	CallAstNode(const std::string &identifier);
 	void accept(AstVisitor &visitor) override;
@@ -76,6 +82,17 @@ struct CallAstNode : public AstNode {
 struct ExpressionAstNode : public AstNode {
 	void accept(AstVisitor &visitor) override;
 	Type type;
+};
+
+struct BinExpressionAstNode : public AstNode {
+	void accept(AstVisitor &visitor) override;
+	TokenType type;
+};
+
+struct VariableAstNode : public AstNode {
+	VariableAstNode(const std::string &name);
+	void accept(AstVisitor &visitor) override;
+	std::string name;
 };
 
 struct StringAstNode : public AstNode {
@@ -93,14 +110,17 @@ struct IntAstNode : public AstNode {
 class AstVisitor {
 public:
 	virtual ~AstVisitor() = default;
-	virtual void visit(ToplevelAstNode &node)	= 0;
-	virtual void visit(FunctionAstNode &node)	= 0;
-	virtual void visit(ExternAstNode &node)		= 0;
-	virtual void visit(StatementAstNode &node)	= 0;
-	virtual void visit(CallAstNode &node)		= 0;
-	virtual void visit(ExpressionAstNode &node)	= 0;
-	virtual void visit(StringAstNode &node)		= 0;
-	virtual void visit(IntAstNode &node)		= 0;
+	virtual void visit(ToplevelAstNode &node)			= 0;
+	virtual void visit(FunctionAstNode &node)			= 0;
+	virtual void visit(ExternAstNode &node)				= 0;
+	virtual void visit(StatementAstNode &node)			= 0;
+	virtual void visit(VariableDeclareAstNode &node)	= 0;
+	virtual void visit(CallAstNode &node)				= 0;
+	virtual void visit(ExpressionAstNode &node)			= 0;
+	virtual void visit(BinExpressionAstNode &node)		= 0;
+	virtual void visit(VariableAstNode &node)			= 0;
+	virtual void visit(StringAstNode &node)				= 0;
+	virtual void visit(IntAstNode &node)				= 0;
 };
 
 class AstParser {
@@ -118,7 +138,7 @@ private:
 	AstNode::Child buildStatement();
 	AstNode::Child buildCall(const std::string &identifier);
 	AstNode::Child buildExpr();
-	AstNode::Child buildType();
+	AstNode::Child buildBinExpr();
 
 	Tokens tokens;
 	Tokens::iterator iterator;

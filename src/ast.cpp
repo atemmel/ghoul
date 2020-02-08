@@ -38,6 +38,10 @@ void StatementAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
+void VariableDeclareAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
 CallAstNode::CallAstNode(const std::string &identifier) 
 	: identifier(identifier) {
 }
@@ -47,6 +51,18 @@ void CallAstNode::accept(AstVisitor &visitor) {
 }
 
 void ExpressionAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
+void BinExpressionAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
+VariableAstNode::VariableAstNode(const std::string &name)
+	: name(name) {
+}
+
+void VariableAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
@@ -227,6 +243,31 @@ AstNode::Child AstParser::buildStatement() {
 		stmnt->addChild(std::move(call) );
 		return stmnt;
 	}
+
+	if(token) {	//Declaration?
+		Type type {
+			token->value,			//Type name
+			getIf(TokenType::And)	//If ptr
+		};
+		
+		auto id = getIf(TokenType::Identifier);
+		if(!id) {
+			return unexpected();
+		}
+
+		auto decl = std::make_unique<VariableDeclareAstNode>();
+		decl->type = type;
+		decl->identifier = id->value;
+		stmnt->addChild(std::move(decl) );
+		return stmnt;
+	}
+
+	auto expr = buildExpr();
+	if(expr) {
+		stmnt->addChild(std::move(expr) );
+		return stmnt;
+	}
+
 	return unexpected();
 }
 
@@ -256,6 +297,7 @@ AstNode::Child AstParser::buildCall(const std::string &identifier) {
 AstNode::Child AstParser::buildExpr() {
 	auto expr = std::make_unique<ExpressionAstNode>();
 	auto tok = getIf(TokenType::StringLiteral);
+
 	if(tok) {
 		//char&
 		expr->type = {"char", true};
@@ -270,5 +312,27 @@ AstNode::Child AstParser::buildExpr() {
 		expr->addChild(std::make_unique<IntAstNode>(tok->value) );
 		return expr;
 	}
+
+	tok = getIf(TokenType::Identifier);
+	if(tok) {
+		//expr->type ???
+		expr->addChild(std::make_unique<VariableAstNode>(tok->value) );
+		return expr;
+	}
+
 	return nullptr;
+}
+
+AstNode::Child AstParser::buildBinExpr() {
+	auto bin = std::make_unique<BinExpressionAstNode>();
+	auto lhs = buildExpr();
+	if(getIf(TokenType::Assign) ) {
+		bin->type = TokenType::Assign;
+	} else {
+		return unexpected();
+	}
+	auto rhs = buildExpr();
+	bin->addChild(std::move(lhs) );
+	bin->addChild(std::move(rhs) );
+	return bin;
 }

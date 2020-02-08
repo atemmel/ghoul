@@ -58,6 +58,14 @@ void SymTable::visit(StatementAstNode &node) {
 	}
 }
 
+void SymTable::visit(VariableDeclareAstNode &node) {
+	if(!hasType(node.type.name) ){
+		Global::errStack.push("Type \"" + node.type.name
+				+ "\" is not defined\n", Token() );
+	}
+	//TODO: Check variable redefinition
+}
+
 void SymTable::visit(CallAstNode &node) {
 	auto sig = hasFunc(node.identifier);
 	if(!sig) {
@@ -107,6 +115,15 @@ void SymTable::visit(ExpressionAstNode &node) {
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}
+}
+void SymTable::visit(BinExpressionAstNode &node) {
+	for(const auto &child : node.children) {
+		child->accept(*this);
+	}
+}
+
+void SymTable::visit(VariableAstNode &node) {
+	//TODO: Semanalysis goes here
 }
 
 void SymTable::visit(StringAstNode &node) {
