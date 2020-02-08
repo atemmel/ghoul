@@ -11,7 +11,7 @@ private:
 	int step();
 	int get() const;
 	void expand(std::string &str);
-	int lexToken(const std::string &str) const;
+
 	Tokens tokens;
 	std::string::const_iterator iterator;
 	size_t row = 1;

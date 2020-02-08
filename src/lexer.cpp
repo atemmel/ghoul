@@ -81,17 +81,33 @@ SEEK_TOKEN_END:	//Iterate until end of token
 			}
 		}
 	} else {
-		while(!std::isspace(*iterator) && !isalnum(*iterator) ) {
-			if(++iterator == end) {
-				--iterator;
-				goto TOKEN_TEST;
+		std::vector<int> matches(static_cast<int>(TokenType::NTokenTypes) );
+		std::generate(matches.begin(), matches.end(), [n=0]() mutable {
+			return n++;
+		});
+
+		std::string str;
+		while(matches.size() > 1) {
+			std::vector<int> indicies;
+			str.push_back(get() );
+
+			for(auto i : matches) {
+				if(Token::strings[i].find(str) == 0) {
+					indicies.push_back(i);
+				}
 			}
-			if(int index = lexToken(std::string(start, iterator) ); index != static_cast<int>(TokenType::NTokenTypes) ) {
-				current.value = Token::strings[index];
-				current.type = static_cast<TokenType>(index);
-				goto INSERT_TOKEN;
+			
+			if(indicies.empty() ) {
+				str.pop_back();
+				goto TOKEN_TEST;
+			} else {
+				step();
 			}
 		}
+
+		current.value = str;
+		current.type = static_cast<TokenType>(matches.front() );
+		goto INSERT_TOKEN;
 	}
 
 TOKEN_TEST:	//Test if token is valid token
@@ -170,12 +186,4 @@ void Lexer::expand(std::string &str) {
 		}
 	}
 
-}
-
-int Lexer::lexToken(const std::string &str) const {
-	int i = 0;
-	for(; i < static_cast<int>(TokenType::NTokenTypes); i++) {
-		if(str == Token::strings[i]) break;
-	}
-	return i;
 }
