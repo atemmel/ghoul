@@ -62,13 +62,15 @@ void SymTable::visit(CallAstNode &node) {
 	if(!sig) {
 		Global::errStack.push("Function \"" + node.identifier 
 				+ "\" does not exist", Token() );
+		return;
 	}
 
 	for(const auto &node : node.children) {
 		node->accept(*this);
 	}
 
-	if(!std::equal(sig->parameters.cbegin(), sig->parameters.cend(),
+	if(sig->parameters.size() != callArgTypes.size() || 
+			!std::equal(sig->parameters.cbegin(), sig->parameters.cend(),
 				callArgTypes.cbegin() ) ) {
 		std::string errString = "Function call \"" + node.identifier
 				+ '(';

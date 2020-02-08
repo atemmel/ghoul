@@ -1,0 +1,5 @@
+extern fn printf(char &str, ...) int
+
+fn main() {
+	printf("\tHello world!\n%d\n")
+}

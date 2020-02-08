@@ -11,6 +11,9 @@ enum struct TokenType {
 	FloatLiteral,       // 15.7
 	Terminator,			// \n
 	Identifier,			// main, x, y, etc
+	Variadic,			// ...
+	Member,				// .
+	Comma,				// ,
 
 	ParensOpen,         // (
 	ParensClose,        // )
@@ -85,6 +88,9 @@ struct Token {
 		"",		//Float literal
 		"\n",	//Statement termination
 		"",
+		"...",
+		".",
+		",",
 
 		"(",
 		")",

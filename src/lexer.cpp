@@ -48,7 +48,13 @@ STRING_LITERAL_TEST:	//Test if token is string literal
 		current.row = row;
 		start = std::next(iterator);
 		//TODO: Account for step
+		char prev = 0;
 		iterator = std::find_if(start, end, [&](const char c) {
+			if(prev == '\\') {
+				prev = c;
+				return false;
+			}
+			prev = c;
 			return c == '"';
 		});
 
@@ -60,6 +66,7 @@ STRING_LITERAL_TEST:	//Test if token is string literal
 
 		current.type = TokenType::StringLiteral;
 		current.value = std::string(start, iterator - 1);
+		expand(current.value);
 		goto INSERT_TOKEN;
 	}
 
@@ -137,6 +144,32 @@ int Lexer::step() {
 		col = 1;
 	} else col++;
 	return *iterator++;
+}
+
+int Lexer::get() const {
+	return *iterator;
+}
+
+void Lexer::expand(std::string &str) {
+	for(auto it = std::find(str.begin(), str.end(), '\\');
+			it != str.end(); it = std::find(it, str.end(), '\\') ) {
+		str.erase(it);
+		switch(*it) {
+			case 'n':
+				*it = '\n';
+				break;
+			case 't':
+				*it = '\t';
+				break;
+			case '"':
+				// :)
+				break;
+			default:
+				Global::errStack.push(std::string("Unrecognized escape char \\")
+						+ *it, Token() );
+		}
+	}
+
 }
 
 int Lexer::lexToken(const std::string &str) const {

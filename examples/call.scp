@@ -1,3 +1,5 @@
+extern fn puts(char &str) int
+
 fn first() {
 	puts("Inside of first")
 	second()
