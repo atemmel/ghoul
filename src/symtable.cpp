@@ -62,8 +62,15 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 	if(!hasType(node.type.name) ){
 		Global::errStack.push("Type \"" + node.type.name
 				+ "\" is not defined\n", Token() );
+	} else {
+		auto it = locals.find(node.identifier);
+		if(it == locals.end() ) {
+			locals.insert(std::make_pair(node.identifier, &node.type) );
+		} else {
+			Global::errStack.push("Redefinition of variable \""
+					+ node.identifier + '\"', Token() );
+		}
 	}
-	//TODO: Check variable redefinition
 }
 
 void SymTable::visit(CallAstNode &node) {
@@ -111,7 +118,6 @@ void SymTable::visit(CallAstNode &node) {
 }
 
 void SymTable::visit(ExpressionAstNode &node) {
-	callArgTypes.push_back(node.type);
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}
@@ -123,13 +129,20 @@ void SymTable::visit(BinExpressionAstNode &node) {
 }
 
 void SymTable::visit(VariableAstNode &node) {
-	//TODO: Semanalysis goes here
+	callArgTypes.push_back(*locals.find(node.name)->second);
 }
 
 void SymTable::visit(StringAstNode &node) {
-
+	callArgTypes.push_back({
+		"char",
+		true
+	});
 }
 
 void SymTable::visit(IntAstNode &node) {
-
+	callArgTypes.push_back({
+		"int",
+		false
+	});
+	
 }

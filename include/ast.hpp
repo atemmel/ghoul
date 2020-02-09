@@ -81,7 +81,6 @@ struct CallAstNode : public AstNode {
 
 struct ExpressionAstNode : public AstNode {
 	void accept(AstVisitor &visitor) override;
-	Type type;
 };
 
 struct BinExpressionAstNode : public AstNode {
@@ -144,4 +143,3 @@ private:
 	Tokens::iterator iterator;
 	ToplevelAstNode *root = nullptr;
 };
-

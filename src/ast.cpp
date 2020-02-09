@@ -274,6 +274,21 @@ AstNode::Child AstParser::buildStatement() {
 AstNode::Child AstParser::buildCall(const std::string &identifier) {
 	auto call = std::make_unique<CallAstNode>(identifier);
 	auto expr = buildExpr();	//TODO: Expand on this to allow for multiple parameters
+
+	if(!expr) {
+		if(!getIf(TokenType::ParensClose) ) {
+			std::cerr << "Expected ')'\n";
+			std::cerr << static_cast<size_t>(iterator->type) << " : " << iterator->value << '\n';
+			return unexpected();
+		}
+		if(!getIf(TokenType::Terminator) ) {
+			std::cerr << "Expected end of expression\n";
+			std::cerr << static_cast<size_t>(iterator->type) << " : " << iterator->value << '\n';
+			return unexpected();
+		}
+		return call;
+	}
+
 	while(true) {
 		call->addChild(std::move(expr) );
 		if(!getIf(TokenType::Comma) ) {
@@ -300,7 +315,7 @@ AstNode::Child AstParser::buildExpr() {
 
 	if(tok) {
 		//char&
-		expr->type = {"char", true};
+		//expr->type = {"char", true};
 		expr->addChild(std::make_unique<StringAstNode>(tok->value) );
 		return expr;
 	}
@@ -308,7 +323,7 @@ AstNode::Child AstParser::buildExpr() {
 	tok = getIf(TokenType::IntLiteral);
 	if(tok) {
 		//int
-		expr->type = {"int", false};
+		//expr->type = {"int", false};
 		expr->addChild(std::make_unique<IntAstNode>(tok->value) );
 		return expr;
 	}

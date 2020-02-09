@@ -36,5 +36,7 @@ private:
 
 	Set types;
 	Map<const FunctionSignature*> functions;
+	Map<const Type*> locals;
+
 	std::vector<Type> callArgTypes;
 };
