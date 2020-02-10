@@ -3,7 +3,7 @@ fn main() {
 	lain()
 }
 
-extern fn puts(int &str) int
+extern fn puts(int *str) int
 
 fn lain() {
 	puts("Uh oh?")
