@@ -59,17 +59,27 @@ void SymTable::visit(StatementAstNode &node) {
 }
 
 void SymTable::visit(VariableDeclareAstNode &node) {
+	//Check if type exists
 	if(!hasType(node.type.name) ){
 		Global::errStack.push("Type \"" + node.type.name
 				+ "\" is not defined\n", Token() );
+		return;
+	}
+
+	//Check function redefinition
+	if(hasFunc(node.identifier) ) { 
+		Global::errStack.push("Redefinition of identifier \"" + node.identifier 
+				+ "\"", Token() );
+		return;
+	}
+
+	//Check variable redefinition
+	auto it = locals.find(node.identifier);
+	if(it == locals.end() ) {
+		locals.insert(std::make_pair(node.identifier, &node.type) );
 	} else {
-		auto it = locals.find(node.identifier);
-		if(it == locals.end() ) {
-			locals.insert(std::make_pair(node.identifier, &node.type) );
-		} else {
-			Global::errStack.push("Redefinition of variable \""
-					+ node.identifier + '\"', Token() );
-		}
+		Global::errStack.push("Redefinition of variable \""
+				+ node.identifier + '\"', Token() );
 	}
 }
 
@@ -129,7 +139,13 @@ void SymTable::visit(BinExpressionAstNode &node) {
 }
 
 void SymTable::visit(VariableAstNode &node) {
-	callArgTypes.push_back(*locals.find(node.name)->second);
+	auto it = locals.find(node.name);
+	if(it == locals.end() ) {
+		Global::errStack.push("Variable \""
+				+ node.name + "\" used but never defined", Token() );
+	} else {
+		callArgTypes.push_back(*it->second);
+	}
 }
 
 void SymTable::visit(StringAstNode &node) {

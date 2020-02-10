@@ -1,7 +1,7 @@
 extern fn printf(char &, int) int
 
 fn main() {
-	int x
+	int printf
 	//x = 3
-	printf("X is %d\n", x)
+	printf("X is %d\n", printf)
 }
