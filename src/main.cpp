@@ -94,7 +94,7 @@ void compile(ModuleInfo &mi) {
 	Clock clock;
 	auto str = consumeFile(mi.fileName.c_str() );
 	if(str.empty() ) {
-		Global::errStack.push("File does not exist", nullptr);
+		Global::errStack.push("File is either empty or does not exist", nullptr);
 		Global::errStack.unwind();
 		return;
 	}
