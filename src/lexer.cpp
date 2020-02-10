@@ -111,7 +111,7 @@ SEEK_TOKEN_END:	//Iterate until end of token
 TOKEN_TEST:	//Test if token is valid token
 	current.value = std::move(std::string(start, iterator) );
 	for(int i = 0; i < static_cast<int>(TokenType::NTokenTypes); i++) {
-		if(current.value == Token::strings[i]) {
+		if(!current.value.empty() && current.value == Token::strings[i]) {
 			current.type = static_cast<TokenType>(i);
 			goto INSERT_TOKEN;
 		}
@@ -134,14 +134,17 @@ FLOAT_TEST:	//Test if token is floating point literal
 	}
 
 IDENTIFIER_TOKEN:	//Otherwise, must be an identifier
-	if(std::all_of(start, iterator, ::isalnum) ) {
+	if(std::distance(start, iterator) != 0 &&
+			std::all_of(start, iterator, ::isalnum) ) {
 		current.type = TokenType::Identifier;
 	} else {
+
 		//TODO: This is very very bad
 		current.type = TokenType::NTokenTypes;
 		current.index = std::distance(begin, start);
 		current.col = cols[current.index];
 		current.row = rows[current.index];
+		current.value.push_back(step());
 		tokens.push_back(current);
 		current.value.clear();
 		Global::errStack.push("Unrecognized token", &tokens.back() );

@@ -1,0 +1,5 @@
+int main() 
+{
+	int tal = 20;;;;;
+	return 0;
+}
