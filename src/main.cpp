@@ -108,6 +108,9 @@ void compile(ModuleInfo &mi) {
 	auto tokens = lexer.lexTokens(str);
 	time = clock.getNanoSeconds();
 	std::cout << mi.fileName.c_str() << " tokenized in " << time << " ns\n";
+	if(tokens.empty() ) {
+		Global::errStack.push("File does not contain any valid tokens", nullptr);
+	}
 	if(Global::config.verbose) displayTokens(tokens);
 	if(!Global::errStack.empty() ) {
 		Global::errStack.unwind();
