@@ -1,4 +1,4 @@
-extern fn puts(char &str) int
+extern fn puts(char *str) int
 
 fn first() {
 	puts("Inside of first")

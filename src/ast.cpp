@@ -197,7 +197,7 @@ AstNode::Child AstParser::buildExtern() {
 		if(id) {
 			Type type;
 			type.name = id->value;
-			type.isPtr = getIf(TokenType::And);
+			type.isPtr = getIf(TokenType::Multiply);
 			getIf(TokenType::Identifier);
 			ext->signature.parameters.push_back(type);
 		} else if(getIf(TokenType::Variadic) ) {
@@ -218,7 +218,7 @@ AstNode::Child AstParser::buildExtern() {
 	id = getIf(TokenType::Identifier);
 	if(id) {
 		result.name = id->value;
-		result.isPtr = getIf(TokenType::And);
+		result.isPtr = getIf(TokenType::Multiply);
 	} else {
 		result.name = "void";
 	}
@@ -247,7 +247,7 @@ AstNode::Child AstParser::buildStatement() {
 	if(token) {	//Declaration?
 		Type type {
 			token->value,			//Type name
-			getIf(TokenType::And)	//If ptr
+			getIf(TokenType::Multiply)	//If ptr
 		};
 		
 		auto id = getIf(TokenType::Identifier);
