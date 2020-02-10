@@ -5,13 +5,13 @@
 #include <iostream>
 
 Tokens &&Lexer::lexTokens(const std::string &str) {
+	index(str);
+
 	const auto begin = str.cbegin();
 	const auto end = str.cend();
 	iterator = str.cbegin();
 	auto start = iterator;
 	Token current;
-	size_t row = 1;
-	size_t col = 1;
 
 	int idummy;
 	float fdummy;
@@ -21,6 +21,7 @@ SEEK_NEXT_TOKEN:
 	if(iterator == end) goto DONE;
 	if(std::isspace(*iterator) ) {
 		if(step() == '\n') {
+			start = std::prev(iterator);
 			//Discard consecutive terminator tokens
 			if(current.type == TokenType::Terminator) {	
 				goto SEEK_NEXT_TOKEN;
@@ -44,10 +45,7 @@ SEEK_NEXT_TOKEN:
 LEX_TOKEN:
 STRING_LITERAL_TEST:	//Test if token is string literal
 	if(*iterator == '"') {	
-		current.col = col;
-		current.row = row;
 		start = std::next(iterator);
-		//TODO: Account for step
 		char prev = 0;
 		iterator = std::find_if(start, end, [&](const char c) {
 			if(prev == '\\') {
@@ -139,13 +137,21 @@ IDENTIFIER_TOKEN:	//Otherwise, must be an identifier
 	if(std::all_of(start, iterator, ::isalnum) ) {
 		current.type = TokenType::Identifier;
 	} else {
-		//TODO: Log error regarding unknown token
-		Global::errStack.push("Unrecognized token", current);
+		//TODO: This is very very bad
+		current.type = TokenType::NTokenTypes;
+		current.index = std::distance(begin, start);
+		current.col = cols[current.index];
+		current.row = rows[current.index];
+		tokens.push_back(current);
+		current.value.clear();
+		Global::errStack.push("Unrecognized token", &tokens.back() );
 		goto SEEK_NEXT_TOKEN;
 	}
 
 INSERT_TOKEN:
 	current.index = std::distance(begin, start);
+	current.col = cols[current.index];
+	current.row = rows[current.index];
 	tokens.push_back(current);
 	current.value.clear();
 	goto SEEK_NEXT_TOKEN;
@@ -154,11 +160,21 @@ DONE:
 	return std::move(tokens);
 }
 
+void Lexer::index(const std::string &str) {
+	size_t row = 1;
+	size_t col = 0;
+	for(auto c : str) {
+		++col;
+		rows.push_back(row);
+		cols.push_back(col);
+		if(c == '\n') {
+			++row;
+			col = 0;
+		}
+	}
+}
+
 int Lexer::step() {
-	if(*iterator == '\n') {
-		row++;
-		col = 1;
-	} else col++;
 	return *iterator++;
 }
 
@@ -181,8 +197,9 @@ void Lexer::expand(std::string &str) {
 				// :)
 				break;
 			default:
+				//TODO: This is also very very bad
 				Global::errStack.push(std::string("Unrecognized escape char \\")
-						+ *it, Token() );
+						+ *it, nullptr );
 		}
 	}
 

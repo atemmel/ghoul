@@ -27,14 +27,14 @@ void SymTable::visit(ToplevelAstNode &node) {
 	for(auto ptr : node.functions) {
 		if(!pushFunc(ptr->name, &ptr->signature) ) {
 			Global::errStack.push("Function redefinition \""
-					+ ptr->name + "\"", Token() );
+					+ ptr->name + "\"", ptr->token);
 		}
 	}
 	//Look ahead at all extern definitions
 	for(auto ptr : node.externs) {
 		if(!pushFunc(ptr->name, &ptr->signature) ) {
 			Global::errStack.push("Function redefinition \""
-					+ ptr->name + "\"", Token() );
+					+ ptr->name + "\"", ptr->token);
 		}
 	}
 	for(const auto &child : node.children) {
@@ -62,14 +62,14 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 	//Check if type exists
 	if(!hasType(node.type.name) ){
 		Global::errStack.push("Type \"" + node.type.name
-				+ "\" is not defined\n", Token() );
+				+ "\" is not defined\n", node.token);
 		return;
 	}
 
 	//Check function redefinition
 	if(hasFunc(node.identifier) ) { 
 		Global::errStack.push("Redefinition of identifier \"" + node.identifier 
-				+ "\"", Token() );
+				+ "\"", node.token);
 		return;
 	}
 
@@ -79,7 +79,7 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 		locals.insert(std::make_pair(node.identifier, &node.type) );
 	} else {
 		Global::errStack.push("Redefinition of variable \""
-				+ node.identifier + '\"', Token() );
+				+ node.identifier + '\"', node.token);
 	}
 }
 
@@ -87,7 +87,7 @@ void SymTable::visit(CallAstNode &node) {
 	auto sig = hasFunc(node.identifier);
 	if(!sig) {
 		Global::errStack.push("Function \"" + node.identifier 
-				+ "\" does not exist", Token() );
+				+ "\" does not exist", node.token);
 		return;
 	}
 
@@ -102,7 +102,7 @@ void SymTable::visit(CallAstNode &node) {
 				+ '(';
 		for(int i = 0; i < callArgTypes.size(); i++) {
 			errString += callArgTypes[i].name;
-			if(callArgTypes[i].isPtr) errString.push_back('&');
+			if(callArgTypes[i].isPtr) errString.push_back('*');
 			if(i != callArgTypes.size() - 1) {
 				errString += ", ";
 			}
@@ -112,7 +112,7 @@ void SymTable::visit(CallAstNode &node) {
 
 		for(int i = 0; i < sig->parameters.size(); i++) {
 			errString += sig->parameters[i].name;
-			if(sig->parameters[i].isPtr) errString.push_back('&');
+			if(sig->parameters[i].isPtr) errString.push_back('*');
 			if(i != sig->parameters.size() - 1) {
 				errString += ", ";
 			}
@@ -120,7 +120,7 @@ void SymTable::visit(CallAstNode &node) {
 
 		errString += ")\"";
 
-		Global::errStack.push(errString, Token() );
+		Global::errStack.push(errString, node.token);
 	}
 
 	//Clear this before next call is made
@@ -142,7 +142,7 @@ void SymTable::visit(VariableAstNode &node) {
 	auto it = locals.find(node.name);
 	if(it == locals.end() ) {
 		Global::errStack.push("Variable \""
-				+ node.name + "\" used but never defined", Token() );
+				+ node.name + "\" used but never defined", node.token);
 	} else {
 		callArgTypes.push_back(*it->second);
 	}

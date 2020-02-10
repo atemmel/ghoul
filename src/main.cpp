@@ -68,7 +68,8 @@ void displaySource(const std::string &str) {
 
 void displayTokens(const Tokens &tokens) {
 	for(const Token &token : tokens) {
-		std::cout << "Index: " << token.index << ", Type: " 
+		std::cout << "Index: " << token.index << " Row: "
+			<< token.row << " Col: " << token.col << ", Type: " 
 			<< token.getPrintString() << " (" 
 			<< static_cast<size_t>(token.type) << "), Value: "
 			<< token.value << '\n';
@@ -93,7 +94,7 @@ void compile(ModuleInfo &mi) {
 	Clock clock;
 	auto str = consumeFile(mi.fileName.c_str() );
 	if(str.empty() ) {
-		Global::errStack.push("File does not exist", Token() );
+		Global::errStack.push("File does not exist", nullptr);
 		Global::errStack.unwind();
 		return;
 	}

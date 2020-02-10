@@ -36,6 +36,7 @@ struct AstNode {
 	virtual void accept(AstVisitor &visitor) = 0;
 	void addChild(Child && child);
 	std::vector<Child> children;
+	Token *token = nullptr;
 };
 
 struct ToplevelAstNode : public AstNode {

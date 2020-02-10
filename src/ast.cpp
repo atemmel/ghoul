@@ -74,11 +74,7 @@ void StringAstNode::accept(AstVisitor &visitor) {
 }
 
 IntAstNode::IntAstNode(const std::string &value) {
-	auto val = isIntLiteral(value, this->value);
-	if(val != NumValidity::Ok) {
-		Global::errStack.push("Integer literal \"" + value 
-				+ "\" could not be converted to type int", Token() );
-	}
+	isIntLiteral(value, this->value);
 }
 
 void IntAstNode::accept(AstVisitor &visitor) {
@@ -92,7 +88,7 @@ AstNode::Root AstParser::buildTree(Tokens &&tokens) {
 }
 
 AstNode::Child AstParser::unexpected() const {
-	Global::errStack.push("Unexpected token: \"" + iterator->value + '\"', *iterator);
+	Global::errStack.push("Unexpected token: \"" + iterator->value + '\"', &*iterator);
 	return nullptr;
 }
 
@@ -146,6 +142,7 @@ AstNode::Child AstParser::buildFunction() {
 	if(!token) return unexpected();
 
 	auto function = std::make_unique<FunctionAstNode>(token->value);
+	function->token = token;
 
 	//TODO: Expand on this to support parameters
 	if(!getIf(TokenType::ParensOpen) ) {
@@ -168,7 +165,7 @@ AstNode::Child AstParser::buildFunction() {
 		auto stmnt = buildStatement();
 		if(stmnt) function->addChild(std::move(stmnt) );
 		else {
-			Global::errStack.push("Could not build valid statement", *iterator);
+			Global::errStack.push("Could not build valid statement", &*iterator);
 			return nullptr;
 		}
 		discardWhile(TokenType::Terminator);
@@ -192,6 +189,7 @@ AstNode::Child AstParser::buildExtern() {
 	}
 
 	auto ext = std::make_unique<ExternAstNode>(id->value);
+	ext->token = id;
 	while(!getIf(TokenType::ParensClose) ) {
 		id = getIf(TokenType::Identifier);
 		if(id) {
@@ -258,6 +256,8 @@ AstNode::Child AstParser::buildStatement() {
 		auto decl = std::make_unique<VariableDeclareAstNode>();
 		decl->type = type;
 		decl->identifier = id->value;
+		//TODO: Token could be either token or id
+		decl->token = token;
 		stmnt->addChild(std::move(decl) );
 		return stmnt;
 	}
@@ -273,7 +273,8 @@ AstNode::Child AstParser::buildStatement() {
 
 AstNode::Child AstParser::buildCall(const std::string &identifier) {
 	auto call = std::make_unique<CallAstNode>(identifier);
-	auto expr = buildExpr();	//TODO: Expand on this to allow for multiple parameters
+	call->token = &*std::prev(iterator);
+	auto expr = buildExpr();
 
 	if(!expr) {
 		if(!getIf(TokenType::ParensClose) ) {
@@ -317,6 +318,7 @@ AstNode::Child AstParser::buildExpr() {
 		//char&
 		//expr->type = {"char", true};
 		expr->addChild(std::make_unique<StringAstNode>(tok->value) );
+		expr->token = tok;
 		return expr;
 	}
 
@@ -325,6 +327,7 @@ AstNode::Child AstParser::buildExpr() {
 		//int
 		//expr->type = {"int", false};
 		expr->addChild(std::make_unique<IntAstNode>(tok->value) );
+		expr->token = tok;
 		return expr;
 	}
 
@@ -332,6 +335,7 @@ AstNode::Child AstParser::buildExpr() {
 	if(tok) {
 		//expr->type ???
 		expr->addChild(std::make_unique<VariableAstNode>(tok->value) );
+		expr->token = tok;
 		return expr;
 	}
 

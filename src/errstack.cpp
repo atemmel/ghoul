@@ -10,13 +10,17 @@ bool ErrorStack::empty() const {
 	return stack.empty();
 }
 
-void ErrorStack::push(const std::string &str, const Token &token) {
+void ErrorStack::push(const std::string &str, Token *token) {
 	stack.push_back({str, token});
 }
 
 void ErrorStack::unwind() const {
 	for(const Error &error : stack) {
-		std::cerr << *file << ':' << error.token.row << ':' << error.token.col 
-			<<  ':' << error.token.index << '\n' << error.str << '\n';
+		if(error.token) {
+			std::cerr << *file << ':' << error.token->row << ':' << error.token->col 
+				<<   '\n' << error.str << '\n';
+		} else {
+			std::cerr << *file <<   '\n' << error.str << '\n';
+		}
 	}
 }
