@@ -91,6 +91,7 @@ void SymTable::visit(CallAstNode &node) {
 		return;
 	}
 
+	callArgTypes.clear();
 	for(const auto &node : node.children) {
 		node->accept(*this);
 	}

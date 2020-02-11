@@ -84,10 +84,9 @@ void LLVMCodeGen::visit(StatementAstNode &node) {
 }
 
 void LLVMCodeGen::visit(VariableDeclareAstNode &node) {
-	//TODO: This
 	auto it = ctx->builder.GetInsertBlock();
 	auto type = translateType(node.type);
-	auto ai = new llvm::AllocaInst(type, 0, node.identifier.c_str(), it);
+	auto ai = new llvm::AllocaInst(type, 0, node.identifier, it);
 }
 
 void LLVMCodeGen::visit(CallAstNode &node) {

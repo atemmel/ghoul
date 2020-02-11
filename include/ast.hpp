@@ -130,6 +130,7 @@ public:
 private:
 	AstNode::Child unexpected() const;
 	Token *getIf(TokenType type);
+	void unget();
 	void discardWhile(TokenType type);
 	AstNode::Root buildTree();
 	AstNode::Child buildFunction();
@@ -138,7 +139,7 @@ private:
 	AstNode::Child buildStatement();
 	AstNode::Child buildCall(const std::string &identifier);
 	AstNode::Child buildExpr();
-	AstNode::Child buildBinExpr();
+	AstNode::Child buildBinExpr(std::unique_ptr<ExpressionAstNode> &child);
 
 	Tokens tokens;
 	Tokens::iterator iterator;

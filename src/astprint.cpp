@@ -68,7 +68,8 @@ void AstPrinter::visit(ExpressionAstNode &node) {
 void AstPrinter::visit(BinExpressionAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
-	std::cerr << "Binary Expression\n";
+	std::cerr << "Binary Expression : " 
+		<< Token::strings[static_cast<size_t>(node.type)] << '\n';
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}
@@ -83,7 +84,7 @@ void AstPrinter::visit(VariableAstNode &node) {
 void AstPrinter::visit(StringAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
-	std::cerr << "String : " << node.value << '\n';
+	std::cerr << "String : '" << node.value << "'\n";
 }
 
 void AstPrinter::visit(IntAstNode &node) {

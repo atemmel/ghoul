@@ -2,6 +2,6 @@ extern fn printf(char *, int) int
 
 fn main() {
 	int x
-	//x = 3
+	x = 3
 	printf("X is %d\n", x)
 }

@@ -97,6 +97,12 @@ Token *AstParser::getIf(TokenType type) {
 	return &*(iterator++);
 }
 
+void AstParser::unget() {
+	if(iterator != tokens.begin() ) {
+		--iterator;
+	}
+}
+
 void AstParser::discardWhile(TokenType type) {
 	while(getIf(type) );
 }
@@ -243,27 +249,28 @@ AstNode::Child AstParser::buildStatement() {
 	}
 
 	if(token) {	//Declaration?
-		Type type {
-			token->value,			//Type name
-			getIf(TokenType::Multiply)	//If ptr
-		};
-		
 		auto id = getIf(TokenType::Identifier);
-		if(!id) {
-			return unexpected();
+		if(id) {
+			Type type {
+				token->value,			//Type name
+				getIf(TokenType::Multiply)	//If ptr
+			};
+
+			auto decl = std::make_unique<VariableDeclareAstNode>();
+			decl->type = type;
+			decl->identifier = id->value;
+			//TODO: Token could be either token or id
+			decl->token = token;
+			stmnt->addChild(std::move(decl) );
+			return stmnt;
 		}
 
-		auto decl = std::make_unique<VariableDeclareAstNode>();
-		decl->type = type;
-		decl->identifier = id->value;
-		//TODO: Token could be either token or id
-		decl->token = token;
-		stmnt->addChild(std::move(decl) );
-		return stmnt;
 	}
 
+	unget();
 	auto expr = buildExpr();
 	if(expr) {
+		std::cout << "WE HERE\n";
 		stmnt->addChild(std::move(expr) );
 		return stmnt;
 	}
@@ -312,46 +319,65 @@ AstNode::Child AstParser::buildCall(const std::string &identifier) {
 
 AstNode::Child AstParser::buildExpr() {
 	auto expr = std::make_unique<ExpressionAstNode>();
+
 	auto tok = getIf(TokenType::StringLiteral);
-
 	if(tok) {
-		//char&
-		//expr->type = {"char", true};
 		expr->addChild(std::make_unique<StringAstNode>(tok->value) );
-		expr->token = tok;
+	}
+
+	if(!tok) {
+		tok = getIf(TokenType::IntLiteral);
+		if(tok) {
+			expr->addChild(std::make_unique<IntAstNode>(tok->value) );
+		}
+	}
+
+	if(!tok) {
+		tok = getIf(TokenType::Identifier);
+		if(tok) {
+			expr->addChild(std::make_unique<VariableAstNode>(tok->value) );
+		}
+	}
+
+
+	if(!tok) {
+		std::cerr << "NOTOK :(\n";
+		std::cout << iterator->value << '\n';
+		return nullptr;
+	}
+
+	expr->token = tok;
+
+	auto parent = buildBinExpr(expr);
+	
+	if(!parent) {
 		return expr;
 	}
 
-	tok = getIf(TokenType::IntLiteral);
-	if(tok) {
-		//int
-		//expr->type = {"int", false};
-		expr->addChild(std::make_unique<IntAstNode>(tok->value) );
-		expr->token = tok;
-		return expr;
-	}
-
-	tok = getIf(TokenType::Identifier);
-	if(tok) {
-		//expr->type ???
-		expr->addChild(std::make_unique<VariableAstNode>(tok->value) );
-		expr->token = tok;
-		return expr;
-	}
-
-	return nullptr;
+	return parent;
 }
 
-AstNode::Child AstParser::buildBinExpr() {
+AstNode::Child AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child) {
 	auto bin = std::make_unique<BinExpressionAstNode>();
-	auto lhs = buildExpr();
+
+	//Check if bin
 	if(getIf(TokenType::Assign) ) {
 		bin->type = TokenType::Assign;
 	} else {
+		//Not bin
+		return nullptr;
+	}
+
+	//Is bin
+	auto rhs = buildExpr();
+
+	if(!rhs) {
 		return unexpected();
 	}
-	auto rhs = buildExpr();
-	bin->addChild(std::move(lhs) );
+
+	bin->addChild(std::move(child) );
 	bin->addChild(std::move(rhs) );
+
+	//TODO: Recursion from here?
 	return bin;
 }
