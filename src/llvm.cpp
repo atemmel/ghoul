@@ -20,6 +20,7 @@
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/ADT/Optional.h>
 #include <llvm/ADT/APInt.h>
+#include <llvm/ADT/Twine.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/FormattedStream.h>
 #include <llvm/Support/FileSystem.h>
@@ -84,6 +85,9 @@ void LLVMCodeGen::visit(StatementAstNode &node) {
 
 void LLVMCodeGen::visit(VariableDeclareAstNode &node) {
 	//TODO: This
+	auto it = ctx->builder.GetInsertBlock();
+	auto type = translateType(node.type);
+	auto ai = new llvm::AllocaInst(type, 0, node.identifier.c_str(), it);
 }
 
 void LLVMCodeGen::visit(CallAstNode &node) {
