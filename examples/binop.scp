@@ -1,0 +1,8 @@
+extern fn printf(char *, int, int) int
+
+fn main() {
+	int a = 2
+	int b = a + 2 = a
+
+	printf("%d %d\n", a, b)
+}

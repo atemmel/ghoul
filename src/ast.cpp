@@ -237,6 +237,7 @@ AstNode::Child AstParser::buildExtern() {
 }
 
 AstNode::Child AstParser::buildStatement() {
+	mayParseAssign = true;
 	auto stmnt = std::make_unique<StatementAstNode>();
 	Token *token = getIf(TokenType::Identifier);
 	if(getIf(TokenType::ParensOpen) ) {
@@ -336,12 +337,14 @@ AstNode::Child AstParser::buildExpr() {
 
 	auto tok = getIf(TokenType::StringLiteral);
 	if(tok) {
+		mayParseAssign = false;
 		expr->addChild(std::make_unique<StringAstNode>(tok->value) );
 	}
 
 	if(!tok) {
 		tok = getIf(TokenType::IntLiteral);
 		if(tok) {
+			mayParseAssign = false;
 			expr->addChild(std::make_unique<IntAstNode>(tok->value) );
 		}
 	}
@@ -374,6 +377,11 @@ AstNode::Child AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child
 
 	//Check if bin
 	if(getIf(TokenType::Assign) ) {
+		if(!mayParseAssign) {
+			Global::errStack.push("Constant expression or operator different from '=' "
+					"may not appear to the left of an assignment", child->token);
+			return nullptr;
+		}
 		bin->type = TokenType::Assign;
 	} else if(getIf(TokenType::Add) ) {
 		bin->type = TokenType::Add;

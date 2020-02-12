@@ -137,7 +137,6 @@ void SymTable::visit(BinExpressionAstNode &node) {
 		child->accept(*this);
 	}
 
-	//Good
 	auto &lhs = callArgTypes.front();
 	auto &rhs = callArgTypes.back();
 	if(lhs != rhs) {

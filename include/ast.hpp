@@ -156,4 +156,5 @@ private:
 	Tokens tokens;
 	Tokens::iterator iterator;
 	ToplevelAstNode *root = nullptr;
+	bool mayParseAssign = true;
 };
