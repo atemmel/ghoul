@@ -122,7 +122,7 @@ void LLVMCodeGen::visit(ExpressionAstNode &node) {
 }
 
 void LLVMCodeGen::visit(BinExpressionAstNode &node) {
-	visitedVariables.clear();
+	auto vars = std::move(visitedVariables);
 	auto params = std::move(callParams);
 	for(const auto &child : node.children) {
 		if(child) {
@@ -131,11 +131,14 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 	}
 
 	if(node.type == TokenType::Assign) {
-		ctx->builder.CreateStore(callParams.back(), locals[visitedVariables.front()->name]);
+		VariableAstNode *node = visitedVariables.front();
+		ctx->builder.CreateStore(callParams.back(), locals[node->name]);
+		params.push_back(callParams.back() );
 	} else if(node.type == TokenType::Add) {
 		params.push_back(ctx->builder.CreateAdd(callParams.front(), callParams.back() ) );
 	}
 	callParams = std::move(params);
+	visitedVariables = std::move(vars);
 }
 
 void LLVMCodeGen::visit(VariableAstNode &node) {

@@ -2,12 +2,15 @@ extern fn printf(char *, int) int
 
 fn main() {
 
-	int x
-	int y
+	int x = 1
+	int z = x
 
-	x = 3
-	x = x + 1
-	y = 4
+	printf("%d\n", z)
+	printf("%d\n", x)
 
-	printf("%d\n", x + y)
+	int a = z = x = 1 + z + x + 5
+
+	printf("%d\n", a)
+	printf("%d\n", z)
+	printf("%d\n", x)
 }

@@ -262,6 +262,21 @@ AstNode::Child AstParser::buildStatement() {
 			//TODO: Token could be either token or id
 			decl->token = token;
 			stmnt->addChild(std::move(decl) );
+
+			//Declaration may include assignment
+			if(getIf(TokenType::Assign) ) {
+				unget();
+				auto idNode = std::make_unique<VariableAstNode>(id->value);
+				auto expr = std::make_unique<ExpressionAstNode>();
+				expr->addChild(std::move(idNode) );
+				auto binExpr = buildBinExpr(expr);
+
+				if(!binExpr) {
+					return unexpected();
+				}
+
+				stmnt->addChild(std::move(binExpr) );
+			}
 			return stmnt;
 		}
 
