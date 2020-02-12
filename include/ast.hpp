@@ -93,27 +93,27 @@ struct CallAstNode : public AstNode {
 };
 
 struct ExpressionAstNode : public AstNode {
-	void accept(AstVisitor &visitor) override;
+	int precedence = 0;
 };
 
-struct BinExpressionAstNode : public AstNode {
+struct BinExpressionAstNode : public ExpressionAstNode {
 	void accept(AstVisitor &visitor) override;
 	TokenType type;
 };
 
-struct VariableAstNode : public AstNode {
+struct VariableAstNode : public ExpressionAstNode {
 	VariableAstNode(const std::string &name);
 	void accept(AstVisitor &visitor) override;
 	std::string name;
 };
 
-struct StringAstNode : public AstNode {
+struct StringAstNode : public ExpressionAstNode {
 	StringAstNode(const std::string &value);
 	void accept(AstVisitor &visitor) override;
 	std::string value;
 };
 
-struct IntAstNode : public AstNode {
+struct IntAstNode : public ExpressionAstNode {
 	IntAstNode(const std::string &value);
 	void accept(AstVisitor &visitor) override;
 	int value;
@@ -128,7 +128,6 @@ public:
 	virtual void visit(StatementAstNode &node)			= 0;
 	virtual void visit(VariableDeclareAstNode &node)	= 0;
 	virtual void visit(CallAstNode &node)				= 0;
-	virtual void visit(ExpressionAstNode &node)			= 0;
 	virtual void visit(BinExpressionAstNode &node)		= 0;
 	virtual void visit(VariableAstNode &node)			= 0;
 	virtual void visit(StringAstNode &node)				= 0;

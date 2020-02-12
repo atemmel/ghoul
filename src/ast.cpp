@@ -50,10 +50,6 @@ void CallAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
-void ExpressionAstNode::accept(AstVisitor &visitor) {
-	visitor.visit(*this);
-}
-
 void BinExpressionAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
@@ -267,10 +263,10 @@ AstNode::Child AstParser::buildStatement() {
 			//Declaration may include assignment
 			if(getIf(TokenType::Assign) ) {
 				unget();
-				auto idNode = std::make_unique<VariableAstNode>(id->value);
-				auto expr = std::make_unique<ExpressionAstNode>();
-				expr->addChild(std::move(idNode) );
-				auto binExpr = buildBinExpr(expr);
+				std::unique_ptr<ExpressionAstNode> idNode(new VariableAstNode(id->value) );
+				//auto expr = std::make_unique<ExpressionAstNode>();
+				//expr->addChild(std::move(idNode) );
+				auto binExpr = buildBinExpr(idNode);
 
 				if(!binExpr) {
 					return unexpected();
@@ -333,26 +329,27 @@ AstNode::Child AstParser::buildCall(const std::string &identifier) {
 }
 
 AstNode::Child AstParser::buildExpr() {
-	auto expr = std::make_unique<ExpressionAstNode>();
+	//auto expr = std::make_unique<ExpressionAstNode>();
+	std::unique_ptr<ExpressionAstNode> expr = nullptr;
 
 	auto tok = getIf(TokenType::StringLiteral);
 	if(tok) {
 		mayParseAssign = false;
-		expr->addChild(std::make_unique<StringAstNode>(tok->value) );
+		expr = std::make_unique<StringAstNode>(tok->value);
 	}
 
 	if(!tok) {
 		tok = getIf(TokenType::IntLiteral);
 		if(tok) {
 			mayParseAssign = false;
-			expr->addChild(std::make_unique<IntAstNode>(tok->value) );
+			expr = std::make_unique<IntAstNode>(tok->value);
 		}
 	}
 
 	if(!tok) {
 		tok = getIf(TokenType::Identifier);
 		if(tok) {
-			expr->addChild(std::make_unique<VariableAstNode>(tok->value) );
+			expr = std::make_unique<VariableAstNode>(tok->value);
 		}
 	}
 
@@ -385,6 +382,8 @@ AstNode::Child AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child
 		bin->type = TokenType::Assign;
 	} else if(getIf(TokenType::Add) ) {
 		bin->type = TokenType::Add;
+	} else if(getIf(TokenType::Multiply) ) {
+		bin->type = TokenType::Multiply;
 	} else {
 		//Not bin
 		return nullptr;

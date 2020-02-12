@@ -9,7 +9,6 @@ public:
 	void visit(StatementAstNode &node) override;
 	void visit(VariableDeclareAstNode &node) override;
 	void visit(CallAstNode &node) override;
-	void visit(ExpressionAstNode &node) override;
 	void visit(BinExpressionAstNode &node) override;
 	void visit(VariableAstNode &node) override;
 	void visit(StringAstNode &node) override;

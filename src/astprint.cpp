@@ -56,15 +56,6 @@ void AstPrinter::visit(CallAstNode &node) {
 	}
 }
 
-void AstPrinter::visit(ExpressionAstNode &node) {
-	Scope scope;
-	pad(scope.depth);
-	std::cerr << "Expression\n";
-	for(auto &c : node.children) {
-		c->accept(*this);
-	}
-}
-
 void AstPrinter::visit(BinExpressionAstNode &node) {
 	Scope scope;
 	pad(scope.depth);

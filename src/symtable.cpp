@@ -126,11 +126,6 @@ void SymTable::visit(CallAstNode &node) {
 	callArgTypes.clear();
 }
 
-void SymTable::visit(ExpressionAstNode &node) {
-	for(const auto &child : node.children) {
-		child->accept(*this);
-	}
-}
 void SymTable::visit(BinExpressionAstNode &node) {
 	auto types = std::move(callArgTypes);
 	for(const auto &child : node.children) {
