@@ -270,7 +270,6 @@ AstNode::Child AstParser::buildStatement() {
 	unget();
 	auto expr = buildExpr();
 	if(expr) {
-		std::cout << "WE HERE\n";
 		stmnt->addChild(std::move(expr) );
 		return stmnt;
 	}
@@ -341,8 +340,6 @@ AstNode::Child AstParser::buildExpr() {
 
 
 	if(!tok) {
-		std::cerr << "NOTOK :(\n";
-		std::cout << iterator->value << '\n';
 		return nullptr;
 	}
 

@@ -56,6 +56,8 @@ private:
 	Context *ctx = nullptr;
 
 	std::vector<llvm::Value*> callParams;
+	std::vector<VariableAstNode*> visitedVariables;
+	std::unordered_map<std::string, llvm::AllocaInst*> locals;
 };
 
 bool gen(ModuleInfo *mi, Context *ctx);

@@ -86,11 +86,13 @@ void LLVMCodeGen::visit(StatementAstNode &node) {
 void LLVMCodeGen::visit(VariableDeclareAstNode &node) {
 	auto it = ctx->builder.GetInsertBlock();
 	auto type = translateType(node.type);
-	auto ai = new llvm::AllocaInst(type, 0, node.identifier, it);
+	locals.insert(std::make_pair(node.identifier, 
+		new llvm::AllocaInst(type, 0, node.identifier, it) ) );
 }
 
 void LLVMCodeGen::visit(CallAstNode &node) {
 	callParams.clear();
+	visitedVariables.clear();
 	std::vector<llvm::Type*> callArgs;
 	auto sig = mi->symtable.hasFunc(node.identifier);
 	for(auto &p : sig->parameters) {
@@ -120,15 +122,21 @@ void LLVMCodeGen::visit(ExpressionAstNode &node) {
 }
 
 void LLVMCodeGen::visit(BinExpressionAstNode &node) {
+	visitedVariables.clear();
 	for(const auto &child : node.children) {
 		if(child) {
 			child->accept(*this);
 		}
 	}
+
+	if(node.type == TokenType::Assign) {
+		ctx->builder.CreateStore(callParams.back(), locals[visitedVariables.front()->name]);
+	}
 }
 
 void LLVMCodeGen::visit(VariableAstNode &node) {
-	//TODO: This
+	visitedVariables.push_back(&node);
+	callParams.push_back(ctx->builder.CreateLoad(locals[node.name]) );
 }
 
 void LLVMCodeGen::visit(StringAstNode &node) {
@@ -156,7 +164,9 @@ llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
 		type = ctx->builder.getInt32Ty();
 	} else if(astType.name == "void") {
 		type = ctx->builder.getVoidTy();
-	} else return nullptr;
+	} else {
+		return nullptr;
+	}
 
 	return astType.isPtr ? type->getPointerTo() : type;
 }
