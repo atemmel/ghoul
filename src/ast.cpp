@@ -360,6 +360,8 @@ AstNode::Child AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child
 	//Check if bin
 	if(getIf(TokenType::Assign) ) {
 		bin->type = TokenType::Assign;
+	} else if(getIf(TokenType::Add) ) {
+		bin->type = TokenType::Add;
 	} else {
 		//Not bin
 		return nullptr;

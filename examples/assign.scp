@@ -1,11 +1,13 @@
 extern fn printf(char *, int) int
 
 fn main() {
+
 	int x
-	x = 3
-	printf("X is %d\n", x)
-	x = 4
 	int y
-	y = x
-	printf("Y is %d\n", y)
+
+	x = 3
+	x = x + 1
+	y = 4
+
+	printf("%d\n", x + y)
 }

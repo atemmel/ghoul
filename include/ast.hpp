@@ -19,6 +19,18 @@ struct Type {
 	bool operator==(const Type &rhs) const {
 		return name == rhs.name && isPtr == rhs.isPtr;
 	}
+	bool operator!=(const Type &rhs) const {
+		return !(*this == rhs);
+	}
+	std::string string() const {
+		if(name.empty() ) {
+			return "<unresolved>";
+		}
+		if(isPtr) {
+			return name + " *";
+		}
+		return name;
+	}
 	std::string name;
 	bool isPtr = false;
 };

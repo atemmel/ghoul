@@ -26,15 +26,15 @@ void SymTable::visit(ToplevelAstNode &node) {
 	//Look ahead at all function definitions
 	for(auto ptr : node.functions) {
 		if(!pushFunc(ptr->name, &ptr->signature) ) {
-			Global::errStack.push("Function redefinition \""
-					+ ptr->name + "\"", ptr->token);
+			Global::errStack.push("Function redefinition '"
+					+ ptr->name + "'", ptr->token);
 		}
 	}
 	//Look ahead at all extern definitions
 	for(auto ptr : node.externs) {
 		if(!pushFunc(ptr->name, &ptr->signature) ) {
-			Global::errStack.push("Function redefinition \""
-					+ ptr->name + "\"", ptr->token);
+			Global::errStack.push("Function redefinition '"
+					+ ptr->name + "'", ptr->token);
 		}
 	}
 	for(const auto &child : node.children) {
@@ -61,15 +61,15 @@ void SymTable::visit(StatementAstNode &node) {
 void SymTable::visit(VariableDeclareAstNode &node) {
 	//Check if type exists
 	if(!hasType(node.type.name) ){
-		Global::errStack.push("Type \"" + node.type.name
-				+ "\" is not defined\n", node.token);
+		Global::errStack.push("Type '" + node.type.name
+				+ "' is not defined\n", node.token);
 		return;
 	}
 
 	//Check function redefinition
 	if(hasFunc(node.identifier) ) { 
-		Global::errStack.push("Redefinition of identifier \"" + node.identifier 
-				+ "\"", node.token);
+		Global::errStack.push("Redefinition of identifier '" + node.identifier 
+				+ "'", node.token);
 		return;
 	}
 
@@ -78,16 +78,16 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 	if(it == locals.end() ) {
 		locals.insert(std::make_pair(node.identifier, &node.type) );
 	} else {
-		Global::errStack.push("Redefinition of variable \""
-				+ node.identifier + '\"', node.token);
+		Global::errStack.push("Redefinition of variable '"
+				+ node.identifier + '\'', node.token);
 	}
 }
 
 void SymTable::visit(CallAstNode &node) {
 	auto sig = hasFunc(node.identifier);
 	if(!sig) {
-		Global::errStack.push("Function \"" + node.identifier 
-				+ "\" does not exist", node.token);
+		Global::errStack.push("Function '" + node.identifier 
+				+ "' does not exist", node.token);
 		return;
 	}
 
@@ -99,27 +99,25 @@ void SymTable::visit(CallAstNode &node) {
 	if(sig->parameters.size() != callArgTypes.size() || 
 			!std::equal(sig->parameters.cbegin(), sig->parameters.cend(),
 				callArgTypes.cbegin() ) ) {
-		std::string errString = "Function call \"" + node.identifier
+		std::string errString = "Function call '" + node.identifier
 				+ '(';
 		for(int i = 0; i < callArgTypes.size(); i++) {
-			errString += callArgTypes[i].name;
-			if(callArgTypes[i].isPtr) errString.push_back('*');
+			errString += callArgTypes[i].string();
 			if(i != callArgTypes.size() - 1) {
 				errString += ", ";
 			}
 		}
-		errString += ")\" does not match function signature of \""
+		errString += ")' does not match function signature of '"
 			+ node.identifier + '(';
 
 		for(int i = 0; i < sig->parameters.size(); i++) {
-			errString += sig->parameters[i].name;
-			if(sig->parameters[i].isPtr) errString.push_back('*');
+			errString += sig->parameters[i].string();
 			if(i != sig->parameters.size() - 1) {
 				errString += ", ";
 			}
 		}
 
-		errString += ")\"";
+		errString += ")'";
 
 		Global::errStack.push(errString, node.token);
 	}
@@ -134,16 +132,30 @@ void SymTable::visit(ExpressionAstNode &node) {
 	}
 }
 void SymTable::visit(BinExpressionAstNode &node) {
+	auto types = std::move(callArgTypes);
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}
+
+	//Good
+	auto &lhs = callArgTypes.front();
+	auto &rhs = callArgTypes.back();
+	if(lhs != rhs) {
+		Global::errStack.push(std::string("Type mismatch, cannot perform '") 
+			+ Token::strings[static_cast<size_t>(node.type)].data()
+			+ "' with '" + lhs.string() + "' and a '" + rhs.string() + '\'', node.token);
+		types.push_back({"", false});
+	} else {
+		types.push_back(rhs);
+	}
+	callArgTypes = std::move(types);
 }
 
 void SymTable::visit(VariableAstNode &node) {
 	auto it = locals.find(node.name);
 	if(it == locals.end() ) {
-		Global::errStack.push("Variable \""
-				+ node.name + "\" used but never defined", node.token);
+		Global::errStack.push("Variable '"
+				+ node.name + "' used but never defined", node.token);
 	} else {
 		callArgTypes.push_back(*it->second);
 	}
