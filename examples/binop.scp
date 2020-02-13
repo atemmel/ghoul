@@ -2,8 +2,12 @@ extern fn printf(char *, int) int
 
 fn main() {
 	int a = 2
-	//int b = a + 2 = a
-	a = 2 + a * a + 2
 
-	printf("%d\n", a)
+	a = 3 * 1 + 2
+
+	printf("%d should be 5\n", a)
+
+	a = 2 + 3 * 1
+
+	printf("%d should be 5\n", a)
 }

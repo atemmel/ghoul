@@ -157,6 +157,28 @@ struct Token {
 	constexpr std::string_view getPrintString() const {
 		return getPrintString(static_cast<size_t>(type) );
 	}
+
+	constexpr int precedence() const {
+		switch(type) {
+			case TokenType::Multiply:
+				return 2;
+			case TokenType::Add:
+				return 1;
+			default:
+				return 0;
+		}
+	}
+
+	constexpr static int precedence(TokenType type) {
+		switch(type) {
+			case TokenType::Multiply:
+				return 2;
+			case TokenType::Add:
+				return 1;
+			default:
+				return 0;
+		}
+	}
 };
 
 using Tokens = std::vector<Token>;

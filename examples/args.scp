@@ -1,0 +1,14 @@
+extern fn printf(char *, int) int
+
+fn mul(int rhs, int lhs) int {
+	return rhs * lhs
+}
+
+fn main() {
+	int x = 1
+	int y = 1
+
+	int z = mul(x, y)
+
+	printf("%d\n", z)
+}

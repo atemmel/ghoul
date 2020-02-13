@@ -97,6 +97,7 @@ struct ExpressionAstNode : public AstNode {
 };
 
 struct BinExpressionAstNode : public ExpressionAstNode {
+	BinExpressionAstNode(TokenType type);
 	void accept(AstVisitor &visitor) override;
 	TokenType type;
 };
@@ -149,8 +150,13 @@ private:
 	AstNode::Child buildExtern();
 	AstNode::Child buildStatement();
 	AstNode::Child buildCall(const std::string &identifier);
-	AstNode::Child buildExpr();
-	AstNode::Child buildBinExpr(std::unique_ptr<ExpressionAstNode> &child);
+	std::unique_ptr<ExpressionAstNode> buildExpr();
+	std::unique_ptr<ExpressionAstNode> buildBinExpr(std::unique_ptr<ExpressionAstNode> &child);
+
+	template<typename T>
+	std::unique_ptr<ExpressionAstNode> toExpr(std::unique_ptr<T> ptr) {
+		return nullptr;
+	}
 
 	Tokens tokens;
 	Tokens::iterator iterator;

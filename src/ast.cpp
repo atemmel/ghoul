@@ -50,12 +50,18 @@ void CallAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
+BinExpressionAstNode::BinExpressionAstNode(TokenType type) 
+	: type(type) {
+	precedence = Token::precedence(type);
+}
+
 void BinExpressionAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
 VariableAstNode::VariableAstNode(const std::string &name)
 	: name(name) {
+	precedence = Token::precedence(TokenType::Identifier);
 }
 
 void VariableAstNode::accept(AstVisitor &visitor) {
@@ -63,6 +69,7 @@ void VariableAstNode::accept(AstVisitor &visitor) {
 }
 
 StringAstNode::StringAstNode(const std::string &value) : value(value) {
+	precedence = Token::precedence(TokenType::StringLiteral);
 }
 
 void StringAstNode::accept(AstVisitor &visitor) {
@@ -71,6 +78,7 @@ void StringAstNode::accept(AstVisitor &visitor) {
 
 IntAstNode::IntAstNode(const std::string &value) {
 	isIntLiteral(value, this->value);
+	precedence = Token::precedence(TokenType::IntLiteral);
 }
 
 void IntAstNode::accept(AstVisitor &visitor) {
@@ -84,7 +92,7 @@ AstNode::Root AstParser::buildTree(Tokens &&tokens) {
 }
 
 AstNode::Child AstParser::unexpected() const {
-	Global::errStack.push("Unexpected token: \"" + iterator->value + '\"', &*iterator);
+	Global::errStack.push("Unexpected token: '" + iterator->value + '\'', &*iterator);
 	return nullptr;
 }
 
@@ -264,8 +272,6 @@ AstNode::Child AstParser::buildStatement() {
 			if(getIf(TokenType::Assign) ) {
 				unget();
 				std::unique_ptr<ExpressionAstNode> idNode(new VariableAstNode(id->value) );
-				//auto expr = std::make_unique<ExpressionAstNode>();
-				//expr->addChild(std::move(idNode) );
 				auto binExpr = buildBinExpr(idNode);
 
 				if(!binExpr) {
@@ -328,8 +334,7 @@ AstNode::Child AstParser::buildCall(const std::string &identifier) {
 	return call;
 }
 
-AstNode::Child AstParser::buildExpr() {
-	//auto expr = std::make_unique<ExpressionAstNode>();
+std::unique_ptr<ExpressionAstNode> AstParser::buildExpr() {
 	std::unique_ptr<ExpressionAstNode> expr = nullptr;
 
 	auto tok = getIf(TokenType::StringLiteral);
@@ -369,8 +374,8 @@ AstNode::Child AstParser::buildExpr() {
 	return parent;
 }
 
-AstNode::Child AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child) {
-	auto bin = std::make_unique<BinExpressionAstNode>();
+std::unique_ptr<ExpressionAstNode> AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child) {
+	std::unique_ptr<ExpressionAstNode> bin;
 
 	//Check if bin
 	if(getIf(TokenType::Assign) ) {
@@ -379,11 +384,11 @@ AstNode::Child AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child
 					"may not appear to the left of an assignment", child->token);
 			return nullptr;
 		}
-		bin->type = TokenType::Assign;
+		bin = std::make_unique<BinExpressionAstNode>(TokenType::Assign);
 	} else if(getIf(TokenType::Add) ) {
-		bin->type = TokenType::Add;
+		bin = std::make_unique<BinExpressionAstNode>(TokenType::Add);
 	} else if(getIf(TokenType::Multiply) ) {
-		bin->type = TokenType::Multiply;
+		bin = std::make_unique<BinExpressionAstNode>(TokenType::Multiply);
 	} else {
 		//Not bin
 		return nullptr;
@@ -393,12 +398,11 @@ AstNode::Child AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child
 	auto rhs = buildExpr();
 
 	if(!rhs) {
-		return unexpected();
+		return toExpr(unexpected() );
 	}
 
+	//TODO: Precedence
 	bin->addChild(std::move(child) );
 	bin->addChild(std::move(rhs) );
-
-	//TODO: Recursion from here?
 	return bin;
 }
