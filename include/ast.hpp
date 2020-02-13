@@ -38,6 +38,7 @@ struct Type {
 struct FunctionSignature {
 	Type returnType;
 	std::vector<Type> parameters;
+	std::vector<std::string> paramNames;
 };
 
 struct AstNode {
@@ -86,14 +87,14 @@ struct VariableDeclareAstNode : public AstNode {
 	std::string identifier;
 };
 
-struct CallAstNode : public AstNode {
+struct ExpressionAstNode : public AstNode {
+	int precedence = 0;
+};
+
+struct CallAstNode : public ExpressionAstNode {
 	CallAstNode(const std::string &identifier);
 	void accept(AstVisitor &visitor) override;
 	std::string identifier;
-};
-
-struct ExpressionAstNode : public AstNode {
-	int precedence = 0;
 };
 
 struct BinExpressionAstNode : public ExpressionAstNode {
@@ -149,7 +150,7 @@ private:
 	AstNode::Child buildParams();
 	AstNode::Child buildExtern();
 	AstNode::Child buildStatement();
-	AstNode::Child buildCall(const std::string &identifier);
+	std::unique_ptr<ExpressionAstNode> buildCall(const std::string &identifier);
 	std::unique_ptr<ExpressionAstNode> buildExpr();
 	std::unique_ptr<ExpressionAstNode> buildBinExpr(std::unique_ptr<ExpressionAstNode> &child);
 

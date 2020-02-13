@@ -43,9 +43,15 @@ void SymTable::visit(ToplevelAstNode &node) {
 }
 
 void SymTable::visit(FunctionAstNode &node) {
+	for(size_t i = 0; i < node.signature.parameters.size(); i++) {
+		locals.insert(std::make_pair(
+			node.signature.paramNames[i],
+			&node.signature.parameters[i]) );
+	}
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}
+	locals.clear();
 }
 
 void SymTable::visit(ExternAstNode &node) {
@@ -56,6 +62,7 @@ void SymTable::visit(StatementAstNode &node) {
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}
+	callArgTypes.clear();
 }
 
 void SymTable::visit(VariableDeclareAstNode &node) {
@@ -91,7 +98,7 @@ void SymTable::visit(CallAstNode &node) {
 		return;
 	}
 
-	callArgTypes.clear();
+	auto oldTypes = std::move(callArgTypes);
 	for(const auto &node : node.children) {
 		node->accept(*this);
 	}
@@ -123,13 +130,22 @@ void SymTable::visit(CallAstNode &node) {
 	}
 
 	//Clear this before next call is made
-	callArgTypes.clear();
+	oldTypes.push_back(functions[node.identifier]->returnType);
+	callArgTypes = std::move(oldTypes);
+	std::cout << callArgTypes.size() << '\n';
+	for(auto t : callArgTypes) {
+		std::cout << t.string() << '\n';
+	}
 }
 
 void SymTable::visit(BinExpressionAstNode &node) {
 	auto types = std::move(callArgTypes);
 	for(const auto &child : node.children) {
 		child->accept(*this);
+	}
+
+	if(callArgTypes.size() != 2) {
+		return;
 	}
 
 	auto &lhs = callArgTypes.front();

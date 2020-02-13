@@ -32,10 +32,14 @@ private:
 	template <typename T>
 	using Map = std::unordered_map<std::string, T>;
 	using Set = std::unordered_set<std::string>;
+	using Locals = Map<const Type*>;
 
 	Set types;
 	Map<const FunctionSignature*> functions;
-	Map<const Type*> locals;
+
+	//TODO: Make variable lookup context dependent
+	//Map<Locals> locals;
+	Locals locals;
 
 	std::vector<Type> callArgTypes;
 };

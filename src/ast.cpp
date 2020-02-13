@@ -154,21 +154,49 @@ AstNode::Child AstParser::buildFunction() {
 	auto function = std::make_unique<FunctionAstNode>(token->value);
 	function->token = token;
 
-	//TODO: Expand on this to support parameters
 	if(!getIf(TokenType::ParensOpen) ) {
 		return unexpected();
 	}
 
-	if(!getIf(TokenType::ParensClose) ) {
-		return unexpected();
+	for(;;) {
+		if(getIf(TokenType::ParensClose) ) {
+			break;
+		}
+
+		Type type;
+		auto typeId = getIf(TokenType::Identifier);
+		if(!typeId) {
+			return unexpected();
+		}
+
+		type.name = typeId->value;
+		type.isPtr = getIf(TokenType::And);
+		
+		auto parId = getIf(TokenType::Identifier);
+		if(!parId) {
+			return unexpected();
+		}
+
+		function->signature.parameters.push_back(type);
+		function->signature.paramNames.push_back(parId->value);
+
+		if(getIf(TokenType::ParensClose) ) {
+			break;
+		} else if(!getIf(TokenType::Comma) ) {
+			return unexpected();
+		}
+	}
+
+	auto ret = getIf(TokenType::Identifier);
+	if(ret) {
+		function->signature.returnType = {ret->value, getIf(TokenType::And) };
+	} else {
+		function->signature.returnType = {"void", false };
 	}
 	
 	if(!getIf(TokenType::BlockOpen) ) {
 		return unexpected();
 	}
-
-	//TODO: This is yucky
-	function->signature.returnType = {"void", false };
 
 	discardWhile(TokenType::Terminator);
 	while(!getIf(TokenType::BlockClose) ) {
@@ -206,7 +234,8 @@ AstNode::Child AstParser::buildExtern() {
 			Type type;
 			type.name = id->value;
 			type.isPtr = getIf(TokenType::Multiply);
-			getIf(TokenType::Identifier);
+			auto arg = getIf(TokenType::Identifier);
+			ext->signature.paramNames.push_back(arg ? arg->value : "");
 			ext->signature.parameters.push_back(type);
 		} else if(getIf(TokenType::Variadic) ) {
 			ext->signature.parameters.push_back({"...", false});
@@ -244,13 +273,12 @@ AstNode::Child AstParser::buildStatement() {
 	mayParseAssign = true;
 	auto stmnt = std::make_unique<StatementAstNode>();
 	Token *token = getIf(TokenType::Identifier);
-	if(getIf(TokenType::ParensOpen) ) {
+	if(token) {
 		auto call = buildCall(token->value);
-		if(!call) {
-			return unexpected();
+		if(call) {
+			stmnt->addChild(std::move(call) );
+			return stmnt;
 		}
-		stmnt->addChild(std::move(call) );
-		return stmnt;
 	}
 
 	if(token) {	//Declaration?
@@ -295,7 +323,10 @@ AstNode::Child AstParser::buildStatement() {
 	return unexpected();
 }
 
-AstNode::Child AstParser::buildCall(const std::string &identifier) {
+std::unique_ptr<ExpressionAstNode> AstParser::buildCall(const std::string &identifier) {
+	if(!getIf(TokenType::ParensOpen) ) {
+		return nullptr;
+	}
 	auto call = std::make_unique<CallAstNode>(identifier);
 	call->token = &*std::prev(iterator);
 	auto expr = buildExpr();
@@ -304,12 +335,12 @@ AstNode::Child AstParser::buildCall(const std::string &identifier) {
 		if(!getIf(TokenType::ParensClose) ) {
 			std::cerr << "Expected ')'\n";
 			std::cerr << static_cast<size_t>(iterator->type) << " : " << iterator->value << '\n';
-			return unexpected();
+			return toExpr(unexpected() );
 		}
 		if(!getIf(TokenType::Terminator) ) {
 			std::cerr << "Expected end of expression\n";
 			std::cerr << static_cast<size_t>(iterator->type) << " : " << iterator->value << '\n';
-			return unexpected();
+			return  toExpr(unexpected() );
 		}
 		return call;
 	}
@@ -320,7 +351,7 @@ AstNode::Child AstParser::buildCall(const std::string &identifier) {
 			if(getIf(TokenType::ParensClose) ) {
 				break;
 			} else {
-				return unexpected();
+				return toExpr(unexpected() );
 			}
 		}
 		expr = buildExpr();
@@ -329,7 +360,7 @@ AstNode::Child AstParser::buildCall(const std::string &identifier) {
 	if(!getIf(TokenType::Terminator) ) {
 		std::cerr << "Expected end of expression\n";
 		std::cerr << static_cast<size_t>(iterator->type) << " : " << iterator->value << '\n';
-		return unexpected();
+		return toExpr(unexpected() );
 	}
 	return call;
 }
@@ -354,7 +385,10 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildExpr() {
 	if(!tok) {
 		tok = getIf(TokenType::Identifier);
 		if(tok) {
-			expr = std::make_unique<VariableAstNode>(tok->value);
+			expr = buildCall(tok->value);
+			if(!expr) {
+				expr = std::make_unique<VariableAstNode>(tok->value);
+			}
 		}
 	}
 

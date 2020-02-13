@@ -1,7 +1,7 @@
 extern fn printf(char *, int) int
 
 fn mul(int rhs, int lhs) int {
-	return rhs * lhs
+	printf("%d\n", rhs * lhs)
 }
 
 fn main() {
