@@ -38,8 +38,8 @@ private:
 	Map<const FunctionSignature*> functions;
 
 	//TODO: Make variable lookup context dependent
-	//Map<Locals> locals;
-	Locals locals;
+	Map<Locals> allLocals;
+	Locals *locals;
 
 	std::vector<Type> callArgTypes;
 };

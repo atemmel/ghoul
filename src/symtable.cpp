@@ -29,6 +29,9 @@ void SymTable::visit(ToplevelAstNode &node) {
 			Global::errStack.push("Function redefinition '"
 					+ ptr->name + "'", ptr->token);
 		}
+		allLocals.insert(std::make_pair(
+					ptr->name,
+					Locals() ) );
 	}
 	//Look ahead at all extern definitions
 	for(auto ptr : node.externs) {
@@ -43,15 +46,16 @@ void SymTable::visit(ToplevelAstNode &node) {
 }
 
 void SymTable::visit(FunctionAstNode &node) {
+	locals = &allLocals.find(node.name)->second;
 	for(size_t i = 0; i < node.signature.parameters.size(); i++) {
-		locals.insert(std::make_pair(
+		locals->insert(std::make_pair(
 			node.signature.paramNames[i],
 			&node.signature.parameters[i]) );
 	}
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}
-	locals.clear();
+	locals->clear();
 }
 
 void SymTable::visit(ExternAstNode &node) {
@@ -81,9 +85,9 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 	}
 
 	//Check variable redefinition
-	auto it = locals.find(node.identifier);
-	if(it == locals.end() ) {
-		locals.insert(std::make_pair(node.identifier, &node.type) );
+	auto it = locals->find(node.identifier);
+	if(it == locals->end() ) {
+		locals->insert(std::make_pair(node.identifier, &node.type) );
 	} else {
 		Global::errStack.push("Redefinition of variable '"
 				+ node.identifier + '\'', node.token);
@@ -132,10 +136,6 @@ void SymTable::visit(CallAstNode &node) {
 	//Clear this before next call is made
 	oldTypes.push_back(functions[node.identifier]->returnType);
 	callArgTypes = std::move(oldTypes);
-	std::cout << callArgTypes.size() << '\n';
-	for(auto t : callArgTypes) {
-		std::cout << t.string() << '\n';
-	}
 }
 
 void SymTable::visit(BinExpressionAstNode &node) {
@@ -162,8 +162,8 @@ void SymTable::visit(BinExpressionAstNode &node) {
 }
 
 void SymTable::visit(VariableAstNode &node) {
-	auto it = locals.find(node.name);
-	if(it == locals.end() ) {
+	auto it = locals->find(node.name);
+	if(it == locals->end() ) {
 		Global::errStack.push("Variable '"
 				+ node.name + "' used but never defined", node.token);
 	} else {
