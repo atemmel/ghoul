@@ -48,6 +48,10 @@ public:
 	void visit(StringAstNode &node) override;
 	void visit(IntAstNode &node) override;
 private:
+	template<typename T>
+	using Map = std::unordered_map<std::string, T>;
+	using Locals = Map<llvm::AllocaInst*>;
+
 	llvm::Type *translateType(const Type &type) const;
 	std::vector<FunctionAstNode*> getFuncsFromToplevel(ToplevelAstNode &node);
 	void buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs);
@@ -56,7 +60,9 @@ private:
 
 	std::vector<llvm::Value*> callParams;
 	std::vector<VariableAstNode*> visitedVariables;
-	std::unordered_map<std::string, llvm::AllocaInst*> locals;
+
+	Map<Locals> allLocals;
+	Locals *locals = nullptr;
 };
 
 bool gen(ModuleInfo *mi, Context *ctx);

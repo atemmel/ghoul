@@ -37,7 +37,6 @@ private:
 	Set types;
 	Map<const FunctionSignature*> functions;
 
-	//TODO: Make variable lookup context dependent
 	Map<Locals> allLocals;
 	Locals *locals;
 

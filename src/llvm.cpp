@@ -52,6 +52,10 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", func);
 	ctx->builder.SetInsertPoint(entry);
 
+	//TODO: Add args to locals
+
+	locals = &allLocals[node.name];
+
 	//Content goes here
 	for(const auto &child : node.children) {
 		if(child) {
@@ -59,11 +63,11 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 		}
 	}
 	
+	//TODO: Change return type & value to match node.signature
 	ctx->builder.CreateRetVoid();
 }
 
 void LLVMCodeGen::visit(ExternAstNode &node) {
-	//TODO: This
 	std::vector<llvm::Type*> callArgs;
 	auto result = translateType(node.signature.returnType);
 	for(const auto &type : node.signature.parameters) {
@@ -86,7 +90,7 @@ void LLVMCodeGen::visit(StatementAstNode &node) {
 void LLVMCodeGen::visit(VariableDeclareAstNode &node) {
 	auto it = ctx->builder.GetInsertBlock();
 	auto type = translateType(node.type);
-	locals.insert(std::make_pair(node.identifier, 
+	locals->insert(std::make_pair(node.identifier, 
 		new llvm::AllocaInst(type, 0, node.identifier, it) ) );
 }
 
@@ -124,7 +128,7 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 
 	if(node.type == TokenType::Assign) {
 		VariableAstNode *node = visitedVariables.front();
-		ctx->builder.CreateStore(callParams.back(), locals[node->name]);
+		ctx->builder.CreateStore(callParams.back(), (*locals)[node->name]);
 		params.push_back(callParams.back() );
 	} else if(node.type == TokenType::Add) {
 		params.push_back(ctx->builder.CreateAdd(callParams.front(), callParams.back() ) );
@@ -137,7 +141,7 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 
 void LLVMCodeGen::visit(VariableAstNode &node) {
 	visitedVariables.push_back(&node);
-	callParams.push_back(ctx->builder.CreateLoad(locals[node.name]) );
+	callParams.push_back(ctx->builder.CreateLoad((*locals)[node.name]) );
 }
 
 void LLVMCodeGen::visit(StringAstNode &node) {
@@ -189,6 +193,10 @@ void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &
 		llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, 
 				f->name, mi->module.get() );
 		mi->functions.insert(std::make_pair(f->name, func) );
+
+		allLocals.insert(std::make_pair(
+					f->name,
+					Locals() ) );
 	}
 }
 
