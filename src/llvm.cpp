@@ -55,6 +55,9 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 	//TODO: Add args to locals
 
 	locals = &allLocals[node.name];
+	for(auto &arg : func->args() ) {
+		locals->insert(std::make_pair(arg.getName(), &arg) );
+	}
 
 	//Content goes here
 	for(const auto &child : node.children) {
@@ -189,7 +192,13 @@ std::vector<FunctionAstNode*> LLVMCodeGen::getFuncsFromToplevel(ToplevelAstNode 
 
 void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs) {
 	for(auto f : funcs) {
-		llvm::FunctionType *funcType = llvm::FunctionType::get(ctx->builder.getVoidTy(), false);
+		std::vector<llvm::Type*> types;
+		for(auto p : f->signature.parameters) {
+			types.push_back(translateType(p) );
+		}
+		llvm::FunctionType *funcType = types.empty() 
+			? llvm::FunctionType::get(ctx->builder.getVoidTy(), false)
+			: llvm::FunctionType::get(ctx->builder.getVoidTy(), types, false);
 		llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, 
 				f->name, mi->module.get() );
 		mi->functions.insert(std::make_pair(f->name, func) );
