@@ -61,13 +61,14 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 		ctx->builder.CreateStore(&arg, alloca->second);
 	}
 
-	//Content goes here
+	//Reset bool
 	for(const auto &child : node.children) {
 		if(child) {
 			child->accept(*this);
 		}
 	}
 	
+	//Check to prevent double return/no return at all
 	if(!lastStatementVisitedWasReturn) {
 		ctx->builder.CreateRetVoid();
 	}

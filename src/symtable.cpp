@@ -55,12 +55,24 @@ void SymTable::visit(FunctionAstNode &node) {
 			&node.signature.parameters[i]) );
 	}
 
+	//TODO: Trimming and analyzing the tree is probably not the SymTable's responsibility,
+	//		Maybe refactor SymTable as a semantic analysis class with a symbol table as a
+	//		biproduct?
 	for(auto it = node.children.begin(); it != node.children.end(); it++) {
 		if(foundEarlyReturn) {
 			node.children.erase(it, node.children.end() );
 			break;
 		}
 		(*it)->accept(*this);
+	}
+
+	//Check to see if a function returning data does not return any
+	if(!foundEarlyReturn &&
+	//TODO: Create type table to prevent these kind of necessities
+			currentFunction->returnType != Type{"void", false} ) {
+		Global::errStack.push("Function '" + node.signature.name 
+				+ "' does not return a value, expected return of type '" 
+				+ node.signature.returnType.string() + "'", node.token);
 	}
 
 	locals->clear();
