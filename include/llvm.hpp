@@ -64,6 +64,7 @@ private:
 
 	Map<Locals> allLocals;
 	Locals *locals = nullptr;
+	bool lastStatementVisitedWasReturn = false;
 };
 
 bool gen(ModuleInfo *mi, Context *ctx);

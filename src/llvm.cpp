@@ -68,8 +68,9 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 		}
 	}
 	
-	//TODO: Change return type & value to match node.signature
-	ctx->builder.CreateRetVoid();
+	if(!lastStatementVisitedWasReturn) {
+		ctx->builder.CreateRetVoid();
+	}
 }
 
 void LLVMCodeGen::visit(ExternAstNode &node) {
@@ -87,6 +88,7 @@ void LLVMCodeGen::visit(ExternAstNode &node) {
 void LLVMCodeGen::visit(StatementAstNode &node) {
 	for(const auto &child : node.children) {
 		if(child) {
+			lastStatementVisitedWasReturn = false;
 			child->accept(*this);
 		}
 	}
@@ -109,6 +111,7 @@ void LLVMCodeGen::visit(ReturnAstNode &node) {
 	} else {
 		ctx->builder.CreateRet(callParams.back() );
 	} 
+	lastStatementVisitedWasReturn = true;
 }
 
 void LLVMCodeGen::visit(CallAstNode &node) {
