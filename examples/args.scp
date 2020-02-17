@@ -1,12 +1,12 @@
 extern fn printf(char *, int) int
 
 fn mul(int rhs, int lhs) int {
-	//printf("%d\n", rhs * lhs)
+	printf("%d\n", rhs * lhs)
 }
 
 fn main() {
-	int x = 1
-	int y = 1
+	int x = 5
+	int y = 4
 
 	int z = mul(x, y)
 

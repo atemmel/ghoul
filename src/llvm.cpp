@@ -52,11 +52,13 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", func);
 	ctx->builder.SetInsertPoint(entry);
 
-	//TODO: Add args to locals
-
 	locals = &allLocals[node.name];
+	auto it = ctx->builder.GetInsertBlock();
 	for(auto &arg : func->args() ) {
-		locals->insert(std::make_pair(arg.getName(), &arg) );
+
+		auto alloca = locals->insert(std::make_pair(arg.getName(), 
+			new llvm::AllocaInst(arg.getType(), 0, arg.getName(), it) ) ).first;
+		ctx->builder.CreateStore(&arg, alloca->second);
 	}
 
 	//Content goes here
@@ -201,6 +203,11 @@ void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &
 			: llvm::FunctionType::get(ctx->builder.getVoidTy(), types, false);
 		llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, 
 				f->name, mi->module.get() );
+
+		for(size_t i = 0; i < f->signature.paramNames.size(); i++) {
+			func->arg_begin()[i].setName(f->signature.paramNames[i]);
+		}
+
 		mi->functions.insert(std::make_pair(f->name, func) );
 
 		allLocals.insert(std::make_pair(
