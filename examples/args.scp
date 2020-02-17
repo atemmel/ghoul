@@ -5,11 +5,26 @@ fn mul(int rhs, int lhs) int {
 	return rhs * lhs
 }
 
+fn hejStr() char* {
+	return "Hejhej!\n"
+}
+
+fn print() {
+	printf(hejStr(), 0)
+	return
+}
+
+fn nothing() {
+	return
+	printf("This does nothing :(\n", 0)
+}
+
 fn main() {
 	int x = 5
-	int y = 4
 
-	int z = mul(x, y)
+	int y = mul(x, 4)
 
-	printf("%d\n", z)
+	printf("%d\n", y)
+	print()
+	nothing()
 }

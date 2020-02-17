@@ -106,8 +106,9 @@ void LLVMCodeGen::visit(ReturnAstNode &node) {
 	}
 	if(callParams.empty() ) {
 		ctx->builder.CreateRetVoid();
-	}
-	ctx->builder.CreateRet(callParams.back() );
+	} else {
+		ctx->builder.CreateRet(callParams.back() );
+	} 
 }
 
 void LLVMCodeGen::visit(CallAstNode &node) {

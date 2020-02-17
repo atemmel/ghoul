@@ -43,4 +43,5 @@ private:
 	Locals *locals;
 
 	std::vector<Type> callArgTypes;
+	bool foundEarlyReturn = false;
 };

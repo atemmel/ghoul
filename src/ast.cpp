@@ -174,7 +174,7 @@ AstNode::Child AstParser::buildFunction() {
 		}
 
 		type.name = typeId->value;
-		type.isPtr = getIf(TokenType::And);
+		type.isPtr = getIf(TokenType::Multiply);
 		
 		auto parId = getIf(TokenType::Identifier);
 		if(!parId) {
@@ -193,7 +193,7 @@ AstNode::Child AstParser::buildFunction() {
 
 	auto ret = getIf(TokenType::Identifier);
 	if(ret) {
-		function->signature.returnType = {ret->value, getIf(TokenType::And) };
+		function->signature.returnType = {ret->value, getIf(TokenType::Multiply) };
 	} else {
 		function->signature.returnType = {"void", false };
 	}
@@ -277,6 +277,7 @@ AstNode::Child AstParser::buildStatement() {
 	mayParseAssign = true;
 	auto stmnt = std::make_unique<StatementAstNode>();
 	Token *token = getIf(TokenType::Identifier);
+	/*
 	if(token) {
 		auto call = buildCall(token->value);
 		if(call) {
@@ -284,6 +285,7 @@ AstNode::Child AstParser::buildStatement() {
 			return stmnt;
 		}
 	}
+	*/
 
 	if(token) {	//Declaration?
 		Type type {
@@ -319,6 +321,10 @@ AstNode::Child AstParser::buildStatement() {
 	token = getIf(TokenType::Return);
 	if(token) {
 		auto ret = std::make_unique<ReturnAstNode>();
+		if(getIf(TokenType::Terminator) ) {
+			return ret;
+		}
+
 		auto expr = buildExpr();
 		if(!expr) {
 			return unexpected();
@@ -351,11 +357,6 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildCall(const std::string &ident
 			std::cerr << "Expected ')'\n";
 			std::cerr << static_cast<size_t>(iterator->type) << " : " << iterator->value << '\n';
 			return toExpr(unexpected() );
-		}
-		if(!getIf(TokenType::Terminator) ) {
-			std::cerr << "Expected end of expression\n";
-			std::cerr << static_cast<size_t>(iterator->type) << " : " << iterator->value << '\n';
-			return  toExpr(unexpected() );
 		}
 		return call;
 	}

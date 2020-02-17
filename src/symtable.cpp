@@ -46,6 +46,7 @@ void SymTable::visit(ToplevelAstNode &node) {
 }
 
 void SymTable::visit(FunctionAstNode &node) {
+	foundEarlyReturn = false;
 	currentFunction = &node.signature;
 	locals = &allLocals.find(node.signature.name)->second;
 	for(size_t i = 0; i < node.signature.parameters.size(); i++) {
@@ -53,9 +54,15 @@ void SymTable::visit(FunctionAstNode &node) {
 			node.signature.paramNames[i],
 			&node.signature.parameters[i]) );
 	}
-	for(const auto &child : node.children) {
-		child->accept(*this);
+
+	for(auto it = node.children.begin(); it != node.children.end(); it++) {
+		if(foundEarlyReturn) {
+			node.children.erase(it, node.children.end() );
+			break;
+		}
+		(*it)->accept(*this);
 	}
+
 	locals->clear();
 }
 
@@ -110,6 +117,7 @@ void SymTable::visit(ReturnAstNode &node) {
 		}
 	}
 	callArgTypes.clear();
+	foundEarlyReturn = true;
 }
 
 void SymTable::visit(CallAstNode &node) {
