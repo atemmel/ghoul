@@ -94,6 +94,10 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 	}
 }
 
+void SymTable::visit(ReturnAstNode &node) {
+	//TODO: This
+}
+
 void SymTable::visit(CallAstNode &node) {
 	auto sig = hasFunc(node.identifier);
 	if(!sig) {

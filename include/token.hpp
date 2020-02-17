@@ -68,6 +68,7 @@ enum struct TokenType {
 	Null,               // null
 	Struct,	            // struct
 	Extern,				// extern
+	Return,				// return
 
 	//Keep this one last
 	NTokenTypes
@@ -139,7 +140,8 @@ struct Token {
 		"false",
 		"null",
 		"struct",
-		"extern"
+		"extern",
+		"return"
 	};
 
 	constexpr static std::array<std::string_view, 5> altStrs = {

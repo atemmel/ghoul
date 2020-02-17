@@ -99,6 +99,10 @@ void LLVMCodeGen::visit(VariableDeclareAstNode &node) {
 		new llvm::AllocaInst(type, 0, node.identifier, it) ) );
 }
 
+void LLVMCodeGen::visit(ReturnAstNode &node) {
+	//TODO: This
+}
+
 void LLVMCodeGen::visit(CallAstNode &node) {
 	callParams.clear();
 	visitedVariables.clear();

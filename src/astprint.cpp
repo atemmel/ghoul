@@ -47,6 +47,15 @@ void AstPrinter::visit(VariableDeclareAstNode &node) {
 		<< node.type.name << (node.type.isPtr ? "&\n" : "\n");
 }
 
+void AstPrinter::visit(ReturnAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Return\n";
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
+}
+
 void AstPrinter::visit(CallAstNode &node) {
 	Scope scope;
 	pad(scope.depth);

@@ -87,6 +87,10 @@ struct VariableDeclareAstNode : public AstNode {
 	std::string identifier;
 };
 
+struct ReturnAstNode : public AstNode {
+	void accept(AstVisitor &visitor) override;
+};
+
 struct ExpressionAstNode : public AstNode {
 	int precedence = 0;
 };
@@ -129,6 +133,7 @@ public:
 	virtual void visit(ExternAstNode &node)				= 0;
 	virtual void visit(StatementAstNode &node)			= 0;
 	virtual void visit(VariableDeclareAstNode &node)	= 0;
+	virtual void visit(ReturnAstNode &node)				= 0;
 	virtual void visit(CallAstNode &node)				= 0;
 	virtual void visit(BinExpressionAstNode &node)		= 0;
 	virtual void visit(VariableAstNode &node)			= 0;

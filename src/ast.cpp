@@ -42,6 +42,10 @@ void VariableDeclareAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
+void ReturnAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
 CallAstNode::CallAstNode(const std::string &identifier) 
 	: identifier(identifier) {
 }
@@ -282,13 +286,12 @@ AstNode::Child AstParser::buildStatement() {
 	}
 
 	if(token) {	//Declaration?
+		Type type {
+			token->value,			//Type name
+			getIf(TokenType::Multiply)	//If ptr
+		};
 		auto id = getIf(TokenType::Identifier);
 		if(id) {
-			Type type {
-				token->value,			//Type name
-				getIf(TokenType::Multiply)	//If ptr
-			};
-
 			auto decl = std::make_unique<VariableDeclareAstNode>();
 			decl->type = type;
 			decl->identifier = id->value;
@@ -311,6 +314,18 @@ AstNode::Child AstParser::buildStatement() {
 			return stmnt;
 		}
 
+	}
+
+	token = getIf(TokenType::Return);
+	if(token) {
+		auto ret = std::make_unique<ReturnAstNode>();
+		auto expr = buildExpr();
+		if(!expr) {
+			return unexpected();
+		}
+
+		ret->addChild(std::move(expr) );
+		return ret;
 	}
 
 	unget();
