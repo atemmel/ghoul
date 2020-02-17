@@ -17,8 +17,8 @@ fn print() {
 fn empty() {
 }
 
-fn invalid() int {
-}
+//fn invalid() int {
+//}
 
 fn nothing() {
 	return
@@ -33,5 +33,5 @@ fn main() {
 	printf("%d\n", y)
 	print()
 	nothing()
-	empty()
+	//empty()
 }

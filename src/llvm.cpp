@@ -62,6 +62,7 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 	}
 
 	//Reset bool
+	lastStatementVisitedWasReturn = false;
 	for(const auto &child : node.children) {
 		if(child) {
 			child->accept(*this);
