@@ -18,8 +18,8 @@ void ToplevelAstNode::addExtern(ExternAstNode *ext) {
 	externs.push_back(ext);
 }
 
-FunctionAstNode::FunctionAstNode(const std::string &identifier) 
-	: name(identifier) {
+FunctionAstNode::FunctionAstNode(const std::string &identifier) {
+	signature.name = identifier;
 }
 
 void FunctionAstNode::accept(AstVisitor &visitor) {

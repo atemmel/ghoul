@@ -48,11 +48,11 @@ void LLVMCodeGen::visit(ToplevelAstNode &node) {
 
 void LLVMCodeGen::visit(FunctionAstNode &node) {
 
-	llvm::Function *func = mi->functions[node.name];
+	llvm::Function *func = mi->functions[node.signature.name];
 	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", func);
 	ctx->builder.SetInsertPoint(entry);
 
-	locals = &allLocals[node.name];
+	locals = &allLocals[node.signature.name];
 	auto it = ctx->builder.GetInsertBlock();
 	for(auto &arg : func->args() ) {
 
@@ -100,11 +100,19 @@ void LLVMCodeGen::visit(VariableDeclareAstNode &node) {
 }
 
 void LLVMCodeGen::visit(ReturnAstNode &node) {
-	//TODO: This
+	callParams.clear();
+	for(const auto &child : node.children) {
+		child->accept(*this);
+	}
+	if(callParams.empty() ) {
+		ctx->builder.CreateRetVoid();
+	}
+	ctx->builder.CreateRet(callParams.back() );
 }
 
 void LLVMCodeGen::visit(CallAstNode &node) {
 	callParams.clear();
+	auto oldVars = std::move(visitedVariables);
 	visitedVariables.clear();
 	std::vector<llvm::Type*> callArgs;
 	auto sig = mi->symtable.hasFunc(node.identifier);
@@ -122,8 +130,10 @@ void LLVMCodeGen::visit(CallAstNode &node) {
 			child->accept(*this);
 		}
 	}
-	llvm::ArrayRef<llvm::Value*> paramRef(callParams);
-	ctx->builder.CreateCall(putsFunc, paramRef);
+	auto callParam = std::move(callParams);
+	llvm::ArrayRef<llvm::Value*> paramRef(callParam);
+	callParams.push_back(ctx->builder.CreateCall(putsFunc, paramRef) );
+	visitedVariables = std::move(oldVars);
 }
 
 void LLVMCodeGen::visit(BinExpressionAstNode &node) {
@@ -202,20 +212,21 @@ void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &
 		for(auto p : f->signature.parameters) {
 			types.push_back(translateType(p) );
 		}
+		llvm::Type *returnType = translateType(f->signature.returnType);
 		llvm::FunctionType *funcType = types.empty() 
-			? llvm::FunctionType::get(ctx->builder.getVoidTy(), false)
-			: llvm::FunctionType::get(ctx->builder.getVoidTy(), types, false);
+			? llvm::FunctionType::get(returnType, false)
+			: llvm::FunctionType::get(returnType, types, false);
 		llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, 
-				f->name, mi->module.get() );
+				f->signature.name, mi->module.get() );
 
 		for(size_t i = 0; i < f->signature.paramNames.size(); i++) {
 			func->arg_begin()[i].setName(f->signature.paramNames[i]);
 		}
 
-		mi->functions.insert(std::make_pair(f->name, func) );
+		mi->functions.insert(std::make_pair(f->signature.name, func) );
 
 		allLocals.insert(std::make_pair(
-					f->name,
+					f->signature.name,
 					Locals() ) );
 	}
 }

@@ -25,12 +25,12 @@ bool SymTable::hasType(const std::string &identifier) const {
 void SymTable::visit(ToplevelAstNode &node) {
 	//Look ahead at all function definitions
 	for(auto ptr : node.functions) {
-		if(!pushFunc(ptr->name, &ptr->signature) ) {
+		if(!pushFunc(ptr->signature.name, &ptr->signature) ) {
 			Global::errStack.push("Function redefinition '"
-					+ ptr->name + "'", ptr->token);
+					+ ptr->signature.name + "'", ptr->token);
 		}
 		allLocals.insert(std::make_pair(
-					ptr->name,
+					ptr->signature.name,
 					Locals() ) );
 	}
 	//Look ahead at all extern definitions
@@ -46,7 +46,8 @@ void SymTable::visit(ToplevelAstNode &node) {
 }
 
 void SymTable::visit(FunctionAstNode &node) {
-	locals = &allLocals.find(node.name)->second;
+	currentFunction = &node.signature;
+	locals = &allLocals.find(node.signature.name)->second;
 	for(size_t i = 0; i < node.signature.parameters.size(); i++) {
 		locals->insert(std::make_pair(
 			node.signature.paramNames[i],
@@ -95,7 +96,20 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 }
 
 void SymTable::visit(ReturnAstNode &node) {
-	//TODO: This
+	callArgTypes.clear();
+	for(const auto &child : node.children) {
+		child->accept(*this);
+	}
+
+	for(auto &t : callArgTypes) {
+		if(t != currentFunction->returnType) {
+			Global::errStack.push("Function '" + currentFunction->name 
+					+ "' tries to return value of type '" + t.string() 
+					+ "', when definition specifies it to return '"
+					+ currentFunction->returnType.string() + "'", node.token);
+		}
+	}
+	callArgTypes.clear();
 }
 
 void SymTable::visit(CallAstNode &node) {

@@ -16,7 +16,7 @@ void AstPrinter::visit(ToplevelAstNode &node) {
 void AstPrinter::visit(FunctionAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
-	std::cerr << "Function : " << node.name << '\n';
+	std::cerr << "Function : " << node.signature.name << '\n';
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}

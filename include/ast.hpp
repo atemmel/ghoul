@@ -36,6 +36,7 @@ struct Type {
 };
 
 struct FunctionSignature {
+	std::string name;
 	Type returnType;
 	std::vector<Type> parameters;
 	std::vector<std::string> paramNames;
@@ -67,7 +68,6 @@ struct FunctionAstNode : public AstNode {
 	FunctionAstNode(const std::string &identifier);
 	void accept(AstVisitor &visitor) override;
 	FunctionSignature signature;
-	std::string name;
 };
 
 struct ExternAstNode : public AstNode {
