@@ -20,6 +20,10 @@ fn empty() {
 //fn invalid() int {
 //}
 
+//fn alsoInvalid() int {
+//	return "bad"
+//}
+
 fn nothing() {
 	return
 	printf("This does nothing :(\n", 0)
