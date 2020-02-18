@@ -471,22 +471,69 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildBinOp() {
 }
 
 std::unique_ptr<ExpressionAstNode> AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child) {
-	std::unique_ptr<ExpressionAstNode> bin = buildBinOp();
 
-	//Check if bin
+	std::unique_ptr<ExpressionAstNode> bin = buildBinOp();
 	if(!bin) {
 		return nullptr;
 	}
 
-	//Is bin
-	auto rhs = buildExpr();
-
-	if(!rhs) {
+	auto val = buildPrimaryExpr();
+	if(!val) {
 		return toExpr(unexpected() );
 	}
 
-	//TODO: Precedence
-	bin->addChild(std::move(child) );
-	bin->addChild(std::move(rhs) );
-	return bin;
+	//https://en.wikipedia.org/wiki/Shunting-yard_algorithm
+
+	std::vector<std::unique_ptr<ExpressionAstNode> > valStack, opStack;
+
+	valStack.push_back(std::move(val) );
+	valStack.push_back(std::move(child) );
+	opStack.push_back(std::move(bin) );
+
+	bin = buildBinOp();
+
+	while(bin) {
+		if(bin->precedence <= opStack.back()->precedence) {
+			auto rhs = std::move(valStack.back() );
+			valStack.pop_back();
+			auto lhs = std::move(valStack.back() );
+			valStack.pop_back();
+			auto op = std::move(opStack.back() );
+			opStack.pop_back();
+
+			op->addChild(std::move(lhs) );
+			op->addChild(std::move(rhs) );
+
+			valStack.push_back(std::move(op) );
+
+		}
+		opStack.push_back(std::move(bin) );
+
+		val = buildPrimaryExpr();
+
+		if(!val) {
+			return toExpr(unexpected() );
+		}
+
+		valStack.push_back(std::move(val) );
+
+		bin = buildBinOp();
+	}
+
+	while(!opStack.empty() ) {
+		auto rhs = std::move(valStack.back() );
+		valStack.pop_back();
+		auto lhs = std::move(valStack.back() );
+		valStack.pop_back();
+		auto op = std::move(opStack.back() );
+		opStack.pop_back();
+
+		op->addChild(std::move(lhs) );
+		op->addChild(std::move(rhs) );
+
+		valStack.push_back(std::move(op) );
+	}
+
+	auto result = std::move(valStack.back() );
+	return result;
 }
