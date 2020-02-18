@@ -373,11 +373,13 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildCall(const std::string &ident
 		expr = buildExpr();
 	}
 
+	/*
 	if(!getIf(TokenType::Terminator) ) {
 		std::cerr << "Expected end of expression\n";
 		std::cerr << static_cast<size_t>(iterator->type) << " : " << iterator->value << '\n';
 		return toExpr(unexpected() );
 	}
+	*/
 	return call;
 }
 
@@ -422,6 +424,10 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildExpr() {
 	}
 
 	return parent;
+}
+
+std::unique_ptr<ExpressionAstNode> AstParser::buildPrimaryExpr() {
+	return nullptr;
 }
 
 std::unique_ptr<ExpressionAstNode> AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child) {

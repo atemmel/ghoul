@@ -1,5 +1,9 @@
 extern fn printf(char *, int) int
 
+fn square(int x) int {
+	return x * x
+}
+
 fn main() {
 	int a = 2
 
@@ -10,4 +14,6 @@ fn main() {
 	a = 2 + 3 * 1
 
 	printf("%d should be 5\n", a)
+
+	printf("5 squared is: %d\n", square(a+0) )
 }

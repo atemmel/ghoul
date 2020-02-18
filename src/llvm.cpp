@@ -88,6 +88,8 @@ void LLVMCodeGen::visit(ExternAstNode &node) {
 }
 
 void LLVMCodeGen::visit(StatementAstNode &node) {
+	callParams.clear();
+	visitedVariables.clear();
 	for(const auto &child : node.children) {
 		if(child) {
 			lastStatementVisitedWasReturn = false;
@@ -117,9 +119,8 @@ void LLVMCodeGen::visit(ReturnAstNode &node) {
 }
 
 void LLVMCodeGen::visit(CallAstNode &node) {
-	callParams.clear();
+	auto oldParams = std::move(callParams);
 	auto oldVars = std::move(visitedVariables);
-	visitedVariables.clear();
 	std::vector<llvm::Type*> callArgs;
 	auto sig = mi->symtable.hasFunc(node.identifier);
 	for(auto &p : sig->parameters) {
@@ -136,9 +137,10 @@ void LLVMCodeGen::visit(CallAstNode &node) {
 			child->accept(*this);
 		}
 	}
-	auto callParam = std::move(callParams);
-	llvm::ArrayRef<llvm::Value*> paramRef(callParam);
-	callParams.push_back(ctx->builder.CreateCall(putsFunc, paramRef) );
+
+	llvm::ArrayRef<llvm::Value*> paramRef(callParams);
+	oldParams.push_back(ctx->builder.CreateCall(putsFunc, paramRef) );
+	callParams = std::move(oldParams);
 	visitedVariables = std::move(oldVars);
 }
 

@@ -157,6 +157,7 @@ private:
 	AstNode::Child buildStatement();
 	std::unique_ptr<ExpressionAstNode> buildCall(const std::string &identifier);
 	std::unique_ptr<ExpressionAstNode> buildExpr();
+	std::unique_ptr<ExpressionAstNode> buildPrimaryExpr();
 	std::unique_ptr<ExpressionAstNode> buildBinExpr(std::unique_ptr<ExpressionAstNode> &child);
 
 	template<typename T>
