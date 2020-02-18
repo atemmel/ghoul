@@ -124,7 +124,7 @@ AstNode::Root AstParser::buildTree() {
 		discardWhile(TokenType::Terminator);
 		if(getIf(TokenType::Function) ) {
 			auto func = buildFunction();
-			if(!func) continue;
+			if(!func) return nullptr;
 			//TODO: If func is empty, a parsing error has occured
 			//Log this somehow for error messages
 			auto fptr = static_cast<FunctionAstNode*>(func.get() );
@@ -328,8 +328,13 @@ AstNode::Child AstParser::buildStatement() {
 	unget();
 	auto expr = buildExpr();
 	if(expr) {
-		stmnt->addChild(std::move(expr) );
-		return stmnt;
+		if(expr->precedence != 0) {
+			Global::errStack.push("Stray expression", expr->token);
+			return nullptr;
+		} else {
+			stmnt->addChild(std::move(expr) );
+			return stmnt;
+		}
 	}
 
 	return unexpected();
@@ -459,6 +464,9 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildBinOp() {
 	Token *token = getIf(TokenType::Add);
 	if(!token) {
 		token = getIf(TokenType::Multiply);
+	}
+	if(!token) {
+		token = getIf(TokenType::Subtract);
 	}
 
 	if(!token) {

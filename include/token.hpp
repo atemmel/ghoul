@@ -176,6 +176,7 @@ struct Token {
 			case TokenType::Multiply:
 				return 2;
 			case TokenType::Add:
+			case TokenType::Subtract:
 				return 1;
 			default:
 				return 0;
