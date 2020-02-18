@@ -296,13 +296,13 @@ AstNode::Child AstParser::buildStatement() {
 			if(getIf(TokenType::Assign) ) {
 				unget();
 				std::unique_ptr<ExpressionAstNode> idNode(new VariableAstNode(id->value) );
-				auto binExpr = buildBinExpr(idNode);
+				auto assign = buildAssignExpr(idNode);
 
-				if(!binExpr) {
+				if(!assign) {
 					return unexpected();
 				}
 
-				stmnt->addChild(std::move(binExpr) );
+				stmnt->addChild(std::move(assign) );
 			}
 			return stmnt;
 		}
@@ -373,7 +373,11 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildExpr() {
 		return nullptr;
 	}
 
-	auto parent = buildBinExpr(expr);
+	auto parent = buildAssignExpr(expr);
+	if(!parent) {
+		mayParseAssign = false;
+		parent = buildBinExpr(expr);
+	}
 	
 	if(!parent) {
 		return expr;
@@ -409,7 +413,6 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildPrimaryExpr() {
 		}
 	}
 
-
 	if(!tok) {
 		return nullptr;
 	}
@@ -418,23 +421,60 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildPrimaryExpr() {
 	return expr;
 }
 
-std::unique_ptr<ExpressionAstNode> AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child) {
+std::unique_ptr<ExpressionAstNode> AstParser::buildAssignExpr(std::unique_ptr<ExpressionAstNode> &lhs) {
 	std::unique_ptr<ExpressionAstNode> bin;
+	Token *token = getIf(TokenType::Assign);
+	if(!token) {
+		return nullptr;
+	}
+
+	if(!mayParseAssign) {
+		Global::errStack.push("Constant expression or operator different from '=' "
+		"may not appear to the left of an assignment", lhs->token);
+		return nullptr;
+	}
+
+	bin = std::make_unique<BinExpressionAstNode>(TokenType::Assign);
+	bin->token = token;
+
+	auto rhs = buildExpr();
+
+	if(!rhs) {
+		return toExpr(unexpected() );
+	}
+
+	bin->addChild(std::move(lhs) );
+	bin->addChild(std::move(rhs) );
+
+	auto parent = buildAssignExpr(bin);
+
+	if(parent) {
+		return parent;
+	}
+
+	return bin;
+}
+
+std::unique_ptr<ExpressionAstNode> AstParser::buildBinOp() {
+	Token *token = getIf(TokenType::Add);
+	if(!token) {
+		token = getIf(TokenType::Multiply);
+	}
+
+	if(!token) {
+		return nullptr;
+	}
+
+	auto bin = std::make_unique<BinExpressionAstNode>(token->type);
+	bin->token = token;
+	return bin;
+}
+
+std::unique_ptr<ExpressionAstNode> AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child) {
+	std::unique_ptr<ExpressionAstNode> bin = buildBinOp();
 
 	//Check if bin
-	if(getIf(TokenType::Assign) ) {
-		if(!mayParseAssign) {
-			Global::errStack.push("Constant expression or operator different from '=' "
-					"may not appear to the left of an assignment", child->token);
-			return nullptr;
-		}
-		bin = std::make_unique<BinExpressionAstNode>(TokenType::Assign);
-	} else if(getIf(TokenType::Add) ) {
-		bin = std::make_unique<BinExpressionAstNode>(TokenType::Add);
-	} else if(getIf(TokenType::Multiply) ) {
-		bin = std::make_unique<BinExpressionAstNode>(TokenType::Multiply);
-	} else {
-		//Not bin
+	if(!bin) {
 		return nullptr;
 	}
 
