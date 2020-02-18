@@ -10,6 +10,8 @@ fn main() {
 
 	int a = z = x = 1 + z + x + 5
 
+	//int invalid = 1 = a
+
 	printf("%d\n", a)
 	printf("%d\n", z)
 	printf("%d\n", x)
