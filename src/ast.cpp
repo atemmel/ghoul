@@ -277,15 +277,6 @@ AstNode::Child AstParser::buildStatement() {
 	mayParseAssign = true;
 	auto stmnt = std::make_unique<StatementAstNode>();
 	Token *token = getIf(TokenType::Identifier);
-	/*
-	if(token) {
-		auto call = buildCall(token->value);
-		if(call) {
-			stmnt->addChild(std::move(call) );
-			return stmnt;
-		}
-	}
-	*/
 
 	if(token) {	//Declaration?
 		Type type {
@@ -373,17 +364,25 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildCall(const std::string &ident
 		expr = buildExpr();
 	}
 
-	/*
-	if(!getIf(TokenType::Terminator) ) {
-		std::cerr << "Expected end of expression\n";
-		std::cerr << static_cast<size_t>(iterator->type) << " : " << iterator->value << '\n';
-		return toExpr(unexpected() );
-	}
-	*/
 	return call;
 }
 
 std::unique_ptr<ExpressionAstNode> AstParser::buildExpr() {
+	auto expr = buildPrimaryExpr();
+	if(!expr) {
+		return nullptr;
+	}
+
+	auto parent = buildBinExpr(expr);
+	
+	if(!parent) {
+		return expr;
+	}
+
+	return parent;
+}
+
+std::unique_ptr<ExpressionAstNode> AstParser::buildPrimaryExpr() {
 	std::unique_ptr<ExpressionAstNode> expr = nullptr;
 
 	auto tok = getIf(TokenType::StringLiteral);
@@ -416,18 +415,7 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildExpr() {
 	}
 
 	expr->token = tok;
-
-	auto parent = buildBinExpr(expr);
-	
-	if(!parent) {
-		return expr;
-	}
-
-	return parent;
-}
-
-std::unique_ptr<ExpressionAstNode> AstParser::buildPrimaryExpr() {
-	return nullptr;
+	return expr;
 }
 
 std::unique_ptr<ExpressionAstNode> AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child) {

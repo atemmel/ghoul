@@ -15,5 +15,5 @@ fn main() {
 
 	printf("%d should be 5\n", a)
 
-	printf("5 squared is: %d\n", square(a+0) )
+	printf("5*5*25*625 is: %d\n", square(square(a*a) ) )
 }
