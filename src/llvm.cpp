@@ -103,6 +103,9 @@ void LLVMCodeGen::visit(VariableDeclareAstNode &node) {
 	auto type = translateType(node.type);
 	locals->insert(std::make_pair(node.identifier, 
 		new llvm::AllocaInst(type, 0, node.identifier, it) ) );
+	for(const auto &child : node.children) {
+		child->accept(*this);
+	}
 }
 
 void LLVMCodeGen::visit(ReturnAstNode &node) {

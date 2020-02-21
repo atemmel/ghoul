@@ -279,34 +279,11 @@ AstNode::Child AstParser::buildStatement() {
 	Token *token = getIf(TokenType::Identifier);
 
 	if(token) {	//Declaration?
-		Type type {
-			token->value,			//Type name
-			getIf(TokenType::Multiply)	//If ptr
-		};
-		auto id = getIf(TokenType::Identifier);
-		if(id) {
-			auto decl = std::make_unique<VariableDeclareAstNode>();
-			decl->type = type;
-			decl->identifier = id->value;
-			//TODO: Token could be either token or id
-			decl->token = token;
+		auto decl = buildDecl(token);
+		if(decl) {
 			stmnt->addChild(std::move(decl) );
-
-			//Declaration may include assignment
-			if(getIf(TokenType::Assign) ) {
-				unget();
-				std::unique_ptr<ExpressionAstNode> idNode(new VariableAstNode(id->value) );
-				auto assign = buildAssignExpr(idNode);
-
-				if(!assign) {
-					return unexpected();
-				}
-
-				stmnt->addChild(std::move(assign) );
-			}
 			return stmnt;
 		}
-
 	}
 
 	token = getIf(TokenType::Return);
@@ -338,6 +315,37 @@ AstNode::Child AstParser::buildStatement() {
 	}
 
 	return unexpected();
+}
+
+AstNode::Child AstParser::buildDecl(Token *token) {
+	Type type {
+		token->value,			//Type name
+		getIf(TokenType::Multiply)	//If ptr
+	};
+	auto id = getIf(TokenType::Identifier);
+	if(!id) {
+		return nullptr;
+	}
+
+	auto decl = std::make_unique<VariableDeclareAstNode>();
+	decl->type = type;
+	decl->identifier = id->value;
+	//TODO: Token could be either token or id
+	decl->token = token;
+
+	//Declaration may include assignment
+	if(getIf(TokenType::Assign) ) {
+		unget();
+		std::unique_ptr<ExpressionAstNode> idNode(new VariableAstNode(id->value) );
+		auto assign = buildAssignExpr(idNode);
+
+		if(!assign) {
+			return unexpected();
+		}
+
+		decl->addChild(std::move(assign) );
+	}
+	return decl;
 }
 
 std::unique_ptr<ExpressionAstNode> AstParser::buildCall(const std::string &identifier) {

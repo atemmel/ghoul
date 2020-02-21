@@ -155,6 +155,7 @@ private:
 	AstNode::Child buildParams();
 	AstNode::Child buildExtern();
 	AstNode::Child buildStatement();
+	AstNode::Child buildDecl(Token *token);
 	std::unique_ptr<ExpressionAstNode> buildCall(const std::string &identifier);
 	std::unique_ptr<ExpressionAstNode> buildExpr();
 	std::unique_ptr<ExpressionAstNode> buildPrimaryExpr();
