@@ -45,6 +45,10 @@ void SymTable::visit(ToplevelAstNode &node) {
 	}
 }
 
+void SymTable::visit(StructAstNode &node) {
+	//TODO: This $hit
+}
+
 void SymTable::visit(FunctionAstNode &node) {
 	foundEarlyReturn = false;
 	currentFunction = &node.signature;

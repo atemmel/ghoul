@@ -22,6 +22,14 @@ FunctionAstNode::FunctionAstNode(const std::string &identifier) {
 	signature.name = identifier;
 }
 
+StructAstNode::StructAstNode(const std::string &name) 
+	: name(name) {
+}
+
+void StructAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
 void FunctionAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
@@ -132,10 +140,14 @@ AstNode::Root AstParser::buildTree() {
 			toplevel->addChild(std::move(func) );
 		} else if(getIf(TokenType::Extern) ) {
 			auto ext = buildExtern();
-			if(!ext) continue;
+			if(!ext) return nullptr;
 			auto eptr = static_cast<ExternAstNode*>(ext.get() );
 			toplevel->addExtern(eptr);
 			toplevel->addChild(std::move(ext) );
+		} else if(getIf(TokenType::Struct) ) {
+			auto struc = buildStruct();
+			if(!struc) return nullptr;
+			toplevel->addChild(std::move(struc) );
 		} else if(iterator == tokens.end() ) {
 			break;
 		} else {
@@ -148,6 +160,38 @@ AstNode::Root AstParser::buildTree() {
 		return nullptr;
 	}
 	return toplevel;
+}
+
+AstNode::Child AstParser::buildStruct() {
+	Token *token = getIf(TokenType::Identifier);
+	if(!token || !getIf(TokenType::BlockOpen) ) {
+		return unexpected();
+	}
+
+	auto struc = std::make_unique<StructAstNode>(token->value);
+
+	discardWhile(TokenType::Terminator);
+
+	AstNode::Child child;
+	for(;;) {
+		Token *id = getIf(TokenType::Identifier);
+		if(!id) {
+			break;
+		}
+		child = buildDecl(id);
+		if(!child) {
+			return unexpected();
+		}
+		struc->addChild(std::move(child) );
+		discardWhile(TokenType::Terminator);
+	}
+
+	discardWhile(TokenType::Terminator);
+	if(!getIf(TokenType::BlockClose) ) {
+		return unexpected();
+	}
+
+	return struc;
 }
 
 AstNode::Child AstParser::buildFunction() {
@@ -345,6 +389,7 @@ AstNode::Child AstParser::buildDecl(Token *token) {
 
 		decl->addChild(std::move(assign) );
 	}
+
 	return decl;
 }
 

@@ -38,6 +38,7 @@ public:
 	void setModuleInfo(ModuleInfo *mi);
 	void setContext(Context *ctx);
 	void visit(ToplevelAstNode &node) override;
+	void visit(StructAstNode &node) override;
 	void visit(FunctionAstNode &node) override;
 	void visit(ExternAstNode &node) override;
 	void visit(StatementAstNode &node) override;

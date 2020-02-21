@@ -13,6 +13,15 @@ void AstPrinter::visit(ToplevelAstNode &node) {
 	}
 }
 
+void AstPrinter::visit(StructAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Struct : " << node.name << '\n';
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
+}
+
 void AstPrinter::visit(FunctionAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
@@ -45,6 +54,9 @@ void AstPrinter::visit(VariableDeclareAstNode &node) {
 	pad(scope.depth);
 	std::cerr << "Decl : " << node.identifier << " as " 
 		<< node.type.name << (node.type.isPtr ? "&\n" : "\n");
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
 }
 
 void AstPrinter::visit(ReturnAstNode &node) {

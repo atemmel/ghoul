@@ -64,6 +64,12 @@ struct ToplevelAstNode : public AstNode {
 	std::vector<ExternAstNode*> externs;
 };
 
+struct StructAstNode : public AstNode {
+	StructAstNode(const std::string &name);
+	void accept(AstVisitor &visitor) override;
+	std::string name;
+};
+
 struct FunctionAstNode : public AstNode {
 	FunctionAstNode(const std::string &identifier);
 	void accept(AstVisitor &visitor) override;
@@ -129,6 +135,7 @@ class AstVisitor {
 public:
 	virtual ~AstVisitor() = default;
 	virtual void visit(ToplevelAstNode &node)			= 0;
+	virtual void visit(StructAstNode &node)				= 0;
 	virtual void visit(FunctionAstNode &node)			= 0;
 	virtual void visit(ExternAstNode &node)				= 0;
 	virtual void visit(StatementAstNode &node)			= 0;
@@ -151,6 +158,7 @@ private:
 	void unget();
 	void discardWhile(TokenType type);
 	AstNode::Root buildTree();
+	AstNode::Child buildStruct();
 	AstNode::Child buildFunction();
 	AstNode::Child buildParams();
 	AstNode::Child buildExtern();

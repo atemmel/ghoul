@@ -46,6 +46,10 @@ void LLVMCodeGen::visit(ToplevelAstNode &node) {
 	}
 }
 
+void LLVMCodeGen::visit(StructAstNode &node) {
+	//TODO: this
+}
+
 void LLVMCodeGen::visit(FunctionAstNode &node) {
 
 	llvm::Function *func = mi->functions[node.signature.name];

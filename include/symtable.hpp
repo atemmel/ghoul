@@ -18,6 +18,7 @@ public:
 	bool hasType(const std::string &identifier) const;
 
 	void visit(ToplevelAstNode &node) override;
+	void visit(StructAstNode &node) override;
 	void visit(FunctionAstNode &node) override;
 	void visit(ExternAstNode &node) override;
 	void visit(StatementAstNode &node) override;
