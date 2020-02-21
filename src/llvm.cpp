@@ -166,6 +166,8 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 		params.push_back(ctx->builder.CreateMul(callParams.front(), callParams.back() ) );
 	} else if(node.type == TokenType::Subtract) {
 		params.push_back(ctx->builder.CreateSub(callParams.front(), callParams.back() ) );
+	} else if(node.type == TokenType::Divide) {
+		params.push_back(ctx->builder.CreateSDiv(callParams.front(), callParams.back() ) );
 	}
 	callParams = std::move(params);
 	visitedVariables = std::move(vars);
