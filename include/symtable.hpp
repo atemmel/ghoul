@@ -9,6 +9,8 @@ class SymTable : public AstVisitor {
 public:
 	SymTable();
 
+	void dump() const;
+
 	bool pushFunc(const std::string &identifier, FunctionSignature *func) {
 		return functions.insert({identifier, func}).second;
 	}

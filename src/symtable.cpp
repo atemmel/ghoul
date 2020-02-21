@@ -9,6 +9,23 @@ SymTable::SymTable() {
 	types.insert("...");
 }
 
+void SymTable::dump() const {
+	std::cerr << "Types:\n";
+	for(const auto &type : types) {
+		std::cerr << '\t' << type << '\n';
+	}
+
+	std::cerr << "Functions:\n";
+	for(const auto &pair : functions) {
+		std::cerr << pair.first << '\n';
+		std::cerr << '\t' << "returns " << pair.second->returnType.string() << '\n';
+		for(size_t i = 0; i < pair.second->parameters.size(); i++) {
+			std::cerr << '\t' << pair.second->parameters[i].string() << ' ' 
+				<< pair.second->paramNames[i] << '\n';
+		}
+	}
+}
+
 const FunctionSignature *SymTable::hasFunc(const std::string &identifier) const {
 	auto it = functions.find(identifier);
 	if(it == functions.end() ) {

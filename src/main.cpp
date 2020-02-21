@@ -137,6 +137,9 @@ void compile(ModuleInfo &mi) {
 	mi.symtable.visit(*mi.ast);
 	time = clock.getNanoSeconds();
 	std::cout << mi.fileName.c_str() << " symbol pass completed in " << time << " ns\n";
+	if(Global::config.verbose) {
+		mi.symtable.dump();
+	}
 	if(!Global::errStack.empty() ) {
 		Global::errStack.unwind();
 		std::cerr << "Symbol pass failed\n";
