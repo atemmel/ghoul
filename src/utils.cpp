@@ -1,7 +1,7 @@
 #include "utils.hpp"
 
-#include <vector>
 #include <fstream>
+#include <vector>
 
 //TODO: Reconsider 'val' parameter
 NumValidity isFloatLiteral(const std::string &str, float &val) {

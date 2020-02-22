@@ -147,6 +147,8 @@ AstNode::Root AstParser::buildTree() {
 		} else if(getIf(TokenType::Struct) ) {
 			auto struc = buildStruct();
 			if(!struc) return nullptr;
+			auto struptr = static_cast<StructAstNode*>(struc.get() );
+			toplevel->structs.push_back(struptr);
 			toplevel->addChild(std::move(struc) );
 		} else if(iterator == tokens.end() ) {
 			break;
@@ -169,6 +171,7 @@ AstNode::Child AstParser::buildStruct() {
 	}
 
 	auto struc = std::make_unique<StructAstNode>(token->value);
+	struc->token = token;
 
 	discardWhile(TokenType::Terminator);
 

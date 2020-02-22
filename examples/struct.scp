@@ -1,7 +1,17 @@
 struct Vector4 {
 	int x
-	int y = 0
+	int y = "James"
 	int z
+}
+
+//struct Vector4 {
+
+//}
+
+struct Matrix4 {
+	Vector4 x
+	Vector4 y
+	Vector4 z
 }
 
 fn main() {

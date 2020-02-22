@@ -33,12 +33,21 @@ public:
 	void visit(IntAstNode &node) override;
 
 private:
+	enum struct Context {
+		InsideStruct,
+		InsideFunction
+	};
+
+	Context context;
+
 	template <typename T>
 	using Map = std::unordered_map<std::string, T>;
 	using Set = std::unordered_set<std::string>;
 	using Locals = Map<const Type*>;
+	using Structs = Map<Type>;
 
 	Set types;
+	Structs structs;
 	Map<const FunctionSignature*> functions;
 	const FunctionSignature *currentFunction = nullptr;
 

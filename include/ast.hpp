@@ -1,5 +1,6 @@
 #pragma once
 #include "token.hpp"
+#include "type.hpp"
 #include "dynamicarray.hpp"
 
 #include "llvm/IR/IRBuilder.h"
@@ -14,26 +15,7 @@ class AstVisitor;
 class ToplevelAstNode;
 class FunctionAstNode;
 class ExternAstNode;
-
-struct Type {
-	bool operator==(const Type &rhs) const {
-		return name == rhs.name && isPtr == rhs.isPtr;
-	}
-	bool operator!=(const Type &rhs) const {
-		return !(*this == rhs);
-	}
-	std::string string() const {
-		if(name.empty() ) {
-			return "<unresolved>";
-		}
-		if(isPtr) {
-			return name + " *";
-		}
-		return name;
-	}
-	std::string name;
-	bool isPtr = false;
-};
+class StructAstNode;
 
 struct FunctionSignature {
 	std::string name;
@@ -54,14 +36,13 @@ struct AstNode {
 };
 
 struct ToplevelAstNode : public AstNode {
-	using SymTable = std::unordered_set<std::string>;
-
 	void accept(AstVisitor &visitor) override;
 	void addFunction(FunctionAstNode *func);
 	void addExtern(ExternAstNode *func);
 
 	std::vector<FunctionAstNode*> functions;
 	std::vector<ExternAstNode*> externs;
+	std::vector<StructAstNode*> structs;
 };
 
 struct StructAstNode : public AstNode {

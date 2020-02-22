@@ -6,13 +6,17 @@ SymTable::SymTable() {
 	types.insert("char");
 	types.insert("int");
 	types.insert("float");
-	types.insert("...");
 }
 
 void SymTable::dump() const {
 	std::cerr << "Types:\n";
 	for(const auto &type : types) {
 		std::cerr << '\t' << type << '\n';
+	}
+
+	std::cerr << "User-defined types:\n";
+	for(const auto &type : structs) {
+		std:: cerr << type.second.string() << '\n';
 	}
 
 	std::cerr << "Functions:\n";
@@ -57,13 +61,41 @@ void SymTable::visit(ToplevelAstNode &node) {
 					+ ptr->name + "'", ptr->token);
 		}
 	}
+
+	for(auto ptr : node.structs) {
+		if(!hasType(ptr->name) ) {
+			types.insert(ptr->name);
+		} else {
+			Global::errStack.push("Type redefinition '"
+					+ ptr->name + "'", ptr->token);
+		}
+	}
+
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}
 }
 
 void SymTable::visit(StructAstNode &node) {
-	//TODO: This $hit
+	Type type;
+	type.name = node.name;
+	Locals structMembers;
+	locals = &structMembers;
+
+	for(const auto &child : node.children) {
+		child->accept(*this);
+	}
+
+	locals = nullptr;
+
+	Member member;
+	for(const auto &visited : structMembers) {
+		member.identifier = visited.first;
+		member.type = *visited.second;
+		type.members.push_back(member);
+	}
+
+	structs.insert({node.name, type} );
 }
 
 void SymTable::visit(FunctionAstNode &node) {

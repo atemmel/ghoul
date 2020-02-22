@@ -17,6 +17,7 @@ public:
 	void visit(IntAstNode &node) override;
 private:
 	void pad(unsigned i) const;
+
 	struct Scope {
 		Scope();
 		~Scope();
