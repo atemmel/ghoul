@@ -90,13 +90,19 @@ void AstPrinter::visit(BinExpressionAstNode &node) {
 void AstPrinter::visit(MemberVariableAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
-	std::cerr << "Member accessed : " << node.name << '\n';
+	std::cerr << "Member : " << node.name << '\n';
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
 }
 
 void AstPrinter::visit(VariableAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
 	std::cerr << "Variable : " << node.name << '\n';
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
 }
 
 void AstPrinter::visit(StringAstNode &node) {
