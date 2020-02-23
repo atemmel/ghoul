@@ -160,17 +160,6 @@ struct Token {
 		return getPrintString(static_cast<size_t>(type) );
 	}
 
-	constexpr int precedence() const {
-		switch(type) {
-			case TokenType::Multiply:
-				return 2;
-			case TokenType::Add:
-				return 1;
-			default:
-				return 0;
-		}
-	}
-
 	constexpr static int precedence(TokenType type) {
 		switch(type) {
 			case TokenType::Multiply:
@@ -178,9 +167,15 @@ struct Token {
 			case TokenType::Add:
 			case TokenType::Subtract:
 				return 1;
-			default:
+			case TokenType::Assign:
 				return 0;
+			default:
+				return -1;
 		}
+	}
+
+	constexpr int precedence() const {
+		return Token::precedence(type);
 	}
 };
 

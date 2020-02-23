@@ -358,6 +358,7 @@ AstNode::Child AstParser::buildStatement() {
 			return nullptr;
 		} else {
 			stmnt->addChild(std::move(expr) );
+			puts("HERE");
 			return stmnt;
 		}
 	}

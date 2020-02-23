@@ -12,23 +12,23 @@ struct Vector4 {
 	int w
 }
 
-struct UnsortedA {
-	int a
-	int b
-	char *str
-}
+//struct UnsortedA {
+//int a
+//int b
+//char *str
+//}
 
-struct UnsortedB {
-	char *str
-	int a
-	int b
-}
+//struct UnsortedB {
+//char *str
+//int a
+//int b
+//}
 
-struct UnsortedC {
-	int a
-	char *str
-	int b
-}
+//struct UnsortedC {
+//int a
+//char *str
+//int b
+//}
 
 //struct Vector4 {
 
@@ -37,9 +37,11 @@ struct UnsortedC {
 fn main() {
 	Vector4 v
 	Matrix4 m
-	UnsortedA ua
-	UnsortedB ub
-	UnsortedC uc
+
+	v.x = 4
+	//UnsortedA ua
+	//UnsortedB ub
+	//UnsortedC uc
 
 	//float f = 0.5
 }

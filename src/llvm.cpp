@@ -53,6 +53,7 @@ void LLVMCodeGen::visit(StructAstNode &node) {
 	for(const auto &member : struc->members) {
 		types.push_back(translateType(member.type) );
 	}
+	//TODO: Sort members for compact layout
 	structTypes[node.name]->setBody(types);
 }
 
