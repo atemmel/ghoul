@@ -87,6 +87,12 @@ void AstPrinter::visit(BinExpressionAstNode &node) {
 	}
 }
 
+void AstPrinter::visit(MemberVariableAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Member accessed : " << node.name << '\n';
+}
+
 void AstPrinter::visit(VariableAstNode &node) {
 	Scope scope;
 	pad(scope.depth);

@@ -72,6 +72,15 @@ void BinExpressionAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
+MemberVariableAstNode::MemberVariableAstNode(const std::string &name)
+	: name(name) {
+	precedence = Token::precedence(TokenType::Identifier);
+}
+
+void MemberVariableAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
 VariableAstNode::VariableAstNode(const std::string &name)
 	: name(name) {
 	precedence = Token::precedence(TokenType::Identifier);
@@ -358,7 +367,6 @@ AstNode::Child AstParser::buildStatement() {
 			return nullptr;
 		} else {
 			stmnt->addChild(std::move(expr) );
-			puts("HERE");
 			return stmnt;
 		}
 	}
@@ -471,7 +479,7 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildPrimaryExpr() {
 		if(tok) {
 			expr = buildCall(tok->value);
 			if(!expr) {
-				expr = std::make_unique<VariableAstNode>(tok->value);
+				expr = buildVariableExpr(tok);
 			}
 		}
 	}
@@ -482,6 +490,38 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildPrimaryExpr() {
 
 	expr->token = tok;
 	return expr;
+}
+
+std::unique_ptr<ExpressionAstNode> AstParser::buildVariableExpr(Token *token) {
+	auto var = std::make_unique<VariableAstNode>(token->value);
+
+	auto child = buildMemberExpr();
+	if(child) {
+		var->addChild(std::move(child) );
+	}
+
+	return var;
+}
+
+std::unique_ptr<ExpressionAstNode> AstParser::buildMemberExpr() {
+	if(!getIf(TokenType::Member) ) {
+		return nullptr;
+	}
+
+	Token *id = getIf(TokenType::Identifier);
+	if(!id) {
+		return toExpr(unexpected() );
+	}
+
+	auto member = std::make_unique<MemberVariableAstNode>(id->value);
+
+	auto child = buildMemberExpr();
+
+	if(child) {
+		member->addChild(std::move(child) );
+	}
+
+	return member;
 }
 
 std::unique_ptr<ExpressionAstNode> AstParser::buildAssignExpr(std::unique_ptr<ExpressionAstNode> &lhs) {

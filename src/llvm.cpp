@@ -184,6 +184,10 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 	visitedVariables = std::move(vars);
 }
 
+void LLVMCodeGen::visit(MemberVariableAstNode &node) {
+
+}
+
 void LLVMCodeGen::visit(VariableAstNode &node) {
 	visitedVariables.push_back(&node);
 	callParams.push_back(ctx->builder.CreateLoad((*locals)[node.name]) );

@@ -93,6 +93,12 @@ struct BinExpressionAstNode : public ExpressionAstNode {
 	TokenType type;
 };
 
+struct MemberVariableAstNode : public ExpressionAstNode {
+	MemberVariableAstNode(const std::string &name);
+	void accept(AstVisitor &visitor) override;
+	std::string name;
+};
+
 struct VariableAstNode : public ExpressionAstNode {
 	VariableAstNode(const std::string &name);
 	void accept(AstVisitor &visitor) override;
@@ -123,6 +129,7 @@ public:
 	virtual void visit(ReturnAstNode &node)				= 0;
 	virtual void visit(CallAstNode &node)				= 0;
 	virtual void visit(BinExpressionAstNode &node)		= 0;
+	virtual void visit(MemberVariableAstNode &node)		= 0;
 	virtual void visit(VariableAstNode &node)			= 0;
 	virtual void visit(StringAstNode &node)				= 0;
 	virtual void visit(IntAstNode &node)				= 0;
@@ -147,6 +154,8 @@ private:
 	std::unique_ptr<ExpressionAstNode> buildCall(const std::string &identifier);
 	std::unique_ptr<ExpressionAstNode> buildExpr();
 	std::unique_ptr<ExpressionAstNode> buildPrimaryExpr();
+	std::unique_ptr<ExpressionAstNode> buildVariableExpr(Token *token);
+	std::unique_ptr<ExpressionAstNode> buildMemberExpr();
 	std::unique_ptr<ExpressionAstNode> buildAssignExpr(std::unique_ptr<ExpressionAstNode> &lhs);
 	std::unique_ptr<ExpressionAstNode> buildBinOp();
 	std::unique_ptr<ExpressionAstNode> buildBinExpr(std::unique_ptr<ExpressionAstNode> &child);

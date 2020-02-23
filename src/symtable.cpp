@@ -260,6 +260,10 @@ void SymTable::visit(BinExpressionAstNode &node) {
 	callArgTypes = std::move(types);
 }
 
+void SymTable::visit(MemberVariableAstNode &node) {
+
+}
+
 void SymTable::visit(VariableAstNode &node) {
 	auto it = locals->find(node.name);
 	if(it == locals->end() ) {
