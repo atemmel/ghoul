@@ -1,6 +1,7 @@
 #include "ast.hpp"
 #include "global.hpp"
 #include "llvm.hpp"
+#include "utils.hpp"
 
 void AstNode::addChild(Child && child) {
 	children.push_back(std::move(child) );

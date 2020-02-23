@@ -1,7 +1,6 @@
 #pragma once
 #include "token.hpp"
 #include "type.hpp"
-#include "dynamicarray.hpp"
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"

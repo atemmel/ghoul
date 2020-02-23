@@ -227,17 +227,6 @@ llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
 	return astType.isPtr ? type->getPointerTo() : type;
 }
 
-std::vector<FunctionAstNode*> LLVMCodeGen::getFuncsFromToplevel(ToplevelAstNode &node) {
-	std::vector<FunctionAstNode*> funcs;
-	for(auto it = node.children.begin(); it != node.children.end(); it++) {
-		auto ptr = dynamic_cast<FunctionAstNode*>(it->get() );
-		if(ptr) {
-			funcs.push_back(ptr);
-		}
-	}
-	return funcs;
-}
-
 void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs) {
 	for(auto f : funcs) {
 		std::vector<llvm::Type*> types;
