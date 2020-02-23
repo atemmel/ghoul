@@ -1,6 +1,9 @@
 #include "type.hpp"
 #include "utils.hpp"
 
+#include <algorithm>
+#include <iostream>
+
 unsigned Type::Scope::depth = 0;
 
 bool Type::operator==(const Type &rhs) const {

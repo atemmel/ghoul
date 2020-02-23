@@ -1,3 +1,5 @@
+extern fn printf(char*, int) int
+
 struct Matrix4 {
 	Vector4 x
 	Vector4 y
@@ -38,7 +40,13 @@ fn main() {
 	Vector4 v
 	Matrix4 m
 
+	//v.abc = 5
 	v.x = 4
+	printf("%d\n", v.x)
+	v.y = 5
+	printf("%d\n", v.y)
+	m.x.x = 1
+	printf("%d\n", m.x.x)
 	//UnsortedA ua
 	//UnsortedB ub
 	//UnsortedC uc

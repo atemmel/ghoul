@@ -20,6 +20,7 @@ public:
 	bool hasType(const std::string &identifier) const;
 
 	const Type* hasStruct(const std::string &identifier) const;
+	const Type* typeHasMember(const Type &type, const std::string &identifier) const;
 
 	void visit(ToplevelAstNode &node) override;
 	void visit(StructAstNode &node) override;

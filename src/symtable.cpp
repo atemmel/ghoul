@@ -51,6 +51,24 @@ const Type* SymTable::hasStruct(const std::string &identifier) const {
 	return &it->second;
 }
 
+const Type *SymTable::typeHasMember(const Type &type, const std::string &identifier) const {
+	auto it = structs.find(type.name);
+	if(it == structs.end() ) {
+		return nullptr;
+	}
+
+	auto &members = it->second.members;
+	auto jt = std::find_if(members.begin(), members.end(), [&](const Member &member) {
+		return member.identifier == identifier;
+	});
+
+	if(jt == members.end() ) {
+		return nullptr;
+	}
+
+	return &jt->type;
+}
+
 void SymTable::visit(ToplevelAstNode &node) {
 	//Look ahead at all function definitions
 	for(auto ptr : node.functions) {
@@ -261,16 +279,35 @@ void SymTable::visit(BinExpressionAstNode &node) {
 }
 
 void SymTable::visit(MemberVariableAstNode &node) {
+	auto &back = callArgTypes.back();
+	auto member = typeHasMember(back, node.name);
+	if(!member) {
+		Global::errStack.push(std::string("Type '" + back.string() + "' has no member '"
+			+ node.name + "'"), node.token);
+		callArgTypes.clear();
+		//TODO: Is this a good idea?
+		//callArgTypes.push_back({"", false});
+		return;
+	}
 
+	callArgTypes.pop_back();
+	callArgTypes.push_back(*member);
+
+	for(const auto &child : node.children) {
+		child->accept(*this);
+	}
 }
 
 void SymTable::visit(VariableAstNode &node) {
 	auto it = locals->find(node.name);
 	if(it == locals->end() ) {
 		Global::errStack.push("Variable '"
-				+ node.name + "' used but never defined", node.token);
+			+ node.name + "' used but never defined", node.token);
 	} else {
 		callArgTypes.push_back(*it->second);
+		for(const auto &child : node.children) {
+			child->accept(*this);
+		}
 	}
 }
 
