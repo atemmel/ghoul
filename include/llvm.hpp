@@ -57,12 +57,15 @@ private:
 	llvm::Type *translateType(const Type &type) const;
 	std::vector<FunctionAstNode*> getFuncsFromToplevel(ToplevelAstNode &node);
 	void buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs);
+	void buildStructDefinitions(const std::vector<StructAstNode*> &structs);
+
 	ModuleInfo *mi = nullptr;
 	Context *ctx = nullptr;
 
 	std::vector<llvm::Value*> callParams;
 	std::vector<VariableAstNode*> visitedVariables;
 
+	Map<llvm::StructType*> structTypes;
 	Map<Locals> allLocals;
 	Locals *locals = nullptr;
 	bool lastStatementVisitedWasReturn = false;

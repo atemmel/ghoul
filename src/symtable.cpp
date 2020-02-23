@@ -43,6 +43,14 @@ bool SymTable::hasType(const std::string &identifier) const {
 	return it != types.end();
 }
 
+const Type* SymTable::hasStruct(const std::string &identifier) const {
+	auto it = structs.find(identifier);
+	if(it == structs.end() ) {
+		return nullptr;
+	}
+	return &it->second;
+}
+
 void SymTable::visit(ToplevelAstNode &node) {
 	//Look ahead at all function definitions
 	for(auto ptr : node.functions) {

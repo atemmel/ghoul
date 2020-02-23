@@ -40,6 +40,7 @@ void LLVMCodeGen::setContext(Context *ctx) {
 void LLVMCodeGen::visit(ToplevelAstNode &node) {
 	FunctionAstNode *main = nullptr;
 	buildFunctionDefinitions(node.functions);
+	buildStructDefinitions(node.structs);
 
 	for(const auto &child : node.children) {
 		child->accept(*this);
@@ -47,7 +48,12 @@ void LLVMCodeGen::visit(ToplevelAstNode &node) {
 }
 
 void LLVMCodeGen::visit(StructAstNode &node) {
-	//TODO: this
+	std::vector<llvm::Type*> types;
+	const Type *struc = mi->symtable.hasStruct(node.name);
+	for(const auto &member : struc->members) {
+		types.push_back(translateType(member.type) );
+	}
+	structTypes[node.name]->setBody(types);
 }
 
 void LLVMCodeGen::visit(FunctionAstNode &node) {
@@ -207,8 +213,15 @@ llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
 		type = ctx->builder.getInt32Ty();
 	} else if(astType.name == "void") {
 		type = ctx->builder.getVoidTy();
+	} else if(astType.name == "float") {
+		type = ctx->builder.getFloatTy();
 	} else {
-		return nullptr;
+		auto it = structTypes.find(astType.name);
+		if(it == structTypes.end() ) {
+			std::cerr << "UHOH\n";
+			return nullptr;
+		}
+		return it->second;
 	}
 
 	return astType.isPtr ? type->getPointerTo() : type;
@@ -250,6 +263,13 @@ void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &
 	}
 }
 
+void LLVMCodeGen::buildStructDefinitions(const std::vector<StructAstNode*> &structs) {
+	for(auto ptr : structs) {
+		
+		llvm::StructType *newStruct = llvm::StructType::create(ctx->context, ptr->name);
+		structTypes.insert({ptr->name, newStruct});
+	}
+}
 
 bool gen(ModuleInfo *mi, Context *ctx) {
 	std::cout << "Generating...\n";

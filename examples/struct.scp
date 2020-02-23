@@ -1,19 +1,45 @@
+struct Matrix4 {
+	Vector4 x
+	Vector4 y
+	Vector4 z
+	Vector4 w
+}
+
 struct Vector4 {
 	int x
 	int y = "James"
 	int z
+	int w
+}
+
+struct UnsortedA {
+	int a
+	int b
+	char *str
+}
+
+struct UnsortedB {
+	char *str
+	int a
+	int b
+}
+
+struct UnsortedC {
+	int a
+	char *str
+	int b
 }
 
 //struct Vector4 {
 
 //}
 
-struct Matrix4 {
-	Vector4 x
-	Vector4 y
-	Vector4 z
-}
-
 fn main() {
+	Vector4 v
+	Matrix4 m
+	UnsortedA ua
+	UnsortedB ub
+	UnsortedC uc
 
+	//float f = 0.5
 }
