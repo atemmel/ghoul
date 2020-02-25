@@ -58,7 +58,7 @@ void LLVMCodeGen::visit(StructAstNode &node) {
 }
 
 void LLVMCodeGen::visit(FunctionAstNode &node) {
-
+	mi->symtable.setActiveFunction(node.signature.name);
 	llvm::Function *func = mi->functions[node.signature.name];
 	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", func);
 	ctx->builder.SetInsertPoint(entry);
@@ -100,7 +100,7 @@ void LLVMCodeGen::visit(ExternAstNode &node) {
 
 void LLVMCodeGen::visit(StatementAstNode &node) {
 	callParams.clear();
-	visitedVariables.clear();
+	instructions.clear();
 	for(const auto &child : node.children) {
 		if(child) {
 			lastStatementVisitedWasReturn = false;
@@ -134,7 +134,7 @@ void LLVMCodeGen::visit(ReturnAstNode &node) {
 
 void LLVMCodeGen::visit(CallAstNode &node) {
 	auto oldParams = std::move(callParams);
-	auto oldVars = std::move(visitedVariables);
+	auto oldInsts = std::move(instructions);
 	std::vector<llvm::Type*> callArgs;
 	auto sig = mi->symtable.hasFunc(node.identifier);
 	for(auto &p : sig->parameters) {
@@ -144,7 +144,7 @@ void LLVMCodeGen::visit(CallAstNode &node) {
 	llvm::ArrayRef<llvm::Type*> argsRef(callArgs);
 
 	llvm::FunctionType *callType = llvm::FunctionType::get(translateType(sig->returnType), argsRef, false);
-	auto putsFunc = mi->module->getOrInsertFunction(node.identifier, callType);
+	auto func = mi->module->getOrInsertFunction(node.identifier, callType);
 	
 	for(const auto &child : node.children) {
 		if(child) {
@@ -153,13 +153,13 @@ void LLVMCodeGen::visit(CallAstNode &node) {
 	}
 
 	llvm::ArrayRef<llvm::Value*> paramRef(callParams);
-	oldParams.push_back(ctx->builder.CreateCall(putsFunc, paramRef) );
+	oldParams.push_back(ctx->builder.CreateCall(func, paramRef) );
 	callParams = std::move(oldParams);
-	visitedVariables = std::move(oldVars);
+	instructions = std::move(oldInsts);
 }
 
 void LLVMCodeGen::visit(BinExpressionAstNode &node) {
-	auto vars = std::move(visitedVariables);
+	auto insts = std::move(instructions);
 	auto params = std::move(callParams);
 	for(const auto &child : node.children) {
 		if(child) {
@@ -168,8 +168,8 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 	}
 
 	if(node.type == TokenType::Assign) {
-		VariableAstNode *node = visitedVariables.front();
-		ctx->builder.CreateStore(callParams.back(), (*locals)[node->name]);
+		auto inst = instructions.front();
+		ctx->builder.CreateStore(callParams.back(), inst);
 		params.push_back(callParams.back() );
 	} else if(node.type == TokenType::Add) {
 		params.push_back(ctx->builder.CreateAdd(callParams.front(), callParams.back() ) );
@@ -181,16 +181,30 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 		params.push_back(ctx->builder.CreateSDiv(callParams.front(), callParams.back() ) );
 	}
 	callParams = std::move(params);
-	visitedVariables = std::move(vars);
+	instructions = std::move(insts);
 }
 
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
-
+	unsigned u = mi->symtable.getMemberOffset(*lastType, node.name);
+	indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, u, true) ) );
+	//TODO: We need to go deeper
 }
 
 void LLVMCodeGen::visit(VariableAstNode &node) {
-	visitedVariables.push_back(&node);
-	callParams.push_back(ctx->builder.CreateLoad((*locals)[node.name]) );
+	auto ld = (*locals)[node.name];
+	if(node.children.empty() ) {
+		callParams.push_back(ctx->builder.CreateLoad(ld) );
+		instructions.push_back(ld);
+	} else {
+		lastType = mi->symtable.getLocal(node.name);
+		node.children.front()->accept(*this);
+		indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) ) );
+		llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(ld, indicies);
+		ctx->builder.Insert(gep);
+		indicies.clear();
+		callParams.push_back(ctx->builder.CreateLoad(gep) );
+		instructions.push_back(gep);
+	}
 }
 
 void LLVMCodeGen::visit(StringAstNode &node) {

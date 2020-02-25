@@ -15,12 +15,16 @@ public:
 		return functions.insert({identifier, func}).second;
 	}
 
+	void setActiveFunction(const std::string &str);
+	const Type *getLocal(const std::string &str) const;
+
 	const FunctionSignature *hasFunc(const std::string &identifier) const;
 
 	bool hasType(const std::string &identifier) const;
 
 	const Type* hasStruct(const std::string &identifier) const;
 	const Type* typeHasMember(const Type &type, const std::string &identifier) const;
+	unsigned getMemberOffset(const Type &type, const std::string &identifier) const;
 
 	void visit(ToplevelAstNode &node) override;
 	void visit(StructAstNode &node) override;

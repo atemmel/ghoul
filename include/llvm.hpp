@@ -64,12 +64,14 @@ private:
 	Context *ctx = nullptr;
 
 	std::vector<llvm::Value*> callParams;
-	std::vector<VariableAstNode*> visitedVariables;
+	std::vector<llvm::Instruction*> instructions;
+	std::vector<llvm::Value*> indicies;
 
 	Map<llvm::StructType*> structTypes;
 	Map<Locals> allLocals;
 	Locals *locals = nullptr;
 	bool lastStatementVisitedWasReturn = false;
+	const Type *lastType = nullptr;
 };
 
 bool gen(ModuleInfo *mi, Context *ctx);

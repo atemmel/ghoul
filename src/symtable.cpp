@@ -30,6 +30,14 @@ void SymTable::dump() const {
 	}
 }
 
+void SymTable::setActiveFunction(const std::string &str) {
+	locals = &allLocals[str];
+}
+
+const Type *SymTable::getLocal(const std::string &str) const {
+	return (*locals)[str];
+}
+
 const FunctionSignature *SymTable::hasFunc(const std::string &identifier) const {
 	auto it = functions.find(identifier);
 	if(it == functions.end() ) {
@@ -67,6 +75,23 @@ const Type *SymTable::typeHasMember(const Type &type, const std::string &identif
 	}
 
 	return &jt->type;
+}
+
+unsigned SymTable::getMemberOffset(const Type &type, const std::string &identifier) const {
+	auto it = structs.find(type.name);
+	if(it == structs.end() ) {
+		//TODO: Hmmm
+		return -1;
+	}
+
+	auto &members = it->second.members;
+	unsigned i = 0;
+	for(; i < members.size(); i++) {
+		if(identifier == members[i].identifier) {
+			break;
+		}
+	}
+	return i;
 }
 
 void SymTable::visit(ToplevelAstNode &node) {
@@ -154,7 +179,7 @@ void SymTable::visit(FunctionAstNode &node) {
 				+ node.signature.returnType.string() + "'", node.token);
 	}
 
-	locals->clear();
+	//locals->clear();
 }
 
 void SymTable::visit(ExternAstNode &node) {
