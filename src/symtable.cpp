@@ -30,6 +30,10 @@ void SymTable::dump() const {
 	}
 }
 
+bool SymTable::pushFunc(const std::string &identifier, FunctionSignature *func) {
+	return functions.insert({identifier, func}).second;
+}
+
 void SymTable::setActiveFunction(const std::string &str) {
 	locals = &allLocals[str];
 }

@@ -11,9 +11,7 @@ public:
 
 	void dump() const;
 
-	bool pushFunc(const std::string &identifier, FunctionSignature *func) {
-		return functions.insert({identifier, func}).second;
-	}
+	bool pushFunc(const std::string &identifier, FunctionSignature *func);
 
 	void setActiveFunction(const std::string &str);
 	const Type *getLocal(const std::string &str) const;
