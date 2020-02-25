@@ -63,8 +63,19 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", func);
 	ctx->builder.SetInsertPoint(entry);
 
+	if(node.signature.name == "main") {
+		ctx->builder.CreateAlloca(llvm::Type::getInt32Ty(ctx->context) );
+	}
+
 	locals = &allLocals[node.signature.name];
 	auto it = ctx->builder.GetInsertBlock();
+
+	//Uuum, okay?
+	if(node.signature.name == "main") {
+		auto alloca = new llvm::AllocaInst(llvm::Type::getInt32Ty(ctx->context), 0, "", it);
+		ctx->builder.CreateStore(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) ), alloca );
+	}
+
 	for(auto &arg : func->args() ) {
 
 		auto alloca = locals->insert(std::make_pair(arg.getName(), 
@@ -112,8 +123,9 @@ void LLVMCodeGen::visit(StatementAstNode &node) {
 void LLVMCodeGen::visit(VariableDeclareAstNode &node) {
 	auto it = ctx->builder.GetInsertBlock();
 	auto type = translateType(node.type);
+	//ctx->builder.Insert(alloca);
 	locals->insert(std::make_pair(node.identifier, 
-		new llvm::AllocaInst(type, 0, node.identifier, it) ) );
+				new llvm::AllocaInst(type, 0, node.identifier, it) ) );
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}
@@ -170,6 +182,7 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 	if(node.type == TokenType::Assign) {
 		auto inst = instructions.front();
 		ctx->builder.CreateStore(callParams.back(), inst);
+		//ctx->builder.CreateAlignedStore(callParams.back(), inst, 4);
 		params.push_back(callParams.back() );
 	} else if(node.type == TokenType::Add) {
 		params.push_back(ctx->builder.CreateAdd(callParams.front(), callParams.back() ) );
@@ -189,12 +202,14 @@ void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 	unsigned u = mi->symtable.getMemberOffset(*lastType, node.name);
 	indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, u, true) ) );
 	indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) ) );
+
 	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(instructions.back(), indicies);
 	instructions.back() = gep;
 	ctx->builder.Insert(gep);
 	
 	if(node.children.empty() ) {
 		callParams.push_back(ctx->builder.CreateLoad(gep) );
+		//callParams.push_back(ctx->builder.CreateAlignedLoad(gep, 4) );
 		return;
 	}
 
@@ -208,7 +223,7 @@ void LLVMCodeGen::visit(VariableAstNode &node) {
 	auto ld = (*locals)[node.name];
 	instructions.push_back(ld);
 	if(node.children.empty() ) {
-		callParams.push_back(ctx->builder.CreateLoad(ld) );
+		callParams.push_back(ctx->builder.CreateAlignedLoad(ld, 4) );
 	} else {
 		lastType = mi->symtable.getLocal(node.name);
 		node.children.front()->accept(*this);

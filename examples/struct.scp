@@ -34,24 +34,25 @@ fn printint(int i ) {
 fn main() int {
 	Vector4 v
 	Matrix4 m
-
+	
 	//v.abc = 5
-	//v.x = 4
-	//v.y = 5
-	//v.z = 6
-	//v.w = 7
+	v.x = 4
+	v.y = 5
+	v.z = 6
+	v.w = 7
 
-	//printf("x: %d, ", v.x)
-	//printf("y: %d, ", v.y)
-	//printf("z: %d, ", v.z)
-	//printf("w: %d", v.w)
-	//printf("\n", 0)
+	printf("x: %d, ", v.x)
+	printf("y: %d, ", v.y)
+	printf("z: %d, ", v.z)
+	printf("w: %d", v.w)
+	printf("\n", 0)
 
-	//printvec(v)
-	//printint(v.x)
+	printvec(v)
+	printint(v.x)
 
 	m.x.y = 3
 	m.z.w = 2
+	//return m.x.y
 	printf("m.x.y = %d\n", m.x.y)
 	printf("m.z.w = %d\n", m.z.w)
 	printf("m.z.w * m.x.y = %d\n", m.z.w * m.x.y)
