@@ -263,7 +263,6 @@ AstNode::Child AstParser::buildFunction() {
 	while(!getIf(TokenType::BlockClose) ) {
 		auto stmnt = buildStatement();
 		if(stmnt) {
-			std::cout << "Could build stmnt, next tok " << iterator->value << '\n';
 			function->addChild(std::move(stmnt) );
 		} else {
 			Global::errStack.push("Could not build valid statement", &*iterator);
