@@ -343,7 +343,7 @@ void write(ModuleInfo *mi, Context *ctx) {
 	auto features = "";
 
 	llvm::TargetOptions opt;
-	auto RM = llvm::Optional<llvm::Reloc::Model>();
+	auto RM = llvm::Optional<llvm::Reloc::Model>(llvm::Reloc::Model::DynamicNoPIC);
 	auto theTargetMachine = target->createTargetMachine(targetTriple, cpu, features, opt, RM);
 
 	mi->module->setDataLayout(theTargetMachine->createDataLayout() );
@@ -369,5 +369,6 @@ void write(ModuleInfo *mi, Context *ctx) {
 
 void link(ModuleInfo *mi, Context *ctx) {
 	std::cout << "Linking to " << mi->name << '\n';
-	system((std::string("gcc -O0 -static ") + mi->objName + " -o " + mi->name).c_str() );
+	//system((std::string("gcc -O0 -static ") + mi->objName + " -o " + mi->name).c_str() );
+	system((std::string("gcc -O0 ") + mi->objName + " -o " + mi->name + " -lSDL2").c_str() );
 }

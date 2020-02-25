@@ -1,0 +1,13 @@
+extern fn SDL_Init() int
+extern fn SDL_Quit() int
+extern fn SDL_CreateWindow(char *, int, int, int, int, int) void*
+extern fn SDL_DestroyWindow(void *) int
+extern fn SDL_Delay(int) int
+
+fn main() {
+	SDL_Init()
+	void *ptr = SDL_CreateWindow("hello sdl2", 0, 0, 300, 300, 1)
+	SDL_Delay(2000)
+	SDL_DestroyWindow(ptr)
+	SDL_Quit()
+}

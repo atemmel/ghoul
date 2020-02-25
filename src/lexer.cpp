@@ -72,7 +72,7 @@ SEEK_TOKEN_END:	//Iterate until end of token
 	start = iterator;
 	if(isalnum(*iterator) ) {
 		//TODO: Account for step
-		while(!std::isspace(*iterator) && isalnum(*iterator) ) {
+		while(!std::isspace(*iterator) && (isalnum(*iterator) || *iterator == '_') ) {
 			if(++iterator == end) {
 				--iterator;
 				goto TOKEN_TEST;
@@ -135,7 +135,9 @@ FLOAT_TEST:	//Test if token is floating point literal
 
 IDENTIFIER_TOKEN:	//Otherwise, must be an identifier
 	if(std::distance(start, iterator) != 0 &&
-			std::all_of(start, iterator, ::isalnum) ) {
+			std::all_of(start, iterator, [](char c) {
+				return std::isalnum(c) || c == '_';
+	}) ) {
 		current.type = TokenType::Identifier;
 	} else {
 
