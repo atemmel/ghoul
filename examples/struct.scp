@@ -36,16 +36,35 @@ struct Vector4 {
 
 //}
 
+fn printvec(Vector4 v) {
+	printf("x: %d\n", v.x)
+		//printf("y: %d, ", v.y)
+		//printf("z: %d, ", v.z)
+		//printf("w: %d", v.w)
+		//printf("\n", 0)
+}
+
 fn main() {
 	Vector4 v
-	//Matrix4 m
+		//Matrix4 m
 
 	//v.abc = 5
 	v.x = 4
-	v.y = 5
-	printf("%d\n", v.x)
-	printf("%d\n", v.y)
-	printf("%d\n", v.x * v.y)
+	//v.y = 5
+	//v.z = 6
+	//v.w = 7
+
+	printf("x: %d\n", v.x)
+	//printf("y: %d, ", v.y)
+	//printf("z: %d, ", v.z)
+	//printf("w: %d", v.w)
+	//printf("\n", 0)
+
+	printvec(v)
+
+	//m.x.y = 1
+	//printf("%d\n", m.x.y)
+	//printf("%d\n", v.x * v.y)
 	//printf("%d\n", v.y)
 	//m.x.x = 1
 	//printf("%d\n", m.x.x)

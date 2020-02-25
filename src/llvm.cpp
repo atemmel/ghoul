@@ -39,8 +39,8 @@ void LLVMCodeGen::setContext(Context *ctx) {
 
 void LLVMCodeGen::visit(ToplevelAstNode &node) {
 	FunctionAstNode *main = nullptr;
-	buildFunctionDefinitions(node.functions);
 	buildStructDefinitions(node.structs);
+	buildFunctionDefinitions(node.functions);
 
 	for(const auto &child : node.children) {
 		child->accept(*this);
@@ -187,7 +187,10 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 	unsigned u = mi->symtable.getMemberOffset(*lastType, node.name);
 	indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, u, true) ) );
-	//TODO: We need to go deeper
+	lastType = mi->symtable.typeHasMember(*lastType, node.name);
+	for(const auto &c : node.children) {
+		c->accept(*this);
+	}
 }
 
 void LLVMCodeGen::visit(VariableAstNode &node) {
@@ -221,7 +224,7 @@ void LLVMCodeGen::visit(StringAstNode &node) {
 void LLVMCodeGen::visit(IntAstNode &node) {
 	auto type = llvm::IntegerType::getInt32Ty(ctx->context);
 	callParams.push_back(static_cast<llvm::Value*>(llvm::ConstantInt::get(type, 
-		llvm::APInt(32, std::to_string(node.value), 10) ) ) );
+		llvm::APInt(32, node.value) ) ) );
 }
 
 llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
@@ -237,6 +240,7 @@ llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
 	} else {
 		auto it = structTypes.find(astType.name);
 		if(it == structTypes.end() ) {
+			std::cerr << astType.string() << '\n';
 			std::cerr << "UHOH\n";
 			return nullptr;
 		}
