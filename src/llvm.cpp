@@ -185,8 +185,19 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 }
 
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
+	indicies.clear();
 	unsigned u = mi->symtable.getMemberOffset(*lastType, node.name);
 	indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, u, true) ) );
+	indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) ) );
+	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(instructions.back(), indicies);
+	instructions.back() = gep;
+	ctx->builder.Insert(gep);
+	
+	if(node.children.empty() ) {
+		callParams.push_back(ctx->builder.CreateLoad(gep) );
+		return;
+	}
+
 	lastType = mi->symtable.typeHasMember(*lastType, node.name);
 	for(const auto &c : node.children) {
 		c->accept(*this);
@@ -195,18 +206,12 @@ void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 
 void LLVMCodeGen::visit(VariableAstNode &node) {
 	auto ld = (*locals)[node.name];
+	instructions.push_back(ld);
 	if(node.children.empty() ) {
 		callParams.push_back(ctx->builder.CreateLoad(ld) );
-		instructions.push_back(ld);
 	} else {
 		lastType = mi->symtable.getLocal(node.name);
 		node.children.front()->accept(*this);
-		indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) ) );
-		llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(ld, indicies);
-		ctx->builder.Insert(gep);
-		indicies.clear();
-		callParams.push_back(ctx->builder.CreateLoad(gep) );
-		instructions.push_back(gep);
 	}
 }
 

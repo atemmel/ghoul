@@ -14,63 +14,47 @@ struct Vector4 {
 	int w
 }
 
-//struct UnsortedA {
-//int a
-//int b
-//char *str
-//}
-
-//struct UnsortedB {
-//char *str
-//int a
-//int b
-//}
-
-//struct UnsortedC {
-//int a
-//char *str
-//int b
-//}
-
 //struct Vector4 {
 
 //}
 
 fn printvec(Vector4 v) {
-	printf("x: %d\n", v.x)
-		//printf("y: %d, ", v.y)
-		//printf("z: %d, ", v.z)
-		//printf("w: %d", v.w)
-		//printf("\n", 0)
+	printf("Inside printvec\n", 0)
+	printf("x: %d, ", v.x)
+	printf("y: %d, ", v.y)
+	printf("z: %d, ", v.z)
+	printf("w: %d", v.w)
+	printf("\n", 0)
 }
 
-fn main() {
+fn printint(int i ) {
+	printf("i: %d\n", i)
+}
+
+fn main() int {
 	Vector4 v
-		//Matrix4 m
+	Matrix4 m
 
 	//v.abc = 5
-	v.x = 4
+	//v.x = 4
 	//v.y = 5
 	//v.z = 6
 	//v.w = 7
 
-	printf("x: %d\n", v.x)
+	//printf("x: %d, ", v.x)
 	//printf("y: %d, ", v.y)
 	//printf("z: %d, ", v.z)
 	//printf("w: %d", v.w)
 	//printf("\n", 0)
 
-	printvec(v)
+	//printvec(v)
+	//printint(v.x)
 
-	//m.x.y = 1
-	//printf("%d\n", m.x.y)
-	//printf("%d\n", v.x * v.y)
-	//printf("%d\n", v.y)
-	//m.x.x = 1
-	//printf("%d\n", m.x.x)
-	//UnsortedA ua
-	//UnsortedB ub
-	//UnsortedC uc
+	m.x.y = 3
+	m.z.w = 2
+	printf("m.x.y = %d\n", m.x.y)
+	printf("m.z.w = %d\n", m.z.w)
+	printf("m.z.w * m.x.y = %d\n", m.z.w * m.x.y)
 
-	//float f = 0.5
+	return 0
 }
