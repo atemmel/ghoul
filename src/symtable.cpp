@@ -131,6 +131,10 @@ void SymTable::visit(ToplevelAstNode &node) {
 	}
 }
 
+void SymTable::visit(LinkAstNode &node) {
+
+}
+
 void SymTable::visit(StructAstNode &node) {
 	Type type;
 	type.name = node.name;

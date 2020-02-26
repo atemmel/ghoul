@@ -25,6 +25,7 @@ public:
 	unsigned getMemberOffset(const Type &type, const std::string &identifier) const;
 
 	void visit(ToplevelAstNode &node) override;
+	void visit(LinkAstNode &node) override;
 	void visit(StructAstNode &node) override;
 	void visit(FunctionAstNode &node) override;
 	void visit(ExternAstNode &node) override;

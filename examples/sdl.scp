@@ -1,3 +1,4 @@
+link "SDL2"
 extern fn SDL_Init() int
 extern fn SDL_Quit() int
 extern fn SDL_CreateWindow(char *, int, int, int, int, int) void*

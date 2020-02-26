@@ -13,6 +13,15 @@ void AstPrinter::visit(ToplevelAstNode &node) {
 	}
 }
 
+void AstPrinter::visit(LinkAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Link\n";
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
+}
+
 void AstPrinter::visit(StructAstNode &node) {
 	Scope scope;
 	pad(scope.depth);

@@ -15,6 +15,7 @@ class ToplevelAstNode;
 class FunctionAstNode;
 class ExternAstNode;
 class StructAstNode;
+class StringAstNode;
 
 struct FunctionSignature {
 	std::string name;
@@ -42,6 +43,11 @@ struct ToplevelAstNode : public AstNode {
 	std::vector<FunctionAstNode*> functions;
 	std::vector<ExternAstNode*> externs;
 	std::vector<StructAstNode*> structs;
+};
+
+struct LinkAstNode : public AstNode {
+	void accept(AstVisitor &visitor) override;
+	StringAstNode *string = nullptr;
 };
 
 struct StructAstNode : public AstNode {
@@ -121,6 +127,7 @@ class AstVisitor {
 public:
 	virtual ~AstVisitor() = default;
 	virtual void visit(ToplevelAstNode &node)			= 0;
+	virtual void visit(LinkAstNode &node)				= 0;
 	virtual void visit(StructAstNode &node)				= 0;
 	virtual void visit(FunctionAstNode &node)			= 0;
 	virtual void visit(ExternAstNode &node)				= 0;
@@ -145,6 +152,7 @@ private:
 	void unget();
 	void discardWhile(TokenType type);
 	AstNode::Root buildTree();
+	AstNode::Child buildLink();
 	AstNode::Child buildStruct();
 	AstNode::Child buildFunction();
 	AstNode::Child buildParams();

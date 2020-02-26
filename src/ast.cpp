@@ -19,8 +19,8 @@ void ToplevelAstNode::addExtern(ExternAstNode *ext) {
 	externs.push_back(ext);
 }
 
-FunctionAstNode::FunctionAstNode(const std::string &identifier) {
-	signature.name = identifier;
+void LinkAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
 }
 
 StructAstNode::StructAstNode(const std::string &name) 
@@ -29,6 +29,10 @@ StructAstNode::StructAstNode(const std::string &name)
 
 void StructAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
+}
+
+FunctionAstNode::FunctionAstNode(const std::string &identifier) {
+	signature.name = identifier;
 }
 
 void FunctionAstNode::accept(AstVisitor &visitor) {
@@ -140,7 +144,11 @@ AstNode::Root AstParser::buildTree() {
 
 	for(;;) {
 		discardWhile(TokenType::Terminator);
-		if(getIf(TokenType::Function) ) {
+		auto link = buildLink();
+		if(link) {
+			toplevel->addChild(std::move(link) );
+		}
+		else if(getIf(TokenType::Function) ) {
 			auto func = buildFunction();
 			if(!func) return nullptr;
 			//TODO: If func is empty, a parsing error has occured
@@ -172,6 +180,29 @@ AstNode::Root AstParser::buildTree() {
 		return nullptr;
 	}
 	return toplevel;
+}
+
+AstNode::Child AstParser::buildLink() {
+	Token *token = getIf(TokenType::Link);
+	if(!token) {
+		return nullptr;
+	}
+
+	auto link = std::make_unique<LinkAstNode>();
+	link->token = token;
+
+	token = getIf(TokenType::StringLiteral);
+	if(!token) {
+		return unexpected();
+	}
+
+	auto str = std::make_unique<StringAstNode>(token->value);
+	str->token = token;
+
+	link->string = str.get();
+	link->addChild(std::move(str) );
+
+	return link;
 }
 
 AstNode::Child AstParser::buildStruct() {

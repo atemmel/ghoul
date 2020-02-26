@@ -6,9 +6,11 @@ let b:current_syntax = "scp"
 
 syn keyword Keyword fn
 
-syn keyword Keyword extern return struct
+syn keyword Keyword extern return struct link
 
 syn keyword Type void char int float
+
+syn keyword cOperator link
 
 syn match Constant '\d\+'
 

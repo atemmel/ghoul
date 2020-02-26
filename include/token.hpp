@@ -19,10 +19,8 @@ enum struct TokenType {
 	ParensClose,        // )
 	BlockOpen,          // {
 	BlockClose,         // }
-	DynamicArrayStart,  // [
-	DynamicArrayEnd,    // ]
-	StaticArrayStart,   // [[
-	StaticArrayEnd,     // ]]
+	ArrayStart,  		// [
+	ArrayEnd,    		// ]
 
 	Add,                // +
 	Subtract,           // -
@@ -49,10 +47,7 @@ enum struct TokenType {
 	LessEquals,         // <=
 	GreaterEquals,      // >=
 	
-	AddressOf,          // &
-	Dereference,        // *
 	Inverse,            // !
-	Negate,             // -
 
 	Ternary,            // ?
 
@@ -69,6 +64,8 @@ enum struct TokenType {
 	Struct,	            // struct
 	Extern,				// extern
 	Return,				// return
+	Link,				// link
+
 
 	//Keep this one last
 	NTokenTypes
@@ -99,8 +96,6 @@ struct Token {
 		"}",
 		"[",
 		"]",
-		"[[",
-		"]]",
 		"+",
 		"-",
 		"*",
@@ -124,10 +119,7 @@ struct Token {
 		"%=",
 		"<=",
 		">=",
-		"&",
-		"*",
 		"!",
-		"-",
 		"?",
 
 		"fn",
@@ -141,7 +133,8 @@ struct Token {
 		"null",
 		"struct",
 		"extern",
-		"return"
+		"return",
+		"link"
 	};
 
 	constexpr static std::array<std::string_view, 5> altStrs = {

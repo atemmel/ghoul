@@ -5,23 +5,18 @@
 
 #include "llvm/IR/Module.h"
 
-#include <iostream>
 #include <vector>
-#include <stack>
+#include <set>
 #include <string>
 #include <memory>
 #include <unordered_map>
 
 struct ModuleInfo {
-	using ValueMap = std::unordered_map<std::string, llvm::Value*>;
-
 	std::string name;
 	std::string fileName;
 	std::string objName;
+	std::set<std::string> links;
 	std::unique_ptr<llvm::Module> module;
-	ValueMap values;
-	std::unordered_map<std::string, llvm::Function*> functions;
-	std::unordered_map<std::string, llvm::FunctionCallee> functionCallees;
 	std::unique_ptr<ToplevelAstNode> ast;
 	SymTable symtable;
 };
@@ -38,6 +33,7 @@ public:
 	void setModuleInfo(ModuleInfo *mi);
 	void setContext(Context *ctx);
 	void visit(ToplevelAstNode &node) override;
+	void visit(LinkAstNode &node) override;
 	void visit(StructAstNode &node) override;
 	void visit(FunctionAstNode &node) override;
 	void visit(ExternAstNode &node) override;
@@ -64,14 +60,17 @@ private:
 	Context *ctx = nullptr;
 
 	std::vector<llvm::Value*> callParams;
-	std::vector<llvm::Instruction*> instructions;
 	std::vector<llvm::Value*> indicies;
+	std::vector<llvm::Instruction*> instructions;
 
 	Map<llvm::StructType*> structTypes;
+	Map<llvm::Function*> functions;
+	Map<llvm::Value*> values;
 	Map<Locals> allLocals;
 	Locals *locals = nullptr;
-	bool lastStatementVisitedWasReturn = false;
+
 	const Type *lastType = nullptr;
+	bool lastStatementVisitedWasReturn = false;
 };
 
 bool gen(ModuleInfo *mi, Context *ctx);

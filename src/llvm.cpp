@@ -26,8 +26,7 @@
 #include <llvm/Support/FileSystem.h>
 #include <llvm/IR/LegacyPassManager.h>
 
-#include <string>
-#include <vector>
+#include <iostream>
 
 void LLVMCodeGen::setModuleInfo(ModuleInfo *mi) {
 	this->mi = mi;
@@ -57,9 +56,13 @@ void LLVMCodeGen::visit(StructAstNode &node) {
 	structTypes[node.name]->setBody(types);
 }
 
+void LLVMCodeGen::visit(LinkAstNode &node) {
+	mi->links.insert(node.string->value);
+}
+
 void LLVMCodeGen::visit(FunctionAstNode &node) {
 	mi->symtable.setActiveFunction(node.signature.name);
-	llvm::Function *func = mi->functions[node.signature.name];
+	llvm::Function *func = functions[node.signature.name];
 	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", func);
 	ctx->builder.SetInsertPoint(entry);
 
@@ -123,7 +126,6 @@ void LLVMCodeGen::visit(StatementAstNode &node) {
 void LLVMCodeGen::visit(VariableDeclareAstNode &node) {
 	auto it = ctx->builder.GetInsertBlock();
 	auto type = translateType(node.type);
-	//ctx->builder.Insert(alloca);
 	locals->insert(std::make_pair(node.identifier, 
 				new llvm::AllocaInst(type, 0, node.identifier, it) ) );
 	for(const auto &child : node.children) {
@@ -182,7 +184,6 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 	if(node.type == TokenType::Assign) {
 		auto inst = instructions.front();
 		ctx->builder.CreateStore(callParams.back(), inst);
-		//ctx->builder.CreateAlignedStore(callParams.back(), inst, 4);
 		params.push_back(callParams.back() );
 	} else if(node.type == TokenType::Add) {
 		params.push_back(ctx->builder.CreateAdd(callParams.front(), callParams.back() ) );
@@ -209,7 +210,6 @@ void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 	
 	if(node.children.empty() ) {
 		callParams.push_back(ctx->builder.CreateLoad(gep) );
-		//callParams.push_back(ctx->builder.CreateAlignedLoad(gep, 4) );
 		return;
 	}
 
@@ -231,10 +231,10 @@ void LLVMCodeGen::visit(VariableAstNode &node) {
 }
 
 void LLVMCodeGen::visit(StringAstNode &node) {
-	auto it = mi->values.find(node.value);
-	if(it == mi->values.end() ) {
+	auto it = values.find(node.value);
+	if(it == values.end() ) {
 		auto value = ctx->builder.CreateGlobalStringPtr(node.value);
-		mi->values[node.value] = value;
+		values[node.value] = value;
 		callParams.push_back(value);
 	} else {
 		callParams.push_back(it->second);
@@ -287,7 +287,7 @@ void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &
 			func->arg_begin()[i].setName(f->signature.paramNames[i]);
 		}
 
-		mi->functions.insert(std::make_pair(f->signature.name, func) );
+		functions.insert(std::make_pair(f->signature.name, func) );
 
 		allLocals.insert(std::make_pair(
 					f->signature.name,
@@ -370,5 +370,10 @@ void write(ModuleInfo *mi, Context *ctx) {
 void link(ModuleInfo *mi, Context *ctx) {
 	std::cout << "Linking to " << mi->name << '\n';
 	//system((std::string("gcc -O0 -static ") + mi->objName + " -o " + mi->name).c_str() );
-	system((std::string("gcc -O0 ") + mi->objName + " -o " + mi->name + " -lSDL2").c_str() );
+	std::string link;
+	for(const auto &str : mi->links) {
+		link += " -l";
+		link += str;
+	}
+	system((std::string("gcc -O0 ") + mi->objName + " -o " + mi->name + link).c_str() );
 }
