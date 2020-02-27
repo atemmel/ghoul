@@ -69,10 +69,6 @@ struct ExternAstNode : public AstNode {
 	std::string name;
 };
 
-struct StatementAstNode : public AstNode {
-	void accept(AstVisitor &visitor) override;
-};
-
 struct VariableDeclareAstNode : public AstNode {
 	void accept(AstVisitor &visitor) override;
 	Type type;
@@ -80,6 +76,10 @@ struct VariableDeclareAstNode : public AstNode {
 };
 
 struct ReturnAstNode : public AstNode {
+	void accept(AstVisitor &visitor) override;
+};
+
+struct BranchAstNode : public AstNode {
 	void accept(AstVisitor &visitor) override;
 };
 
@@ -131,9 +131,9 @@ public:
 	virtual void visit(StructAstNode &node)				= 0;
 	virtual void visit(FunctionAstNode &node)			= 0;
 	virtual void visit(ExternAstNode &node)				= 0;
-	virtual void visit(StatementAstNode &node)			= 0;
 	virtual void visit(VariableDeclareAstNode &node)	= 0;
 	virtual void visit(ReturnAstNode &node)				= 0;
+	virtual void visit(BranchAstNode &node)				= 0;
 	virtual void visit(CallAstNode &node)				= 0;
 	virtual void visit(BinExpressionAstNode &node)		= 0;
 	virtual void visit(MemberVariableAstNode &node)		= 0;
@@ -159,6 +159,7 @@ private:
 	AstNode::Child buildExtern();
 	AstNode::Child buildStatement();
 	AstNode::Child buildDecl(Token *token);
+	AstNode::Child buildBranch();
 	std::unique_ptr<ExpressionAstNode> buildCall(const std::string &identifier);
 	std::unique_ptr<ExpressionAstNode> buildExpr();
 	std::unique_ptr<ExpressionAstNode> buildPrimaryExpr();

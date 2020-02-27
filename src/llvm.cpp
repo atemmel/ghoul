@@ -90,6 +90,8 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 	lastStatementVisitedWasReturn = false;
 	for(const auto &child : node.children) {
 		if(child) {
+			callParams.clear();
+			instructions.clear();
 			child->accept(*this);
 		}
 	}
@@ -110,17 +112,6 @@ void LLVMCodeGen::visit(ExternAstNode &node) {
 	llvm::ArrayRef<llvm::Type*> argsRef(callArgs);
 	llvm::FunctionType *funcType = llvm::FunctionType::get(result, argsRef, false);
 	mi->module->getOrInsertFunction(node.name, funcType);
-}
-
-void LLVMCodeGen::visit(StatementAstNode &node) {
-	callParams.clear();
-	instructions.clear();
-	for(const auto &child : node.children) {
-		if(child) {
-			lastStatementVisitedWasReturn = false;
-			child->accept(*this);
-		}
-	}
 }
 
 void LLVMCodeGen::visit(VariableDeclareAstNode &node) {
@@ -144,6 +135,10 @@ void LLVMCodeGen::visit(ReturnAstNode &node) {
 		ctx->builder.CreateRet(callParams.back() );
 	} 
 	lastStatementVisitedWasReturn = true;
+}
+
+void LLVMCodeGen::visit(BranchAstNode &node) {
+	
 }
 
 void LLVMCodeGen::visit(CallAstNode &node) {

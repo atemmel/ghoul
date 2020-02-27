@@ -176,6 +176,7 @@ void SymTable::visit(FunctionAstNode &node) {
 			break;
 		}
 		(*it)->accept(*this);
+		callArgTypes.clear();
 	}
 
 	//Check to see if a function returning data does not return any
@@ -192,13 +193,6 @@ void SymTable::visit(FunctionAstNode &node) {
 
 void SymTable::visit(ExternAstNode &node) {
 	//TODO: ?
-}
-
-void SymTable::visit(StatementAstNode &node) {
-	for(const auto &child : node.children) {
-		child->accept(*this);
-	}
-	callArgTypes.clear();
 }
 
 void SymTable::visit(VariableDeclareAstNode &node) {
@@ -242,6 +236,10 @@ void SymTable::visit(ReturnAstNode &node) {
 	}
 	callArgTypes.clear();
 	foundEarlyReturn = true;
+}
+
+void SymTable::visit(BranchAstNode &node) {
+
 }
 
 void SymTable::visit(CallAstNode &node) {

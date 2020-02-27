@@ -47,15 +47,15 @@ void ExternAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
-void StatementAstNode::accept(AstVisitor &visitor) {
-	visitor.visit(*this);
-}
-
 void VariableDeclareAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
 void ReturnAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
+void BranchAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
@@ -296,7 +296,6 @@ AstNode::Child AstParser::buildFunction() {
 		if(stmnt) {
 			function->addChild(std::move(stmnt) );
 		} else {
-			Global::errStack.push("Could not build valid statement", &*iterator);
 			return nullptr;
 		}
 		discardWhile(TokenType::Terminator);
@@ -364,14 +363,12 @@ AstNode::Child AstParser::buildExtern() {
 
 AstNode::Child AstParser::buildStatement() {
 	mayParseAssign = true;
-	auto stmnt = std::make_unique<StatementAstNode>();
 	Token *token = getIf(TokenType::Identifier);
 
 	if(token) {	//Declaration?
 		auto decl = buildDecl(token);
 		if(decl) {
-			stmnt->addChild(std::move(decl) );
-			return stmnt;
+			return decl;
 		}
 	}
 
@@ -384,11 +381,17 @@ AstNode::Child AstParser::buildStatement() {
 
 		auto expr = buildExpr();
 		if(!expr) {
+			Global::errStack.push("Could not build valid statement", &*iterator);
 			return unexpected();
 		}
 
 		ret->addChild(std::move(expr) );
 		return ret;
+	}
+
+	auto node = buildBranch();
+	if(node) {
+		return node;
 	}
 
 	unget();
@@ -398,12 +401,13 @@ AstNode::Child AstParser::buildStatement() {
 			Global::errStack.push("Stray expression", expr->token);
 			return nullptr;
 		} else {
-			stmnt->addChild(std::move(expr) );
-			return stmnt;
+			return expr;
 		}
+	} else {
+		iterator++;
 	}
 
-	return unexpected();
+	return nullptr;
 }
 
 AstNode::Child AstParser::buildDecl(Token *token) {
@@ -436,6 +440,44 @@ AstNode::Child AstParser::buildDecl(Token *token) {
 	}
 
 	return decl;
+}
+
+AstNode::Child AstParser::buildBranch() {
+	Token *tok = getIf(TokenType::If);
+	if(!tok) {
+		return nullptr;
+	}
+
+	auto expr = buildExpr();
+
+	if(!expr) {
+		return unexpected();
+	}
+
+	tok = getIf(TokenType::BlockOpen);
+	if(!tok) {
+		return unexpected();
+	}
+
+	tok = getIf(TokenType::Terminator);
+	if(!tok) {
+		return unexpected();
+	}
+
+	auto br = std::make_unique<BranchAstNode>();
+	discardWhile(TokenType::Terminator);
+	auto stmnt = buildStatement();
+	while(stmnt) {
+		br->addChild(std::move(stmnt) );
+		discardWhile(TokenType::Terminator);
+		stmnt = buildStatement();
+	}
+
+	if(!getIf(TokenType::BlockClose) ) {
+		return unexpected();
+	}
+
+	return br;
 }
 
 std::unique_ptr<ExpressionAstNode> AstParser::buildCall(const std::string &identifier) {

@@ -12,13 +12,6 @@ struct Type {
 	std::string name;
 	bool isPtr = false;
 	std::vector<Member> members;
-
-private:
-	struct Scope {
-		Scope();
-		~Scope();
-		static unsigned depth;
-	};
 };
 
 struct Member {

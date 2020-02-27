@@ -49,15 +49,6 @@ void AstPrinter::visit(ExternAstNode &node) {
 	}
 }
 
-void AstPrinter::visit(StatementAstNode &node) {
-	Scope scope;
-	pad(scope.depth);
-	std::cerr << "Statement\n";
-	for(auto &c : node.children) {
-		c->accept(*this);
-	}
-}
-
 void AstPrinter::visit(VariableDeclareAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
@@ -72,6 +63,15 @@ void AstPrinter::visit(ReturnAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
 	std::cerr << "Return\n";
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
+}
+
+void AstPrinter::visit(BranchAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "if\n";
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}
