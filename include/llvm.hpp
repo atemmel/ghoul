@@ -18,7 +18,7 @@ struct ModuleInfo {
 	std::set<std::string> links;
 	std::unique_ptr<llvm::Module> module;
 	std::unique_ptr<ToplevelAstNode> ast;
-	SymTable symtable;
+	SymTable *symtable;
 };
 
 struct Context {

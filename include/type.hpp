@@ -10,7 +10,7 @@ struct Type {
 	std::string string() const;
 
 	std::string name;
-	bool isPtr = false;
+	bool isPtr = false;	//TODO: Refactor as unsigned
 	std::vector<Member> members;
 };
 

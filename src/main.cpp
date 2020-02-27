@@ -33,6 +33,8 @@ void buildModuleInfo(ModuleInfo &mi, std::string_view sv) {
 
 void compile(ModuleInfo &mi) {
 	static Context ctx;
+	SymTable symtable;
+	mi.symtable = &symtable;
 
 	float time;
 	Clock clock;
@@ -45,7 +47,6 @@ void compile(ModuleInfo &mi) {
 
 	time = clock.getNanoSeconds();
 	std::cout << mi.fileName.c_str() << " read in " << time << " ns\n";
-	//displaySource(str);
 
 	clock.restart();
 	Lexer lexer;
@@ -78,11 +79,11 @@ void compile(ModuleInfo &mi) {
 	}
 
 	clock.restart();
-	mi.symtable.visit(*mi.ast);
+	mi.symtable->visit(*mi.ast);
 	time = clock.getNanoSeconds();
 	std::cout << mi.fileName.c_str() << " symbol pass completed in " << time << " ns\n";
 	if(Global::config.verbose) {
-		mi.symtable.dump();
+		mi.symtable->dump();
 	}
 	if(!Global::errStack.empty() ) {
 		Global::errStack.unwind();

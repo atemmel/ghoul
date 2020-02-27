@@ -48,7 +48,7 @@ void LLVMCodeGen::visit(ToplevelAstNode &node) {
 
 void LLVMCodeGen::visit(StructAstNode &node) {
 	std::vector<llvm::Type*> types;
-	const Type *struc = mi->symtable.hasStruct(node.name);
+	const Type *struc = mi->symtable->hasStruct(node.name);
 	for(const auto &member : struc->members) {
 		types.push_back(translateType(member.type) );
 	}
@@ -61,7 +61,7 @@ void LLVMCodeGen::visit(LinkAstNode &node) {
 }
 
 void LLVMCodeGen::visit(FunctionAstNode &node) {
-	mi->symtable.setActiveFunction(node.signature.name);
+	mi->symtable->setActiveFunction(node.signature.name);
 	llvm::Function *func = functions[node.signature.name];
 	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", func);
 	ctx->builder.SetInsertPoint(entry);
@@ -145,7 +145,7 @@ void LLVMCodeGen::visit(CallAstNode &node) {
 	auto oldParams = std::move(callParams);
 	auto oldInsts = std::move(instructions);
 	std::vector<llvm::Type*> callArgs;
-	auto sig = mi->symtable.hasFunc(node.identifier);
+	auto sig = mi->symtable->hasFunc(node.identifier);
 	for(auto &p : sig->parameters) {
 		callArgs.push_back(translateType(p) );
 	}
@@ -195,7 +195,7 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 	indicies.clear();
-	unsigned u = mi->symtable.getMemberOffset(*lastType, node.name);
+	unsigned u = mi->symtable->getMemberOffset(*lastType, node.name);
 	indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, u, true) ) );
 	indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) ) );
 
@@ -208,7 +208,7 @@ void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 		return;
 	}
 
-	lastType = mi->symtable.typeHasMember(*lastType, node.name);
+	lastType = mi->symtable->typeHasMember(*lastType, node.name);
 	for(const auto &c : node.children) {
 		c->accept(*this);
 	}
@@ -220,7 +220,7 @@ void LLVMCodeGen::visit(VariableAstNode &node) {
 	if(node.children.empty() ) {
 		callParams.push_back(ctx->builder.CreateAlignedLoad(ld, 4) );
 	} else {
-		lastType = mi->symtable.getLocal(node.name);
+		lastType = mi->symtable->getLocal(node.name);
 		node.children.front()->accept(*this);
 	}
 }
