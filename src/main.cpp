@@ -21,8 +21,8 @@ void displayTokens(const Tokens &tokens) {
 }
 
 void buildModuleInfo(ModuleInfo &mi, std::string_view sv) {
-	if(!endsWith(sv, ".scp") ) {	//TODO: Remove hardcoded constant ".scp"
-		std::cerr << "Invalid source file given, expected a source file with a \".scp\" file extension\n";
+	if(!endsWith(sv, ".gh") ) {	//TODO: Remove hardcoded constant ".gh"
+		std::cerr << "Invalid source file given, expected a source file with a \".gh\" file extension\n";
 		std::exit(EXIT_FAILURE);
 	}
 
