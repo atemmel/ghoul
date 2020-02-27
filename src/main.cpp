@@ -40,7 +40,7 @@ void compile(ModuleInfo &mi) {
 	if(str.empty() ) {
 		Global::errStack.push("File is either empty or does not exist", nullptr);
 		Global::errStack.unwind();
-		return;
+		exit(EXIT_FAILURE);
 	}
 
 	time = clock.getNanoSeconds();
@@ -59,7 +59,7 @@ void compile(ModuleInfo &mi) {
 	if(!Global::errStack.empty() ) {
 		Global::errStack.unwind();
 		std::cerr << "Tokenization step failed\n";
-		return;
+		exit(EXIT_FAILURE);
 	}
 
 	clock.restart();
@@ -70,7 +70,7 @@ void compile(ModuleInfo &mi) {
 	if(!Global::errStack.empty() ) {
 		Global::errStack.unwind();
 		std::cerr << "Parsing step failed\n";
-		return;
+		exit(EXIT_FAILURE);
 	}
 
 	if(Global::config.verbose) {
@@ -87,11 +87,11 @@ void compile(ModuleInfo &mi) {
 	if(!Global::errStack.empty() ) {
 		Global::errStack.unwind();
 		std::cerr << "Symbol pass failed\n";
-		return;
+		exit(EXIT_FAILURE);
 	}
 
 	clock.restart();
-	if(!gen(&mi, &ctx) ) return;
+	if(!gen(&mi, &ctx) ) exit(EXIT_FAILURE);
 	time = clock.getMilliSeconds();
 	std::cout << mi.objName.c_str() << " object file built in " << time << " ms\n";
 }
