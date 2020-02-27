@@ -643,6 +643,9 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildBinOp() {
 	if(!token) {
 		token = getIf(TokenType::Divide);
 	}
+	if(!token) {
+		token = getIf(TokenType::Equivalence);
+	}
 
 	if(!token) {
 		return nullptr;

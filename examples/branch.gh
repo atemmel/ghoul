@@ -3,7 +3,7 @@ extern fn printf(char*) int
 fn main() {
 
 	printf("Do we do this?\n")
-	if 2 + 2 {
+	if 2 {
 		printf("Yes\n")
 	}
 }

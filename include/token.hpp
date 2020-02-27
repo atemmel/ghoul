@@ -156,9 +156,11 @@ struct Token {
 	constexpr static int precedence(TokenType type) {
 		switch(type) {
 			case TokenType::Multiply:
-				return 2;
+				return 3;
 			case TokenType::Add:
 			case TokenType::Subtract:
+				return 2;
+			case TokenType::Equivalence:
 				return 1;
 			case TokenType::Assign:
 				return 0;
