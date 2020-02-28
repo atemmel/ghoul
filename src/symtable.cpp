@@ -243,7 +243,7 @@ void SymTable::visit(BranchAstNode &node) {
 	node.expr->accept(*this);
 	Type &result = callArgTypes.back();
 	if(result == Type{"int", false} || result.isPtr) { //Compare numeric values to zero		
-		auto binop = std::make_unique<BinExpressionAstNode>(TokenType::Equivalence);
+		auto binop = std::make_unique<BinExpressionAstNode>(TokenType::NotEquivalence);
 		binop->addChild(std::move(node.expr) );
 		binop->addChild(std::make_unique<IntAstNode>(0) );
 		node.expr = std::move(binop);

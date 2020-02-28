@@ -68,6 +68,7 @@ private:
 	Map<llvm::Value*> values;
 	Map<Locals> allLocals;
 	Locals *locals = nullptr;
+	llvm::Function *function = nullptr;
 
 	const Type *lastType = nullptr;
 	bool lastStatementVisitedWasReturn = false;

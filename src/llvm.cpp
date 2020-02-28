@@ -62,7 +62,7 @@ void LLVMCodeGen::visit(LinkAstNode &node) {
 
 void LLVMCodeGen::visit(FunctionAstNode &node) {
 	mi->symtable->setActiveFunction(node.signature.name);
-	llvm::Function *func = functions[node.signature.name];
+	llvm::Function *func = function = functions[node.signature.name];
 	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", func);
 	ctx->builder.SetInsertPoint(entry);
 
@@ -138,7 +138,18 @@ void LLVMCodeGen::visit(ReturnAstNode &node) {
 }
 
 void LLVMCodeGen::visit(BranchAstNode &node) {
-	
+	node.expr->accept(*this);
+	llvm::BasicBlock *origin = ctx->builder.GetInsertBlock();
+	llvm::BasicBlock *branch = llvm::BasicBlock::Create(ctx->context, "", function);
+	llvm::BasicBlock *end = llvm::BasicBlock::Create(ctx->context, "", function);
+	ctx->builder.CreateCondBr(callParams.back(), branch, end);
+
+	ctx->builder.SetInsertPoint(branch);
+	for(const auto &child : node.children) {
+		child->accept(*this);
+	}
+	ctx->builder.CreateBr(end);
+	ctx->builder.SetInsertPoint(end);
 }
 
 void LLVMCodeGen::visit(CallAstNode &node) {
@@ -188,6 +199,10 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 		params.push_back(ctx->builder.CreateSub(callParams.front(), callParams.back() ) );
 	} else if(node.type == TokenType::Divide) {
 		params.push_back(ctx->builder.CreateSDiv(callParams.front(), callParams.back() ) );
+	} else if(node.type == TokenType::Equivalence) {
+		params.push_back(ctx->builder.CreateICmpEQ(callParams.front(), callParams.back() ) );
+	} else if(node.type == TokenType::NotEquivalence) {
+		params.push_back(ctx->builder.CreateICmpNE(callParams.front(), callParams.back() ) );
 	}
 	callParams = std::move(params);
 	instructions = std::move(insts);

@@ -652,6 +652,9 @@ AstNode::Expr AstParser::buildBinOp() {
 	if(!token) {
 		token = getIf(TokenType::Equivalence);
 	}
+	if(!token) {
+		token = getIf(TokenType::NotEquivalence);
+	}
 
 	if(!token) {
 		return nullptr;
