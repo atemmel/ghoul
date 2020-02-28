@@ -102,6 +102,11 @@ void StringAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
+IntAstNode::IntAstNode(int value) 
+	: value(value) {
+	precedence = Token::precedence(TokenType::IntLiteral);
+}
+
 IntAstNode::IntAstNode(const std::string &value) {
 	isIntLiteral(value, this->value);
 	precedence = Token::precedence(TokenType::IntLiteral);
@@ -429,7 +434,7 @@ AstNode::Child AstParser::buildDecl(Token *token) {
 	//Declaration may include assignment
 	if(getIf(TokenType::Assign) ) {
 		unget();
-		std::unique_ptr<ExpressionAstNode> idNode(new VariableAstNode(id->value) );
+		AstNode::Expr idNode(new VariableAstNode(id->value) );
 		auto assign = buildAssignExpr(idNode);
 
 		if(!assign) {
@@ -448,7 +453,7 @@ AstNode::Child AstParser::buildBranch() {
 		return nullptr;
 	}
 
-	auto expr = buildExpr();
+	AstNode::Expr expr = buildExpr();
 
 	if(!expr) {
 		return unexpected();
@@ -465,6 +470,7 @@ AstNode::Child AstParser::buildBranch() {
 	}
 
 	auto br = std::make_unique<BranchAstNode>();
+	br->expr = std::move(expr);
 	discardWhile(TokenType::Terminator);
 	auto stmnt = buildStatement();
 	while(stmnt) {
@@ -480,7 +486,7 @@ AstNode::Child AstParser::buildBranch() {
 	return br;
 }
 
-std::unique_ptr<ExpressionAstNode> AstParser::buildCall(const std::string &identifier) {
+AstNode::Expr AstParser::buildCall(const std::string &identifier) {
 	if(!getIf(TokenType::ParensOpen) ) {
 		return nullptr;
 	}
@@ -512,7 +518,7 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildCall(const std::string &ident
 	return call;
 }
 
-std::unique_ptr<ExpressionAstNode> AstParser::buildExpr() {
+AstNode::Expr AstParser::buildExpr() {
 	auto expr = buildPrimaryExpr();
 	if(!expr) {
 		return nullptr;
@@ -531,8 +537,8 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildExpr() {
 	return parent;
 }
 
-std::unique_ptr<ExpressionAstNode> AstParser::buildPrimaryExpr() {
-	std::unique_ptr<ExpressionAstNode> expr = nullptr;
+AstNode::Expr AstParser::buildPrimaryExpr() {
+	AstNode::Expr expr = nullptr;
 
 	auto tok = getIf(TokenType::StringLiteral);
 	if(tok) {
@@ -566,7 +572,7 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildPrimaryExpr() {
 	return expr;
 }
 
-std::unique_ptr<ExpressionAstNode> AstParser::buildVariableExpr(Token *token) {
+AstNode::Expr AstParser::buildVariableExpr(Token *token) {
 	auto var = std::make_unique<VariableAstNode>(token->value);
 
 	auto child = buildMemberExpr();
@@ -577,7 +583,7 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildVariableExpr(Token *token) {
 	return var;
 }
 
-std::unique_ptr<ExpressionAstNode> AstParser::buildMemberExpr() {
+AstNode::Expr AstParser::buildMemberExpr() {
 	if(!getIf(TokenType::Member) ) {
 		return nullptr;
 	}
@@ -598,8 +604,8 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildMemberExpr() {
 	return member;
 }
 
-std::unique_ptr<ExpressionAstNode> AstParser::buildAssignExpr(std::unique_ptr<ExpressionAstNode> &lhs) {
-	std::unique_ptr<ExpressionAstNode> bin;
+AstNode::Expr AstParser::buildAssignExpr(AstNode::Expr &lhs) {
+	AstNode::Expr bin;
 	Token *token = getIf(TokenType::Assign);
 	if(!token) {
 		return nullptr;
@@ -632,7 +638,7 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildAssignExpr(std::unique_ptr<Ex
 	return bin;
 }
 
-std::unique_ptr<ExpressionAstNode> AstParser::buildBinOp() {
+AstNode::Expr AstParser::buildBinOp() {
 	Token *token = getIf(TokenType::Add);
 	if(!token) {
 		token = getIf(TokenType::Multiply);
@@ -656,9 +662,9 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildBinOp() {
 	return bin;
 }
 
-std::unique_ptr<ExpressionAstNode> AstParser::buildBinExpr(std::unique_ptr<ExpressionAstNode> &child) {
+AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 
-	std::unique_ptr<ExpressionAstNode> bin = buildBinOp();
+	AstNode::Expr bin = buildBinOp();
 	if(!bin) {
 		return nullptr;
 	}
@@ -670,7 +676,7 @@ std::unique_ptr<ExpressionAstNode> AstParser::buildBinExpr(std::unique_ptr<Expre
 
 	//https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 
-	std::vector<std::unique_ptr<ExpressionAstNode> > valStack, opStack;
+	std::vector<AstNode::Expr > valStack, opStack;
 
 	valStack.push_back(std::move(val) );
 	valStack.push_back(std::move(child) );

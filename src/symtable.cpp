@@ -6,6 +6,7 @@ SymTable::SymTable() {
 	types.insert("char");
 	types.insert("int");
 	types.insert("float");
+	types.insert("bool");
 }
 
 void SymTable::dump() const {
@@ -239,7 +240,25 @@ void SymTable::visit(ReturnAstNode &node) {
 }
 
 void SymTable::visit(BranchAstNode &node) {
+	node.expr->accept(*this);
+	Type &result = callArgTypes.back();
+	if(result == Type{"int", false} || result.isPtr) { //Compare numeric values to zero		
+		auto binop = std::make_unique<BinExpressionAstNode>(TokenType::Equivalence);
+		binop->addChild(std::move(node.expr) );
+		binop->addChild(std::make_unique<IntAstNode>(0) );
+		node.expr = std::move(binop);
+	} else if(result != Type{"bool", false}) {	//If non bool expr
+		Global::errStack.push("Cannot translate result of expression into type'bool'", 
+				node.expr->token);
+		return;
+	}
 
+	callArgTypes.clear();
+
+	//TODO: LOCALS?????
+	for(const auto &child : node.children) {
+		child->accept(*this);
+	}
 }
 
 void SymTable::visit(CallAstNode &node) {
@@ -304,6 +323,22 @@ void SymTable::visit(BinExpressionAstNode &node) {
 			+ "' with '" + lhs.string() + "' and a '" + rhs.string() + '\'', node.token);
 		types.push_back({"", false});
 	} else {
+		switch(node.type) {
+			case TokenType::Add:
+			case TokenType::Multiply:
+			case TokenType::Divide:
+			case TokenType::Subtract:
+			case TokenType::Assign:
+				types.push_back(rhs);
+				break;
+			case TokenType::Equivalence:
+				types.push_back({"bool", false});
+				break;
+			default:
+				Global::errStack.push("Missing case for binary operator '" + node.token->value
+					+ "'", node.token);
+				return;
+		}
 		types.push_back(rhs);
 	}
 	callArgTypes = std::move(types);

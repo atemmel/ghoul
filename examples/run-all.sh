@@ -1,7 +1,7 @@
 #!/usr/bin/sh
 
-bin="../build/lang"
-src=$(find . -iname "*.scp")
+bin="../build/ghoul"
+src=$(find . -iname "*.gh")
 
 for file in $src ; do
 	echo "Building $bin build $file"

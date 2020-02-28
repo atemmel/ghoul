@@ -6,4 +6,16 @@ fn main() {
 	if 2 {
 		printf("Yes\n")
 	}
+
+	if 0 {
+		printf("No\n")
+	}
+
+	if 0 == 2 {
+		printf("No\n")
+	}
+
+	if 1 == 1 {
+		printf("Yes\n")
+	}
 }

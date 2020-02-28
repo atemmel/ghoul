@@ -15,6 +15,7 @@ class ToplevelAstNode;
 class FunctionAstNode;
 class ExternAstNode;
 class StructAstNode;
+class ExpressionAstNode;
 class StringAstNode;
 
 struct FunctionSignature {
@@ -27,6 +28,7 @@ struct FunctionSignature {
 struct AstNode {
 	using Child = std::unique_ptr<AstNode>;
 	using Root = std::unique_ptr<ToplevelAstNode>;
+	using Expr = std::unique_ptr<ExpressionAstNode>;
 
 	virtual ~AstNode() = default;
 	virtual void accept(AstVisitor &visitor) = 0;
@@ -81,6 +83,7 @@ struct ReturnAstNode : public AstNode {
 
 struct BranchAstNode : public AstNode {
 	void accept(AstVisitor &visitor) override;
+	AstNode::Expr expr;
 };
 
 struct ExpressionAstNode : public AstNode {
@@ -118,6 +121,7 @@ struct StringAstNode : public ExpressionAstNode {
 };
 
 struct IntAstNode : public ExpressionAstNode {
+	IntAstNode(int value);
 	IntAstNode(const std::string &value);
 	void accept(AstVisitor &visitor) override;
 	int value;
