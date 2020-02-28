@@ -339,7 +339,6 @@ void SymTable::visit(BinExpressionAstNode &node) {
 					+ "'", node.token);
 				return;
 		}
-		types.push_back(rhs);
 	}
 	callArgTypes = std::move(types);
 }
