@@ -37,3 +37,24 @@ fn main() {                   // void as a return type is implicit if no return 
 	printf("Hello, World!\n")   // Newlines replace ';'
 }
 ```
+
+#### Factorial
+
+```cpp
+// factorial.gh
+
+extern fn printf(char *, int, int) int
+
+fn factorial(int n) int {
+	if n <= 1 {
+		return 1
+	}
+
+	return n * factorial(n - 1)
+}
+
+fn main() {
+	int n = 5
+	printf("Factorial of %d is %d\n", n, factorial(n) )
+}
+```
