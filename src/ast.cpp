@@ -3,6 +3,8 @@
 #include "llvm.hpp"
 #include "utils.hpp"
 
+#include <queue>
+
 void AstNode::addChild(Child && child) {
 	children.push_back(std::move(child) );
 }
@@ -640,6 +642,8 @@ AstNode::Expr AstParser::buildAssignExpr(AstNode::Expr &lhs) {
 
 AstNode::Expr AstParser::buildBinOp() {
 	Token *token = getIf(TokenType::Add);
+
+	//TODO: Refactor this...?
 	if(!token) {
 		token = getIf(TokenType::Multiply);
 	}
@@ -654,6 +658,18 @@ AstNode::Expr AstParser::buildBinOp() {
 	}
 	if(!token) {
 		token = getIf(TokenType::NotEquivalence);
+	}
+	if(!token) {
+		token = getIf(TokenType::Greater);
+	}
+	if(!token) {
+		token = getIf(TokenType::GreaterEquals);
+	}
+	if(!token) {
+		token = getIf(TokenType::Less);
+	}
+	if(!token) {
+		token = getIf(TokenType::LessEquals);
 	}
 
 	if(!token) {
@@ -677,9 +693,11 @@ AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 		return toExpr(unexpected() );
 	}
 
+	//TODO: This does not quite work as intended, see binop.gh
 	//https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 
-	std::vector<AstNode::Expr > valStack, opStack;
+	std::vector<AstNode::Expr> valStack;
+	std::vector<AstNode::Expr> opStack;
 
 	valStack.push_back(std::move(val) );
 	valStack.push_back(std::move(child) );
@@ -689,9 +707,9 @@ AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 
 	while(bin) {
 		if(bin->precedence <= opStack.back()->precedence) {
-			auto rhs = std::move(valStack.back() );
-			valStack.pop_back();
 			auto lhs = std::move(valStack.back() );
+			valStack.pop_back();
+			auto rhs = std::move(valStack.back() );
 			valStack.pop_back();
 			auto op = std::move(opStack.back() );
 			opStack.pop_back();
@@ -700,8 +718,8 @@ AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 			op->addChild(std::move(rhs) );
 
 			valStack.push_back(std::move(op) );
-
 		}
+
 		opStack.push_back(std::move(bin) );
 
 		val = buildPrimaryExpr();
@@ -716,9 +734,9 @@ AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 	}
 
 	while(!opStack.empty() ) {
-		auto rhs = std::move(valStack.back() );
-		valStack.pop_back();
 		auto lhs = std::move(valStack.back() );
+		valStack.pop_back();
+		auto rhs = std::move(valStack.back() );
 		valStack.pop_back();
 		auto op = std::move(opStack.back() );
 		opStack.pop_back();

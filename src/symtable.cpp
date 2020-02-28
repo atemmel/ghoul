@@ -236,7 +236,9 @@ void SymTable::visit(ReturnAstNode &node) {
 		}
 	}
 	callArgTypes.clear();
-	foundEarlyReturn = true;
+	if(blockDepth == 0) {
+		foundEarlyReturn = true;
+	}
 }
 
 void SymTable::visit(BranchAstNode &node) {
@@ -253,12 +255,15 @@ void SymTable::visit(BranchAstNode &node) {
 		return;
 	}
 
+	blockDepth++;
 	callArgTypes.clear();
 
 	//TODO: LOCALS?????
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}
+
+	blockDepth--;
 }
 
 void SymTable::visit(CallAstNode &node) {
@@ -332,6 +337,11 @@ void SymTable::visit(BinExpressionAstNode &node) {
 				types.push_back(rhs);
 				break;
 			case TokenType::Equivalence:
+			case TokenType::NotEquivalence:
+			case TokenType::Greater:
+			case TokenType::GreaterEquals:
+			case TokenType::Less:
+			case TokenType::LessEquals:
 				types.push_back({"bool", false});
 				break;
 			default:

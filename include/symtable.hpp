@@ -62,5 +62,6 @@ private:
 	Locals *locals;
 
 	std::vector<Type> callArgTypes;
+	unsigned blockDepth = 0;
 	bool foundEarlyReturn = false;
 };

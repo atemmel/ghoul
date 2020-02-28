@@ -74,6 +74,7 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 	auto it = ctx->builder.GetInsertBlock();
 
 	//Uuum, okay?
+	//TODO: Extend check to see if function is recursive
 	if(node.signature.name == "main") {
 		auto alloca = new llvm::AllocaInst(llvm::Type::getInt32Ty(ctx->context), 0, "", it);
 		ctx->builder.CreateStore(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) ), alloca );
@@ -187,23 +188,35 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 		}
 	}
 
+	auto &lhs = callParams.front();
+	auto &rhs = callParams.back();
+
 	if(node.type == TokenType::Assign) {
 		auto inst = instructions.front();
 		ctx->builder.CreateStore(callParams.back(), inst);
 		params.push_back(callParams.back() );
 	} else if(node.type == TokenType::Add) {
-		params.push_back(ctx->builder.CreateAdd(callParams.front(), callParams.back() ) );
+		params.push_back(ctx->builder.CreateAdd(lhs, rhs) );
 	} else if(node.type == TokenType::Multiply) {
-		params.push_back(ctx->builder.CreateMul(callParams.front(), callParams.back() ) );
+		params.push_back(ctx->builder.CreateMul(lhs, rhs) );
 	} else if(node.type == TokenType::Subtract) {
-		params.push_back(ctx->builder.CreateSub(callParams.front(), callParams.back() ) );
+		params.push_back(ctx->builder.CreateSub(lhs, rhs) );
 	} else if(node.type == TokenType::Divide) {
-		params.push_back(ctx->builder.CreateSDiv(callParams.front(), callParams.back() ) );
+		params.push_back(ctx->builder.CreateSDiv(lhs, rhs) );
 	} else if(node.type == TokenType::Equivalence) {
-		params.push_back(ctx->builder.CreateICmpEQ(callParams.front(), callParams.back() ) );
+		params.push_back(ctx->builder.CreateICmpEQ(lhs, rhs) );
 	} else if(node.type == TokenType::NotEquivalence) {
-		params.push_back(ctx->builder.CreateICmpNE(callParams.front(), callParams.back() ) );
-	}
+		params.push_back(ctx->builder.CreateICmpNE(lhs, rhs) );
+	} else if(node.type == TokenType::Less) {
+		params.push_back(ctx->builder.CreateICmpSLT(lhs, rhs) );
+	} else if(node.type == TokenType::LessEquals) {
+		params.push_back(ctx->builder.CreateICmpSLE(lhs, rhs) );
+	} else if(node.type == TokenType::Greater) {
+		params.push_back(ctx->builder.CreateICmpSGT(lhs, rhs) );
+	} else if(node.type == TokenType::GreaterEquals) {
+		params.push_back(ctx->builder.CreateICmpSGE(lhs, rhs) );
+	} 
+
 	callParams = std::move(params);
 	instructions = std::move(insts);
 }
