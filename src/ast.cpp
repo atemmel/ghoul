@@ -3,8 +3,6 @@
 #include "llvm.hpp"
 #include "utils.hpp"
 
-#include <queue>
-
 void AstNode::addChild(Child && child) {
 	children.push_back(std::move(child) );
 }
@@ -115,6 +113,14 @@ IntAstNode::IntAstNode(const std::string &value) {
 }
 
 void IntAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
+BoolAstNode::BoolAstNode(bool value) 
+	: value(value) {
+}
+
+void BoolAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
@@ -553,6 +559,20 @@ AstNode::Expr AstParser::buildPrimaryExpr() {
 		if(tok) {
 			mayParseAssign = false;
 			expr = std::make_unique<IntAstNode>(tok->value);
+		}
+	}
+
+	if(!tok) {
+		bool val = false;
+		tok = getIf(TokenType::False);
+		if(!tok) {
+			val = true;
+			tok = getIf(TokenType::True);
+		}
+
+		if(tok) {
+			mayParseAssign = false;
+			expr = std::make_unique<BoolAstNode>(val);
 		}
 	}
 

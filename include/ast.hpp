@@ -127,6 +127,12 @@ struct IntAstNode : public ExpressionAstNode {
 	int value;
 };
 
+struct BoolAstNode : public ExpressionAstNode {
+	BoolAstNode(bool value);
+	void accept(AstVisitor &visitor) override;
+	bool value;
+};
+
 class AstVisitor {
 public:
 	virtual ~AstVisitor() = default;
@@ -144,6 +150,7 @@ public:
 	virtual void visit(VariableAstNode &node)			= 0;
 	virtual void visit(StringAstNode &node)				= 0;
 	virtual void visit(IntAstNode &node)				= 0;
+	virtual void visit(BoolAstNode &node)				= 0;
 };
 
 class AstParser {

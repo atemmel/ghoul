@@ -270,6 +270,12 @@ void LLVMCodeGen::visit(IntAstNode &node) {
 		llvm::APInt(32, node.value) ) ) );
 }
 
+void LLVMCodeGen::visit(BoolAstNode &node) {
+	auto type = llvm::IntegerType::getInt8Ty(ctx->context);
+	callParams.push_back(static_cast<llvm::Value*>(llvm::ConstantInt::get(type,
+		llvm::APInt(8, node.value) ) ) );
+}
+
 llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
 	llvm::Type *type = nullptr;
 	if(astType.name == "char") {

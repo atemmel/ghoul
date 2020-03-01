@@ -71,7 +71,8 @@ void AstPrinter::visit(ReturnAstNode &node) {
 void AstPrinter::visit(BranchAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
-	std::cerr << "if\n";
+	std::cerr << "if\nexpr:\n";
+	node.expr->accept(*this);
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}
@@ -124,6 +125,12 @@ void AstPrinter::visit(IntAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
 	std::cerr << "Int : " << node.value << '\n';
+}
+
+void AstPrinter::visit(BoolAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Boolean : " << std::boolalpha << node.value << '\n';
 }
 
 void AstPrinter::pad(unsigned i) const {

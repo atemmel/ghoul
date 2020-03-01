@@ -46,6 +46,7 @@ public:
 	void visit(VariableAstNode &node) override;
 	void visit(StringAstNode &node) override;
 	void visit(IntAstNode &node) override;
+	void visit(BoolAstNode &node) override;
 private:
 	template<typename T>
 	using Map = std::unordered_map<std::string, T>;

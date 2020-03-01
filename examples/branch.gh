@@ -1,21 +1,53 @@
-extern fn printf(char*) int
+extern fn printf(char*, int) int
 
 fn main() {
 
-	printf("Do we do this?\n")
+	printf("Do we do this?\n", 0)
 	if 2 {
-		printf("Yes\n")
+		printf("Yes\n", 0)
 	}
 
 	if 0 {
-		printf("No\n")
+		printf("No\n", 0)
 	}
 
 	if 0 == 2 {
-		printf("No\n")
+		printf("No\n", 0)
 	}
 
 	if 1 == 1 {
-		printf("Yes\n")
+		printf("Yes\n", 0)
+	}
+
+	int x = 3
+
+	if x > 0 {
+		printf("Yes\n", 0)
+	}
+
+	if x < 0 {
+		printf("No\n", 0)
+	}
+
+	int y
+	if y = 3 {
+		printf("Maybe???\n", 0)
+	}
+
+	if 1 {
+		int scoped = 1
+		printf("scoped: %d\n", scoped)
+	}
+
+	//???
+	scoped = 5
+	printf("scoped: %d\n", scoped)
+
+	if true {
+		printf("Eyyyyyy\n", scoped)
+	}
+
+	if false {
+		printf("Nopes\n", scoped)
 	}
 }

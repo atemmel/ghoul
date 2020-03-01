@@ -400,3 +400,10 @@ void SymTable::visit(IntAstNode &node) {
 	});
 	
 }
+
+void SymTable::visit(BoolAstNode &node) {
+	callArgTypes.push_back({
+		"bool",
+		false
+	});
+}

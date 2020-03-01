@@ -38,6 +38,7 @@ public:
 	void visit(VariableAstNode &node) override;
 	void visit(StringAstNode &node) override;
 	void visit(IntAstNode &node) override;
+	void visit(BoolAstNode &node) override;
 
 private:
 	enum struct Context {
