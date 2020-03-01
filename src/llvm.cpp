@@ -3,6 +3,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/VariadicFunction.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -110,8 +111,13 @@ void LLVMCodeGen::visit(ExternAstNode &node) {
 		callArgs.push_back(translateType(type) );
 	}
 
+	bool isVariadic = callArgs.back() == nullptr;
+	if(isVariadic) {
+		callArgs.pop_back();
+	}
+
 	llvm::ArrayRef<llvm::Type*> argsRef(callArgs);
-	llvm::FunctionType *funcType = llvm::FunctionType::get(result, argsRef, false);
+	llvm::FunctionType *funcType = llvm::FunctionType::get(result, argsRef, isVariadic);
 	mi->module->getOrInsertFunction(node.name, funcType);
 }
 
@@ -162,10 +168,12 @@ void LLVMCodeGen::visit(CallAstNode &node) {
 		callArgs.push_back(translateType(p) );
 	}
 
+	bool isVariadic = sig->parameters.empty() ? false : sig->parameters.back().name == "...";
+
 	llvm::ArrayRef<llvm::Type*> argsRef(callArgs);
 
-	llvm::FunctionType *callType = llvm::FunctionType::get(translateType(sig->returnType), argsRef, false);
-	auto func = mi->module->getOrInsertFunction(node.identifier, callType);
+	llvm::FunctionType *callType = llvm::FunctionType::get(translateType(sig->returnType), argsRef, isVariadic);
+	auto func = mi->module->getFunction(node.identifier);
 	
 	for(const auto &child : node.children) {
 		if(child) {
@@ -287,6 +295,8 @@ llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
 		type = ctx->builder.getVoidTy();
 	} else if(astType.name == "float") {
 		type = ctx->builder.getFloatTy();
+	} else if(astType.name == "...") {
+		return nullptr;	
 	} else {
 		auto it = structTypes.find(astType.name);
 		if(it == structTypes.end() ) {
@@ -316,6 +326,8 @@ void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &
 		for(size_t i = 0; i < f->signature.paramNames.size(); i++) {
 			func->arg_begin()[i].setName(f->signature.paramNames[i]);
 		}
+
+		func->setCallingConv(llvm::CallingConv::C);
 
 		functions.insert(std::make_pair(f->signature.name, func) );
 

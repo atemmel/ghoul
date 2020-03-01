@@ -28,6 +28,7 @@ void SymTable::dump() const {
 			std::cerr << '\t' << pair.second->parameters[i].string() << ' ' 
 				<< pair.second->paramNames[i] << '\n';
 		}
+		std::cerr << '\n';
 	}
 }
 
@@ -279,9 +280,29 @@ void SymTable::visit(CallAstNode &node) {
 		node->accept(*this);
 	}
 
-	if(sig->parameters.size() != callArgTypes.size() || 
-			!std::equal(sig->parameters.cbegin(), sig->parameters.cend(),
-				callArgTypes.cbegin() ) ) {
+	auto matches = [](const std::vector<Type> &sig, const std::vector<Type> &args) {
+		size_t overlap = 0;
+		for(auto sigit = sig.cbegin(), argsit = args.cbegin(); 
+				sigit != sig.cend() && argsit != args.cend(); sigit++, argsit++, overlap++) {
+			if(*sigit != *argsit) {
+				break;
+			}
+		}
+
+		if(overlap == sig.size() == args.size() ) {
+			return true;
+		}
+
+		if(sig.size() < args.size() ) {
+			if(!sig.empty() && sig.back().name == "...") {
+				return true;
+			}
+		} 
+
+		return false;
+	};
+
+	if(matches(sig->parameters, callArgTypes) ) {
 		std::string errString = "Function call '" + node.identifier
 				+ '(';
 		for(int i = 0; i < callArgTypes.size(); i++) {

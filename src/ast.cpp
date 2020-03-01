@@ -344,6 +344,7 @@ AstNode::Child AstParser::buildExtern() {
 			ext->signature.parameters.push_back(type);
 		} else if(getIf(TokenType::Variadic) ) {
 			ext->signature.parameters.push_back({"...", false});
+			ext->signature.paramNames.push_back("");
 		} else {
 			return unexpected();
 		}
