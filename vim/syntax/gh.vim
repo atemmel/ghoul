@@ -4,9 +4,11 @@ endif
 
 let b:current_syntax = "gh"
 
-syn keyword Keyword fn
+syn keyword Keyword fn if
 
-syn keyword Keyword return struct if
+syn keyword Statement return
+
+syn keyword Keyword struct true false
 
 syn keyword Type void char int float
 

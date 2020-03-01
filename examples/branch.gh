@@ -44,10 +44,25 @@ fn main() {
 	printf("scoped: %d\n", scoped)
 
 	if true {
-		printf("Eyyyyyy\n", scoped)
+		printf("True\n", scoped)
 	}
 
 	if false {
-		printf("Nopes\n", scoped)
+		printf("False\n", scoped)
+	}
+
+	int it = 3
+
+	if it > 0 {
+		if it > 1 {
+			if it > 2 {
+				printf("It follows %d\n", it)
+			}
+		}
+	}
+
+	bool boolean = 1 != false
+	if boolean {
+		printf("boolean was true!\n", 0)
 	}
 }

@@ -278,7 +278,8 @@ void LLVMCodeGen::visit(BoolAstNode &node) {
 
 llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
 	llvm::Type *type = nullptr;
-	if(astType.name == "char") {
+	if(astType.name == "char"
+			|| astType.name == "bool") {
 		type = ctx->builder.getInt8Ty();
 	} else if(astType.name == "int") {
 		type = ctx->builder.getInt32Ty();
