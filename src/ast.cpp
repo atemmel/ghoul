@@ -693,23 +693,22 @@ AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 		return toExpr(unexpected() );
 	}
 
-	//TODO: This does not quite work as intended, see binop.gh
 	//https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 
 	std::vector<AstNode::Expr> valStack;
 	std::vector<AstNode::Expr> opStack;
 
-	valStack.push_back(std::move(val) );
 	valStack.push_back(std::move(child) );
+	valStack.push_back(std::move(val) );
 	opStack.push_back(std::move(bin) );
 
 	bin = buildBinOp();
 
 	while(bin) {
 		if(bin->precedence <= opStack.back()->precedence) {
-			auto lhs = std::move(valStack.back() );
-			valStack.pop_back();
 			auto rhs = std::move(valStack.back() );
+			valStack.pop_back();
+			auto lhs = std::move(valStack.back() );
 			valStack.pop_back();
 			auto op = std::move(opStack.back() );
 			opStack.pop_back();
@@ -734,9 +733,9 @@ AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 	}
 
 	while(!opStack.empty() ) {
-		auto lhs = std::move(valStack.back() );
-		valStack.pop_back();
 		auto rhs = std::move(valStack.back() );
+		valStack.pop_back();
+		auto lhs = std::move(valStack.back() );
 		valStack.pop_back();
 		auto op = std::move(opStack.back() );
 		opStack.pop_back();
