@@ -34,7 +34,7 @@ make
 import "io"			// printf
 
 fn main() {			// void is implicit return type unless otherwise specified
-	printf("Hello, World!")	// newlines replace semicolons
+	printf("Hello, World!\n")	// newlines replace semicolons
 }
 
 ```
