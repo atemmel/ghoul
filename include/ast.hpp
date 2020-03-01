@@ -163,6 +163,7 @@ private:
 	void unget();
 	void discardWhile(TokenType type);
 	AstNode::Root buildTree();
+	AstNode::Child buildImport();
 	AstNode::Child buildLink();
 	AstNode::Child buildStruct();
 	AstNode::Child buildFunction();

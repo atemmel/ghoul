@@ -65,6 +65,7 @@ enum struct TokenType {
 	Extern,				// extern
 	Return,				// return
 	Link,				// link
+	Import,				// import
 
 
 	//Keep this one last
@@ -134,7 +135,8 @@ struct Token {
 		"struct",
 		"extern",
 		"return",
-		"link"
+		"link",
+		"import"
 	};
 
 	constexpr static std::array<std::string_view, 5> altStrs = {

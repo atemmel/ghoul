@@ -111,7 +111,7 @@ void LLVMCodeGen::visit(ExternAstNode &node) {
 		callArgs.push_back(translateType(type) );
 	}
 
-	bool isVariadic = callArgs.back() == nullptr;
+	bool isVariadic = callArgs.empty() ? false : callArgs.back() == nullptr;
 	if(isVariadic) {
 		callArgs.pop_back();
 	}
@@ -359,7 +359,9 @@ bool gen(ModuleInfo *mi, Context *ctx) {
 	}
 	codeGen.visit(*mi->ast);
 
-	if(Global::config.verbose) mi->module->print(llvm::errs(), nullptr);
+	if(Global::config.verbose || Global::config.verboseIR) {
+		mi->module->print(llvm::errs(), nullptr);
+	}
 	write(mi, ctx);
 	return true;
 }

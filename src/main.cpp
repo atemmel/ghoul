@@ -9,16 +9,8 @@
 #include "global.hpp"
 #include "argparser.hpp"
 #include "astprint.hpp"
+#include "frontend.hpp"
 
-void displayTokens(const Tokens &tokens) {
-	for(const Token &token : tokens) {
-		std::cout << "Index: " << token.index << " Row: "
-			<< token.row << " Col: " << token.col << ", Type: " 
-			<< token.getPrintString() << " (" 
-			<< static_cast<size_t>(token.type) << "), Value: "
-			<< token.value << '\n';
-	}
-}
 
 void buildModuleInfo(ModuleInfo &mi, std::string_view sv) {
 	if(!endsWith(sv, ".gh") ) {	//TODO: Remove hardcoded constant ".gh"
@@ -36,63 +28,15 @@ void compile(ModuleInfo &mi) {
 	SymTable symtable;
 	mi.symtable = &symtable;
 
+	mi.ast = performFrontendWork(mi.fileName, mi.symtable);
+
 	float time;
 	Clock clock;
-	auto str = consumeFile(mi.fileName.c_str() );
-	if(str.empty() ) {
-		Global::errStack.push("File is either empty or does not exist", nullptr);
-		Global::errStack.unwind();
+
+	if(!gen(&mi, &ctx) ) {
 		exit(EXIT_FAILURE);
 	}
 
-	time = clock.getNanoSeconds();
-	std::cout << mi.fileName.c_str() << " read in " << time << " ns\n";
-
-	clock.restart();
-	Lexer lexer;
-	auto tokens = lexer.lexTokens(str);
-	time = clock.getNanoSeconds();
-	std::cout << mi.fileName.c_str() << " tokenized in " << time << " ns\n";
-	if(tokens.empty() ) {
-		Global::errStack.push("File does not contain any valid tokens", nullptr);
-	}
-	if(Global::config.verbose) displayTokens(tokens);
-	if(!Global::errStack.empty() ) {
-		Global::errStack.unwind();
-		std::cerr << "Tokenization step failed\n";
-		exit(EXIT_FAILURE);
-	}
-
-	clock.restart();
-	AstParser parser;
-	mi.ast = std::move(parser.buildTree(std::move(tokens) ) );
-	time = clock.getNanoSeconds();
-	std::cout << mi.fileName.c_str() << " ast built in " << time << " ns\n";
-	if(!Global::errStack.empty() ) {
-		Global::errStack.unwind();
-		std::cerr << "Parsing step failed\n";
-		exit(EXIT_FAILURE);
-	}
-
-	if(Global::config.verbose) {
-		AstPrinter().visit(*mi.ast);
-	}
-
-	clock.restart();
-	mi.symtable->visit(*mi.ast);
-	time = clock.getNanoSeconds();
-	std::cout << mi.fileName.c_str() << " symbol pass completed in " << time << " ns\n";
-	if(Global::config.verbose) {
-		mi.symtable->dump();
-	}
-	if(!Global::errStack.empty() ) {
-		Global::errStack.unwind();
-		std::cerr << "Symbol pass failed\n";
-		exit(EXIT_FAILURE);
-	}
-
-	clock.restart();
-	if(!gen(&mi, &ctx) ) exit(EXIT_FAILURE);
 	time = clock.getMilliSeconds();
 	std::cout << mi.objName.c_str() << " object file built in " << time << " ms\n";
 }
@@ -117,6 +61,9 @@ int main(int argc, char** argv) {
 	ArgParser argParser(argc, argv);
 	argParser.addString(&buildFlag, "build");
 	argParser.addBool(&Global::config.verbose, "--verbose");
+	argParser.addBool(&Global::config.verboseAst, "--verbose-ast");
+	argParser.addBool(&Global::config.verboseSymtable, "--verbose-symtable");
+	argParser.addBool(&Global::config.verboseIR, "--verbose-ir");
 
 	argParser.unwind();
 

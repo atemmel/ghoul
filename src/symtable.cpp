@@ -289,20 +289,18 @@ void SymTable::visit(CallAstNode &node) {
 			}
 		}
 
-		if(overlap == sig.size() == args.size() ) {
+		if(overlap == sig.size() && overlap == args.size() ) {
 			return true;
 		}
 
-		if(sig.size() < args.size() ) {
-			if(!sig.empty() && sig.back().name == "...") {
-				return true;
-			}
-		} 
+		if(overlap == sig.size() - 1 && !sig.empty() && sig.back().name == "...") {
+			return true;
+		}
 
 		return false;
 	};
 
-	if(matches(sig->parameters, callArgTypes) ) {
+	if(!matches(sig->parameters, callArgTypes) ) {
 		std::string errString = "Function call '" + node.identifier
 				+ '(';
 		for(int i = 0; i < callArgTypes.size(); i++) {

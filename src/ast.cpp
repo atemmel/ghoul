@@ -195,6 +195,21 @@ AstNode::Root AstParser::buildTree() {
 	return toplevel;
 }
 
+AstNode::Child AstParser::buildImport() {
+	Token *token = getIf(TokenType::Import);
+	if(!token) {
+		return nullptr;
+	}
+
+	Token *file = getIf(TokenType::StringLiteral);
+	if(!file) {
+		return unexpected();
+	}
+
+	//TODO: This could get interesting
+	return nullptr;
+}
+
 AstNode::Child AstParser::buildLink() {
 	Token *token = getIf(TokenType::Link);
 	if(!token) {
