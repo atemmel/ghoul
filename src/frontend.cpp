@@ -6,9 +6,26 @@
 #include "lexer.hpp"
 #include "utils.hpp"
 
+#include <filesystem>
+
+static std::string findLibPath(const std::string &origin);
+
 static void displayTokens(const Tokens &tokens);
 
-AstNode::Root performFrontendWork(const std::string &filename, SymTable *symtable) {
+AstNode::Root performFrontendWork(const std::string &module, SymTable *symtable) {
+	std::string filename = module + ".gh";	//TODO: Remove hardcoded constant
+	if(!std::filesystem::exists(filename) ) {
+		std::string libPath = findLibPath(module);
+		if(libPath.empty() ) {
+			Global::errStack.push("Could not find module '" + module + "'", nullptr);
+			Global::errStack.unwind();
+			exit(EXIT_FAILURE);
+		}
+
+		filename = libPath + '/' + filename;
+		std::cerr << filename << '\n';
+	}
+
 	float time;
 	Clock clock;
 	auto str = consumeFile(filename.c_str() );
@@ -38,7 +55,7 @@ AstNode::Root performFrontendWork(const std::string &filename, SymTable *symtabl
 
 	clock.restart();
 	AstParser parser;
-	AstNode::Root ast = std::move(parser.buildTree(std::move(tokens) ) );
+	AstNode::Root ast = std::move(parser.buildTree(std::move(tokens), symtable) );
 
 	time = clock.getNanoSeconds();
 	std::cout << filename << " ast built in " << time << " ns\n";
@@ -66,6 +83,27 @@ AstNode::Root performFrontendWork(const std::string &filename, SymTable *symtabl
 	}
 
 	return ast;
+}
+
+static std::string findLibPath(const std::string &origin) {
+	auto cwd = std::filesystem::current_path();
+	auto path = cwd.filename();
+
+	while(!path.empty() && path != "ghoul") { //TODO: Remove hardcoded constant
+		cwd = cwd.parent_path();
+		path = cwd.filename();
+	}
+
+	if(path.empty() ) {
+		return "";
+	}
+
+	cwd /= "lib";
+	if(!std::filesystem::exists(cwd) ) {
+		return "";
+	}
+
+	return cwd;
 }
 
 static void displayTokens(const Tokens &tokens) {

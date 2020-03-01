@@ -1,6 +1,9 @@
 #include "ast.hpp"
+
+#include "frontend.hpp"
 #include "global.hpp"
 #include "llvm.hpp"
+#include "symtable.hpp"
 #include "utils.hpp"
 
 void AstNode::addChild(Child && child) {
@@ -124,8 +127,9 @@ void BoolAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
-AstNode::Root AstParser::buildTree(Tokens &&tokens) {
+AstNode::Root AstParser::buildTree(Tokens &&tokens, SymTable *symtable) {
 	this->tokens = tokens;
+	this->symtable = symtable;
 	iterator = this->tokens.begin();
 	return buildTree();
 }
@@ -150,6 +154,28 @@ void AstParser::discardWhile(TokenType type) {
 	while(getIf(type) );
 }
 
+AstNode::Root AstParser::mergeTrees(AstNode::Root &&lhs, AstNode::Root &&rhs) {
+	auto product = std::make_unique<ToplevelAstNode>();
+
+	product->children = std::move(lhs->children);
+	product->functions = std::move(lhs->functions);
+	product->externs = std::move(lhs->externs);
+
+	//We can be smart about this
+	product->children.reserve(product->children.size() + rhs->children.size() );
+	product->functions.reserve(product->functions.size() + rhs->functions.size() );
+	product->externs.reserve(product->externs.size() + rhs->externs.size() );
+
+	//These need to be moved
+	std::move(rhs->children.begin(), rhs->children.end(), std::back_inserter(product->children) );
+
+	//These can be copied
+	std::copy(rhs->functions.begin(), rhs->functions.end(), std::back_inserter(product->functions) );
+	std::copy(rhs->externs.begin(), rhs->externs.end(), std::back_inserter(product->externs) );
+
+	return product;
+}
+
 AstNode::Root AstParser::buildTree() {
 	auto toplevel = std::make_unique<ToplevelAstNode>();
 
@@ -160,6 +186,13 @@ AstNode::Root AstParser::buildTree() {
 		auto link = buildLink();
 		if(link) {
 			toplevel->addChild(std::move(link) );
+			continue;
+		}
+		auto import = buildImport();
+		if(import) {
+			//toplevel = mergeTrees(std::move(toplevel), std::move(import) );
+			toplevel->addChild(std::move(import) );
+			continue;
 		}
 		else if(getIf(TokenType::Function) ) {
 			auto func = buildFunction();
@@ -195,7 +228,7 @@ AstNode::Root AstParser::buildTree() {
 	return toplevel;
 }
 
-AstNode::Child AstParser::buildImport() {
+AstNode::Root AstParser::buildImport() {
 	Token *token = getIf(TokenType::Import);
 	if(!token) {
 		return nullptr;
@@ -203,11 +236,11 @@ AstNode::Child AstParser::buildImport() {
 
 	Token *file = getIf(TokenType::StringLiteral);
 	if(!file) {
-		return unexpected();
+		return toRoot(unexpected() );
 	}
 
-	//TODO: This could get interesting
-	return nullptr;
+	AstNode::Root sub = performFrontendWork(file->value, symtable);
+	return sub;
 }
 
 AstNode::Child AstParser::buildLink() {

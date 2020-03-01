@@ -101,6 +101,10 @@ unsigned SymTable::getMemberOffset(const Type &type, const std::string &identifi
 }
 
 void SymTable::visit(ToplevelAstNode &node) {
+	if(node.analyzed) {	//No need to do it again
+		return;
+	}
+
 	//Look ahead at all function definitions
 	for(auto ptr : node.functions) {
 		if(!pushFunc(ptr->signature.name, &ptr->signature) ) {
@@ -131,6 +135,8 @@ void SymTable::visit(ToplevelAstNode &node) {
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}
+
+	node.analyzed = true;
 }
 
 void SymTable::visit(LinkAstNode &node) {

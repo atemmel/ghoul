@@ -4,4 +4,5 @@
 
 #include <string>
 
-AstNode::Root performFrontendWork(const std::string &filename, SymTable *symtable);
+//TODO: Test this with loads of files, cyclic dependencies, etc
+AstNode::Root performFrontendWork(const std::string &module, SymTable *symtable);

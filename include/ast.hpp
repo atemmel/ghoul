@@ -18,6 +18,8 @@ class StructAstNode;
 class ExpressionAstNode;
 class StringAstNode;
 
+class SymTable;
+
 struct FunctionSignature {
 	std::string name;
 	Type returnType;
@@ -45,6 +47,8 @@ struct ToplevelAstNode : public AstNode {
 	std::vector<FunctionAstNode*> functions;
 	std::vector<ExternAstNode*> externs;
 	std::vector<StructAstNode*> structs;
+
+	bool analyzed = false;
 };
 
 struct LinkAstNode : public AstNode {
@@ -155,15 +159,16 @@ public:
 
 class AstParser {
 public:
-	AstNode::Root buildTree(Tokens &&tokens);
+	AstNode::Root buildTree(Tokens &&tokens, SymTable *symtable);
 
 private:
 	AstNode::Child unexpected() const;
 	Token *getIf(TokenType type);
 	void unget();
 	void discardWhile(TokenType type);
+	AstNode::Root mergeTrees(AstNode::Root &&lhs, AstNode::Root &&rhs);
 	AstNode::Root buildTree();
-	AstNode::Child buildImport();
+	AstNode::Root buildImport();
 	AstNode::Child buildLink();
 	AstNode::Child buildStruct();
 	AstNode::Child buildFunction();
@@ -186,8 +191,14 @@ private:
 		return nullptr;
 	}
 
+	template<typename T>
+	AstNode::Root toRoot(std::unique_ptr<T> ptr) {
+		return nullptr;
+	}
+
 	Tokens tokens;
 	Tokens::iterator iterator;
 	ToplevelAstNode *root = nullptr;
+	SymTable *symtable = nullptr;
 	bool mayParseAssign = true;
 };
