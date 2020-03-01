@@ -31,10 +31,10 @@ make
 ```cpp
 // hello.gh
 
-import "io"
+import "io"			// printf
 
-fn main() {
-	printf("Hello, World!")
+fn main() {			// void is implicit return type unless otherwise specified
+	printf("Hello, World!")	// newlines replace semicolons
 }
 
 ```
@@ -46,17 +46,17 @@ fn main() {
 
 import "io"
 
-fn factorial(int n) int {
-	if n <= 1 {
+fn main() {
+	int n = 5
+	printf("Factorial of %d is %d\n", n, factorial(n) )
+}
+
+fn factorial(int n) int {	// Order of function declarations is resolved at compile-time
+	if n <= 1 {		// Branches do not need parantheses to contain their expressions
 		return 1
 	}
 
 	return n * factorial(n - 1)
-}
-
-fn main() {
-	int n = 5
-	printf("Factorial of %d is %d\n", n, factorial(n) )
 }
 
 ```
