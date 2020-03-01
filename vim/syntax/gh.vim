@@ -10,7 +10,7 @@ syn keyword Statement return
 
 syn keyword Keyword struct true false
 
-syn keyword Type void char int float
+syn keyword Type void char int float bool
 
 syn keyword cOperator link extern
 
