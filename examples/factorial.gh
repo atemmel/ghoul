@@ -1,4 +1,4 @@
-extern fn printf(char *, int, int) int
+import "io"
 
 fn factorial(int n) int {
 	if n <= 1 {

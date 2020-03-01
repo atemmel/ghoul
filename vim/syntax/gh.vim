@@ -12,7 +12,7 @@ syn keyword Keyword struct true false
 
 syn keyword Type void char int float bool
 
-syn keyword cOperator link extern
+syn keyword cOperator link extern import
 
 syn match Constant '\d\+'
 
