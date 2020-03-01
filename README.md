@@ -31,11 +31,12 @@ make
 ```cpp
 // hello.gh
 
-extern fn printf(char*) int   // Link with an extern function
+import "io"
 
-fn main() {                   // void as a return type is implicit if no return type is specified
-	printf("Hello, World!\n")   // Newlines replace ';'
+fn main() {
+	printf("Hello, World!")
 }
+
 ```
 
 #### Factorial
@@ -43,7 +44,7 @@ fn main() {                   // void as a return type is implicit if no return 
 ```cpp
 // factorial.gh
 
-extern fn printf(char *, int, int) int
+import "io"
 
 fn factorial(int n) int {
 	if n <= 1 {
@@ -57,4 +58,5 @@ fn main() {
 	int n = 5
 	printf("Factorial of %d is %d\n", n, factorial(n) )
 }
+
 ```
