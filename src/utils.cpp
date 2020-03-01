@@ -1,5 +1,6 @@
 #include "utils.hpp"
 
+#include <algorithm>
 #include <fstream>
 #include <vector>
 
@@ -51,7 +52,8 @@ std::string consumeFile(const char* path) {
 }
 
 bool endsWith(std::string_view sv, std::string_view end) {
-	return sv.rfind(end) + end.size() == sv.size();
+	if(end.size() > sv.size() ) return false;
+	return std::equal(end.rbegin(), end.rend(), sv.rbegin() );
 }
 
 std::string getFileName(std::string_view sv) {

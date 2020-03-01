@@ -405,6 +405,12 @@ void write(ModuleInfo *mi, Context *ctx) {
 	}
 
 	pass.run(*mi->module);
+
+	if(Global::config.verbose || Global::config.verboseIR) {
+		std::cerr << "Optimized IR:\n";
+		mi->module->print(llvm::errs(), nullptr);
+	}
+
 	dest.flush();
 
 	std::cout << "Object written to " << mi->objName << '\n';

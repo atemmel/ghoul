@@ -14,7 +14,7 @@
 
 void buildModuleInfo(ModuleInfo &mi, std::string_view sv) {
 	mi.fileName = sv;
-	mi.name = sv;
+	mi.name = endsWith(sv, ".gh") ? removeStem(sv) : sv;
 	mi.objName = mi.name + ".o";
 }
 

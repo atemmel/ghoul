@@ -13,24 +13,32 @@ static std::string findLibPath(const std::string &origin);
 static void displayTokens(const Tokens &tokens);
 
 AstNode::Root performFrontendWork(const std::string &module, SymTable *symtable) {
-	std::string filename = module + ".gh";	//TODO: Remove hardcoded constant
+	std::string filename = module;
+	if(!endsWith(filename, ".gh") ) {	//TODO: Remove hardcoded constant
+		filename += ".gh";
+	}	
+
 	if(!std::filesystem::exists(filename) ) {
 		std::string libPath = findLibPath(module);
 		if(libPath.empty() ) {
-			Global::errStack.push("Could not find module '" + module + "'", nullptr);
+			Global::errStack.push("Could not find valid lib path for '" + module + "'", nullptr);
 			Global::errStack.unwind();
 			exit(EXIT_FAILURE);
 		}
 
 		filename = libPath + '/' + filename;
-		std::cerr << filename << '\n';
-	}
+		if(!std::filesystem::exists(filename) ) {
+			Global::errStack.push("Could not find module '" + module + "' in " + libPath, nullptr);
+			Global::errStack.unwind();
+			exit(EXIT_FAILURE);
+		}
+	} 
 
 	float time;
 	Clock clock;
 	auto str = consumeFile(filename.c_str() );
 	if(str.empty() ) {
-		Global::errStack.push("File is either empty or does not exist", nullptr);
+		Global::errStack.push("File '" + filename + "' is either empty or does not exist", nullptr);
 		Global::errStack.unwind();
 		exit(EXIT_FAILURE);
 	}
