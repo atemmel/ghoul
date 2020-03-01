@@ -1,14 +1,14 @@
 import "io"
 
+fn main() {
+	int n = 5
+	printf("Factorial of %d is %d\n", n, factorial(n) )
+}
+
 fn factorial(int n) int {
 	if n <= 1 {
 		return 1
 	}
 
 	return n * factorial(n - 1)
-}
-
-fn main() {
-	int n = 5
-	printf("Factorial of %d is %d\n", n, factorial(n) )
 }
