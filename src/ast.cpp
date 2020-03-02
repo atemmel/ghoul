@@ -1,5 +1,6 @@
 #include "ast.hpp"
 
+#include "astprint.hpp"
 #include "frontend.hpp"
 #include "global.hpp"
 #include "llvm.hpp"
@@ -154,7 +155,7 @@ AstNode::Root AstParser::buildTree(Tokens &&tokens, SymTable *symtable) {
 AstNode::Child AstParser::panic(const char *file, int line) {
 	isPanic = true;
 	Global::errStack.push("Unexpected token: '" + iterator->value + '\'', &*iterator);
-	Global::errStack.push(std::string(file) + " at " + std::to_string(line), &*iterator);
+	Global::errStack.push(std::string(file) + " at " + std::to_string(line), nullptr);
 	discardUntil(TokenType::Terminator);	//Remember, no dupes!
 	discardWhile(TokenType::Terminator);
 	return nullptr;
@@ -473,6 +474,7 @@ AstNode::Child AstParser::buildStatement() {
 		if(decl) {
 			return decl;
 		}
+		unget();
 	}
 
 	token = getIf(TokenType::Return);
@@ -501,7 +503,6 @@ AstNode::Child AstParser::buildStatement() {
 		return node;
 	}
 
-	unget();
 	auto expr = buildExpr();
 	if(expr) {
 		if(expr->precedence != 0) {
@@ -512,9 +513,7 @@ AstNode::Child AstParser::buildStatement() {
 		} else {
 			return expr;
 		}
-	} else {
-		iterator++;
-	}
+	} 
 
 	return nullptr;
 }
@@ -910,12 +909,13 @@ AstNode::Expr AstParser::buildUnaryOp() {
 	Token *tok = nullptr;
 	switch(iterator->type) {
 		case TokenType::And:
-			tok = &*iterator++;
+			tok = &*iterator;
 			break;
 		default:
 			return nullptr;
 	}
 
+	iterator++;
 	return std::make_unique<UnaryExpressionAstNode>(tok);
 }
 
