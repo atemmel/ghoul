@@ -245,6 +245,10 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 	instructions = std::move(insts);
 }
 
+void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
+	//TODO: This
+}
+
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 	indicies.clear();
 	unsigned u = mi->symtable->getMemberOffset(*lastType, node.name);

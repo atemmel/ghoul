@@ -114,6 +114,16 @@ void AstPrinter::visit(BinExpressionAstNode &node) {
 	}
 }
 
+void AstPrinter::visit(UnaryExpressionAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Unary Expression : " 
+		<< Token::strings[static_cast<size_t>(node.type)] << '\n';
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
+}
+
 void AstPrinter::visit(MemberVariableAstNode &node) {
 	Scope scope;
 	pad(scope.depth);

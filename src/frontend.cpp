@@ -56,7 +56,7 @@ AstNode::Root performFrontendWork(const std::string &module, SymTable *symtable)
 	if(tokens.empty() ) {
 		Global::errStack.push("File does not contain any valid tokens", nullptr);
 	}
-	if(Global::config.verbose) displayTokens(tokens);
+	if(Global::config.verbose || Global::config.verboseLexer) displayTokens(tokens);
 	if(!Global::errStack.empty() ) {
 		Global::errStack.unwind();
 		std::cerr << "Tokenization step failed\n";

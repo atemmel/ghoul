@@ -43,11 +43,13 @@ public:
 	void visit(LoopAstNode &node) override;
 	void visit(CallAstNode &node) override;
 	void visit(BinExpressionAstNode &node) override;
+	void visit(UnaryExpressionAstNode &node) override;
 	void visit(MemberVariableAstNode &node) override;
 	void visit(VariableAstNode &node) override;
 	void visit(StringAstNode &node) override;
 	void visit(IntAstNode &node) override;
 	void visit(BoolAstNode &node) override;
+
 private:
 	template<typename T>
 	using Map = std::unordered_map<std::string, T>;

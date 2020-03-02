@@ -111,6 +111,12 @@ struct BinExpressionAstNode : public ExpressionAstNode {
 	TokenType type;
 };
 
+struct UnaryExpressionAstNode : public ExpressionAstNode {
+	UnaryExpressionAstNode(TokenType type);
+	void accept(AstVisitor &visitor) override;
+	TokenType type;
+};
+
 struct MemberVariableAstNode : public ExpressionAstNode {
 	MemberVariableAstNode(const std::string &name);
 	void accept(AstVisitor &visitor) override;
@@ -156,6 +162,7 @@ public:
 	virtual void visit(LoopAstNode &node)				= 0;
 	virtual void visit(CallAstNode &node)				= 0;
 	virtual void visit(BinExpressionAstNode &node)		= 0;
+	virtual void visit(UnaryExpressionAstNode &node)	= 0;
 	virtual void visit(MemberVariableAstNode &node)		= 0;
 	virtual void visit(VariableAstNode &node)			= 0;
 	virtual void visit(StringAstNode &node)				= 0;
@@ -168,10 +175,21 @@ public:
 	AstNode::Root buildTree(Tokens &&tokens, SymTable *symtable);
 
 private:
-	AstNode::Child unexpected() const;
+
+#ifndef NDEBUG	//Debug
+#define unexpected() \
+	panic(__FILE__, __LINE__)
+	AstNode::Child panic(const char *file, int line);
+#else	//Release
+#define unexpected() \
+	panic()
+	AstNode::Child panic();
+#endif
+
 	Token *getIf(TokenType type);
 	void unget();
 	void discardWhile(TokenType type);
+	void discardUntil(TokenType type);
 	AstNode::Root mergeTrees(AstNode::Root &&lhs, AstNode::Root &&rhs);
 	AstNode::Root buildTree();
 	AstNode::Root buildImport();
@@ -192,6 +210,7 @@ private:
 	AstNode::Expr buildAssignExpr(AstNode::Expr &lhs);
 	AstNode::Expr buildBinOp();
 	AstNode::Expr buildBinExpr(AstNode::Expr &child);
+	AstNode::Expr buildUnaryExpr();
 
 	Type buildType(Token *token);
 
@@ -210,4 +229,5 @@ private:
 	ToplevelAstNode *root = nullptr;
 	SymTable *symtable = nullptr;
 	bool mayParseAssign = true;
+	bool isPanic = false;
 };

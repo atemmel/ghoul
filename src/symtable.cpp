@@ -384,6 +384,10 @@ void SymTable::visit(BinExpressionAstNode &node) {
 	callArgTypes = std::move(types);
 }
 
+void SymTable::visit(UnaryExpressionAstNode &node) {
+	//TODO: This
+}
+
 void SymTable::visit(MemberVariableAstNode &node) {
 	auto &back = callArgTypes.back();
 	auto member = typeHasMember(back, node.name);

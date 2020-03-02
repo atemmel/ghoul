@@ -83,6 +83,15 @@ void BinExpressionAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
+UnaryExpressionAstNode::UnaryExpressionAstNode(TokenType type) 
+	: type(type) {
+	precedence = Token::precedence(type);
+}
+
+void UnaryExpressionAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
 MemberVariableAstNode::MemberVariableAstNode(const std::string &name)
 	: name(name) {
 	precedence = Token::precedence(TokenType::Identifier);
@@ -138,10 +147,28 @@ AstNode::Root AstParser::buildTree(Tokens &&tokens, SymTable *symtable) {
 	return buildTree();
 }
 
-AstNode::Child AstParser::unexpected() const {
+
+#ifndef NDEBUG
+
+AstNode::Child AstParser::panic(const char *file, int line) {
+	isPanic = true;
 	Global::errStack.push("Unexpected token: '" + iterator->value + '\'', &*iterator);
+	Global::errStack.push(std::string(file) + " at " + std::to_string(line), &*iterator);
+	discardUntil(TokenType::Terminator);	//Remember, no dupes!
+	discardWhile(TokenType::Terminator);
 	return nullptr;
 }
+
+#else
+
+AstNode::Child AstParser::panic() {
+	isPanic = true;
+	Global::errStack.push("Unexpected token: '" + iterator->value + '\'', &*iterator);
+	discardUntil(TokenType::Terminator);	//Remember, no dupes!
+	discardWhile(TokenType::Terminator);
+	return nullptr;
+}
+#endif
 
 Token *AstParser::getIf(TokenType type) {
 	if(iterator == tokens.end() || iterator->type != type) return nullptr;
@@ -156,6 +183,12 @@ void AstParser::unget() {
 
 void AstParser::discardWhile(TokenType type) {
 	while(getIf(type) );
+}
+
+void AstParser::discardUntil(TokenType type) {
+	while(iterator != tokens.end() && iterator->type != type) {
+		iterator++;
+	}
 }
 
 AstNode::Root AstParser::mergeTrees(AstNode::Root &&lhs, AstNode::Root &&rhs) {
@@ -353,7 +386,7 @@ AstNode::Child AstParser::buildFunction() {
 	if(ret) {
 		function->signature.returnType = buildType(ret);
 	} else {
-		function->signature.returnType = {"void", false };
+		function->signature.returnType = {"void"};
 	}
 	
 	if(!getIf(TokenType::BlockOpen) ) {
@@ -369,7 +402,7 @@ AstNode::Child AstParser::buildFunction() {
 	}
 
 	if(!getIf(TokenType::BlockClose) ) {
-		return unexpected();
+		return isPanic ? nullptr : unexpected();
 	}
 
 	return function;
@@ -471,7 +504,9 @@ AstNode::Child AstParser::buildStatement() {
 	auto expr = buildExpr();
 	if(expr) {
 		if(expr->precedence != 0) {
-			Global::errStack.push("Stray expression", expr->token);
+			if(Global::errStack.empty() ) {
+				Global::errStack.push("Stray expression", expr->token);
+			}
 			return nullptr;
 		} else {
 			return expr;
@@ -600,8 +635,6 @@ AstNode::Expr AstParser::buildCall(const std::string &identifier) {
 
 	if(!expr) {
 		if(!getIf(TokenType::ParensClose) ) {
-			std::cerr << "Expected ')'\n";
-			std::cerr << static_cast<size_t>(iterator->type) << " : " << iterator->value << '\n';
 			return toExpr(unexpected() );
 		}
 		return call;
@@ -613,6 +646,7 @@ AstNode::Expr AstParser::buildCall(const std::string &identifier) {
 			if(getIf(TokenType::ParensClose) ) {
 				break;
 			} else {
+				//return panic ? nullptr : toExpr(unexpected() );
 				return toExpr(unexpected() );
 			}
 		}
@@ -864,6 +898,10 @@ AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 
 	auto result = std::move(valStack.back() );
 	return result;
+}
+
+AstNode::Expr AstParser::buildUnaryExpr() {
+	return nullptr;
 }
 
 Type AstParser::buildType(Token *token) {

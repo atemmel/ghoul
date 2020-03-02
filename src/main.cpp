@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
 	ArgParser argParser(argc, argv);
 	argParser.addString(&buildFlag, "build");
 	argParser.addBool(&Global::config.verbose, "--verbose");
+	argParser.addBool(&Global::config.verboseLexer, "--verbose-lexer");
 	argParser.addBool(&Global::config.verboseAst, "--verbose-ast");
 	argParser.addBool(&Global::config.verboseSymtable, "--verbose-symtable");
 	argParser.addBool(&Global::config.verboseIR, "--verbose-ir");
