@@ -78,6 +78,16 @@ void AstPrinter::visit(BranchAstNode &node) {
 	}
 }
 
+void AstPrinter::visit(LoopAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "while\nexpr:\n";
+	node.expr->accept(*this);
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
+}
+
 void AstPrinter::visit(CallAstNode &node) {
 	Scope scope;
 	pad(scope.depth);

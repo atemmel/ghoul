@@ -67,7 +67,7 @@ AstNode::Root performFrontendWork(const std::string &module, SymTable *symtable)
 
 	time = clock.getNanoSeconds();
 	std::cout << filename << " ast built in " << time << " ns\n";
-	if(!Global::errStack.empty() ) {
+	if(!Global::errStack.empty() || !ast) {
 		Global::errStack.unwind();
 		std::cerr << "Parsing step failed\n";
 		exit(EXIT_FAILURE);

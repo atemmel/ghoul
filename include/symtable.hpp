@@ -32,6 +32,7 @@ public:
 	void visit(VariableDeclareAstNode &node) override;
 	void visit(ReturnAstNode &node) override;
 	void visit(BranchAstNode &node) override;
+	void visit(LoopAstNode &node) override;
 	void visit(CallAstNode &node) override;
 	void visit(BinExpressionAstNode &node) override;
 	void visit(MemberVariableAstNode &node) override;
@@ -46,14 +47,15 @@ private:
 		InsideFunction
 	};
 
-	Context context;
-
 	template <typename T>
 	using Map = std::unordered_map<std::string, T>;
 	using Set = std::unordered_set<std::string>;
 	using Locals = Map<const Type*>;
 	using Structs = Map<Type>;
 
+	bool demoteExprToBool(AstNode::Expr &expr);
+
+	Context context;
 	Set types;
 	Structs structs;
 	Map<const FunctionSignature*> functions;

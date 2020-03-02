@@ -249,16 +249,22 @@ void SymTable::visit(ReturnAstNode &node) {
 }
 
 void SymTable::visit(BranchAstNode &node) {
-	node.expr->accept(*this);
-	Type &result = callArgTypes.back();
-	if(result == Type{"int", false} || result.isPtr) { //Compare numeric values to zero		
-		auto binop = std::make_unique<BinExpressionAstNode>(TokenType::NotEquivalence);
-		binop->addChild(std::move(node.expr) );
-		binop->addChild(std::make_unique<IntAstNode>(0) );
-		node.expr = std::move(binop);
-	} else if(result != Type{"bool", false}) {	//If non bool expr
-		Global::errStack.push("Cannot translate result of expression into type'bool'", 
-				node.expr->token);
+	if(!demoteExprToBool(node.expr) ) {
+		return;
+	}
+
+	blockDepth++;
+
+	//TODO: LOCALS?????
+	for(const auto &child : node.children) {
+		child->accept(*this);
+	}
+
+	blockDepth--;
+}
+
+void SymTable::visit(LoopAstNode &node) {
+	if(!demoteExprToBool(node.expr) ) {
 		return;
 	}
 
@@ -431,4 +437,23 @@ void SymTable::visit(BoolAstNode &node) {
 		"bool",
 		false
 	});
+}
+
+bool SymTable::demoteExprToBool(AstNode::Expr &expr) {
+	expr->accept(*this);
+	Type &result = callArgTypes.back();
+	if(result == Type{"int", false} || result.isPtr) { //Compare numeric values to zero		
+		auto binop = std::make_unique<BinExpressionAstNode>(TokenType::NotEquivalence);
+		binop->addChild(std::move(expr) );
+		binop->addChild(std::make_unique<IntAstNode>(0) );
+		expr = std::move(binop);
+	} else if(result != Type{"bool", false}) {	//If non bool expr
+		Global::errStack.push("Cannot translate result of expression into type'bool'", 
+				expr->token);
+		callArgTypes.clear();
+		return false;
+	}
+
+	callArgTypes.clear();
+	return true;
 }

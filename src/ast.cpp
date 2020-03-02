@@ -62,6 +62,10 @@ void BranchAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
+void LoopAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
 CallAstNode::CallAstNode(const std::string &identifier) 
 	: identifier(identifier) {
 }
@@ -196,7 +200,9 @@ AstNode::Root AstParser::buildTree() {
 		}
 		else if(getIf(TokenType::Function) ) {
 			auto func = buildFunction();
-			if(!func) return nullptr;
+			if(!func) {
+				return nullptr;
+			}
 			//TODO: If func is empty, a parsing error has occured
 			//Log this somehow for error messages
 			auto fptr = static_cast<FunctionAstNode*>(func.get() );
@@ -204,13 +210,17 @@ AstNode::Root AstParser::buildTree() {
 			toplevel->addChild(std::move(func) );
 		} else if(getIf(TokenType::Extern) ) {
 			auto ext = buildExtern();
-			if(!ext) return nullptr;
+			if(!ext) {
+				return nullptr;
+			}
 			auto eptr = static_cast<ExternAstNode*>(ext.get() );
 			toplevel->addExtern(eptr);
 			toplevel->addChild(std::move(ext) );
 		} else if(getIf(TokenType::Struct) ) {
 			auto struc = buildStruct();
-			if(!struc) return nullptr;
+			if(!struc) {
+				return nullptr;
+			}
 			auto struptr = static_cast<StructAstNode*>(struc.get() );
 			toplevel->structs.push_back(struptr);
 			toplevel->addChild(std::move(struc) );
@@ -352,14 +362,15 @@ AstNode::Child AstParser::buildFunction() {
 	}
 
 	discardWhile(TokenType::Terminator);
-	while(!getIf(TokenType::BlockClose) ) {
-		auto stmnt = buildStatement();
-		if(stmnt) {
-			function->addChild(std::move(stmnt) );
-		} else {
-			return nullptr;
-		}
+	auto stmnt = buildStatement();
+	while(stmnt) {
+		function->addChild(std::move(stmnt) );
 		discardWhile(TokenType::Terminator);
+		stmnt = buildStatement();
+	}
+
+	if(!getIf(TokenType::BlockClose) ) {
+		return unexpected();
 	}
 
 	return function;
@@ -455,6 +466,10 @@ AstNode::Child AstParser::buildStatement() {
 	if(node) {
 		return node;
 	}
+	node = buildLoop();
+	if(node) {
+		return node;
+	}
 
 	unget();
 	auto expr = buildExpr();
@@ -541,6 +556,45 @@ AstNode::Child AstParser::buildBranch() {
 	}
 
 	return br;
+}
+
+AstNode::Child AstParser::buildLoop() {
+	Token *tok = getIf(TokenType::While);
+	if(!tok) {
+		return nullptr;
+	}
+
+	AstNode::Expr expr = buildExpr();
+
+	if(!expr) {
+		return unexpected();
+	}
+
+	tok = getIf(TokenType::BlockOpen);
+	if(!tok) {
+		return unexpected();
+	}
+
+	tok = getIf(TokenType::Terminator);
+	if(!tok) {
+		return unexpected();
+	}
+
+	auto loop = std::make_unique<LoopAstNode>();
+	loop->expr = std::move(expr);
+	discardWhile(TokenType::Terminator);
+	auto stmnt = buildStatement();
+	while(stmnt) {
+		loop->addChild(std::move(stmnt) );
+		discardWhile(TokenType::Terminator);
+		stmnt = buildStatement();
+	}
+
+	if(!getIf(TokenType::BlockClose) ) {
+		return unexpected();
+	}		
+
+	return loop;
 }
 
 AstNode::Expr AstParser::buildCall(const std::string &identifier) {

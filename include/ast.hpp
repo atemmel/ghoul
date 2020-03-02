@@ -90,6 +90,11 @@ struct BranchAstNode : public AstNode {
 	AstNode::Expr expr;
 };
 
+struct LoopAstNode : public AstNode {
+	void accept(AstVisitor &visitor) override;
+	AstNode::Expr expr;
+};
+
 struct ExpressionAstNode : public AstNode {
 	int precedence = 0;
 };
@@ -148,6 +153,7 @@ public:
 	virtual void visit(VariableDeclareAstNode &node)	= 0;
 	virtual void visit(ReturnAstNode &node)				= 0;
 	virtual void visit(BranchAstNode &node)				= 0;
+	virtual void visit(LoopAstNode &node)				= 0;
 	virtual void visit(CallAstNode &node)				= 0;
 	virtual void visit(BinExpressionAstNode &node)		= 0;
 	virtual void visit(MemberVariableAstNode &node)		= 0;
@@ -177,17 +183,18 @@ private:
 	AstNode::Child buildStatement();
 	AstNode::Child buildDecl(Token *token);
 	AstNode::Child buildBranch();
-	std::unique_ptr<ExpressionAstNode> buildCall(const std::string &identifier);
-	std::unique_ptr<ExpressionAstNode> buildExpr();
-	std::unique_ptr<ExpressionAstNode> buildPrimaryExpr();
-	std::unique_ptr<ExpressionAstNode> buildVariableExpr(Token *token);
-	std::unique_ptr<ExpressionAstNode> buildMemberExpr();
-	std::unique_ptr<ExpressionAstNode> buildAssignExpr(std::unique_ptr<ExpressionAstNode> &lhs);
-	std::unique_ptr<ExpressionAstNode> buildBinOp();
-	std::unique_ptr<ExpressionAstNode> buildBinExpr(std::unique_ptr<ExpressionAstNode> &child);
+	AstNode::Child buildLoop();
+	AstNode::Expr buildCall(const std::string &identifier);
+	AstNode::Expr buildExpr();
+	AstNode::Expr buildPrimaryExpr();
+	AstNode::Expr buildVariableExpr(Token *token);
+	AstNode::Expr buildMemberExpr();
+	AstNode::Expr buildAssignExpr(AstNode::Expr &lhs);
+	AstNode::Expr buildBinOp();
+	AstNode::Expr buildBinExpr(AstNode::Expr &child);
 
 	template<typename T>
-	std::unique_ptr<ExpressionAstNode> toExpr(std::unique_ptr<T> ptr) {
+	AstNode::Expr toExpr(std::unique_ptr<T> ptr) {
 		return nullptr;
 	}
 

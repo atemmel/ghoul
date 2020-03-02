@@ -1,0 +1,9 @@
+import "io"
+
+fn main() {
+	int i = 5
+	while i > 0 {
+		printf("i is %d\n", i)
+		i = i - 1
+	}
+}
