@@ -36,6 +36,7 @@ public:
 	void visit(CallAstNode &node) override;
 	void visit(BinExpressionAstNode &node) override;
 	void visit(UnaryExpressionAstNode &node) override;
+	void visit(CastExpressionAstNode &node) override;
 	void visit(MemberVariableAstNode &node) override;
 	void visit(VariableAstNode &node) override;
 	void visit(StringAstNode &node) override;
@@ -55,6 +56,7 @@ private:
 	using Structs = Map<Type>;
 
 	bool demoteExprToBool(AstNode::Expr &expr);
+	bool resolveCast(CallAstNode &call);
 
 	Context context;
 	Set types;

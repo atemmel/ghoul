@@ -1,0 +1,17 @@
+import "io"
+
+struct Obj {
+	int member
+	char *str
+}
+
+fn main() {
+	Obj o
+	o.str = "James bond" 
+
+	printf("%s starts with %c\n", o.str, &o.str)
+
+	&o.str = &"W"
+
+	printf("%s starts with %c\n", o.str, &o.str)
+}

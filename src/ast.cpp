@@ -94,6 +94,14 @@ void UnaryExpressionAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
+CastExpressionAstNode::CastExpressionAstNode(const Type &type) 
+ 	: type(type) {
+}
+
+void CastExpressionAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
 MemberVariableAstNode::MemberVariableAstNode(const std::string &name)
 	: name(name) {
 	precedence = Token::precedence(TokenType::Identifier);
@@ -922,6 +930,10 @@ AstNode::Expr AstParser::buildUnaryOp() {
 AstNode::Expr AstParser::buildUnaryExpr() {
 	auto un = buildUnaryOp();
 	if(!un) {
+		un = buildCast();
+	}
+
+	if(!un) {
 		return nullptr;
 	}
 
@@ -934,6 +946,25 @@ AstNode::Expr AstParser::buildUnaryExpr() {
 	un->addChild(std::move(expr) );
 
 	return un;
+}
+
+AstNode::Expr AstParser::buildCast() {
+	if(!getIf(TokenType::Less) ) {
+		return nullptr;
+	}
+
+	Token *token = getIf(TokenType::Identifier);
+	if(!token) {
+		return toExpr(unexpected() );
+	}
+
+	auto cast = std::make_unique<CastExpressionAstNode>(buildType(token) );
+
+	if(!getIf(TokenType::Greater) ) {
+		return nullptr;
+	}
+
+	return cast;
 }
 
 Type AstParser::buildType(Token *token) {

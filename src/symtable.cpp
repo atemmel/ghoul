@@ -394,6 +394,22 @@ void SymTable::visit(UnaryExpressionAstNode &node) {
 	}
 }
 
+void SymTable::visit(CastExpressionAstNode &node) {
+	for(const auto &child : node.children) {
+		child->accept(*this);
+	}
+
+	if(!hasType(node.type.name) ) {
+		Global::errStack.push("Cannot cast '" + callArgTypes.back().name
+				+ "' into '" + node.type.name + "'", node.token);
+		callArgTypes.clear();
+		return;
+	}
+
+	//I mean...
+	callArgTypes.back() = node.type;
+}
+
 void SymTable::visit(MemberVariableAstNode &node) {
 	auto &back = callArgTypes.back();
 	auto member = typeHasMember(back, node.name);

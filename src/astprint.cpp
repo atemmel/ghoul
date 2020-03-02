@@ -124,6 +124,15 @@ void AstPrinter::visit(UnaryExpressionAstNode &node) {
 	}
 }
 
+void AstPrinter::visit(CastExpressionAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Cast : " << node.type.string() << '\n';
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
+}
+
 void AstPrinter::visit(MemberVariableAstNode &node) {
 	Scope scope;
 	pad(scope.depth);

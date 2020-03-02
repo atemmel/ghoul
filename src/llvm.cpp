@@ -262,6 +262,24 @@ void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
 	}
 }
 
+void LLVMCodeGen::visit(CastExpressionAstNode &node) {
+	llvm::Type *type = translateType(node.type);
+	for(const auto &c : node.children) {
+		c->accept(*this);
+	}
+
+	/*
+	llvm::Instruction *cast = llvm::CastInst::Create(llvm::Instruction::BitCast, 
+			callParams.back(), type);
+	instructions.push_back(cast);
+	ctx->builder.Insert(cast);
+	*/
+
+	auto v = ctx->builder.CreateIntCast(callParams.back(), type, true);
+
+	callParams.back() = v;
+}
+
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 	indicies.clear();
 	unsigned u = mi->symtable->getMemberOffset(*lastType, node.name);

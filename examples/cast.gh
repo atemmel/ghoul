@@ -1,0 +1,9 @@
+import "io"
+
+fn printc(char c) {
+	printf("c is: %c\n", c)
+}
+
+fn main() {
+	printc(<char>54)
+}

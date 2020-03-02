@@ -103,6 +103,7 @@ struct CallAstNode : public ExpressionAstNode {
 	CallAstNode(const std::string &identifier);
 	void accept(AstVisitor &visitor) override;
 	std::string identifier;
+	bool isCast = false;
 };
 
 struct BinExpressionAstNode : public ExpressionAstNode {
@@ -115,6 +116,12 @@ struct UnaryExpressionAstNode : public ExpressionAstNode {
 	UnaryExpressionAstNode(Token *token);
 	void accept(AstVisitor &visitor) override;
 	TokenType type;
+};
+
+struct CastExpressionAstNode : public ExpressionAstNode {
+	CastExpressionAstNode(const Type &type);
+	void accept(AstVisitor &visitor) override;
+	Type type;
 };
 
 struct MemberVariableAstNode : public ExpressionAstNode {
@@ -163,6 +170,7 @@ public:
 	virtual void visit(CallAstNode &node)				= 0;
 	virtual void visit(BinExpressionAstNode &node)		= 0;
 	virtual void visit(UnaryExpressionAstNode &node)	= 0;
+	virtual void visit(CastExpressionAstNode &node)		= 0;
 	virtual void visit(MemberVariableAstNode &node)		= 0;
 	virtual void visit(VariableAstNode &node)			= 0;
 	virtual void visit(StringAstNode &node)				= 0;
@@ -212,6 +220,7 @@ private:
 	AstNode::Expr buildBinExpr(AstNode::Expr &child);
 	AstNode::Expr buildUnaryOp();
 	AstNode::Expr buildUnaryExpr();
+	AstNode::Expr buildCast();
 
 	Type buildType(Token *token);
 
