@@ -5,6 +5,9 @@
 unsigned AstPrinter::Scope::depth = 0;
 
 void AstPrinter::visit(ToplevelAstNode &node) {
+	if(node.analyzed) {
+		return;
+	}
 	Scope scope;
 	pad(scope.depth);
 	std::cerr << "Toplevel\n";
@@ -53,7 +56,11 @@ void AstPrinter::visit(VariableDeclareAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
 	std::cerr << "Decl : " << node.identifier << " as " 
-		<< node.type.name << (node.type.isPtr ? "&\n" : "\n");
+		<< node.type.name;
+	for(int i = 0; i < node.type.isPtr; i++) {
+		std::cerr << '*';
+	}
+	std::cerr << '\n';
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}

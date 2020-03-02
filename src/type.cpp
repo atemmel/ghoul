@@ -17,9 +17,9 @@ std::string Type::string() const {
 		return "<unresolved>";
 	}
 
-	std::string buffer = name;
-	if(isPtr) {
-		buffer += " *";
+	std::string buffer = name + ' ';
+	for(int i = 0; i < isPtr; i++) {
+		buffer += "*";
 	}
 
 	for(const auto &member : members) {
