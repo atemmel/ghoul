@@ -7,7 +7,7 @@
 
 class ErrorStack {
 public:
-	void setFile(std::string *ptr);
+	void setFile(const std::string &ptr);
 	bool empty() const;
 	void push(const std::string &str, Token *token);
 	void unwind() const;
@@ -17,6 +17,6 @@ private:
 		Token *token;
 	};
 
-	std::string *file;
+	std::string file;
 	std::vector<Error> stack;
 };

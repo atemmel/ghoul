@@ -18,7 +18,7 @@ AstNode::Root performFrontendWork(const std::string &module, SymTable *symtable)
 		filename += ".gh";
 	}	
 
-	Global::errStack.setFile(&filename);
+	Global::errStack.setFile(filename);
 
 	if(!std::filesystem::exists(filename) ) {
 		std::string libPath = findLibPath(module);
@@ -92,7 +92,6 @@ AstNode::Root performFrontendWork(const std::string &module, SymTable *symtable)
 		exit(EXIT_FAILURE);
 	}
 
-	Global::errStack.setFile(nullptr);
 	return ast;
 }
 
