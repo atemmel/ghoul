@@ -83,9 +83,10 @@ void BinExpressionAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
-UnaryExpressionAstNode::UnaryExpressionAstNode(TokenType type) 
-	: type(type) {
+UnaryExpressionAstNode::UnaryExpressionAstNode(Token *token) 
+	: type(token->type) {
 	precedence = Token::precedence(type);
+	this->token = token;
 }
 
 void UnaryExpressionAstNode::accept(AstVisitor &visitor) {
@@ -678,6 +679,11 @@ AstNode::Expr AstParser::buildExpr() {
 AstNode::Expr AstParser::buildPrimaryExpr() {
 	AstNode::Expr expr = nullptr;
 
+	expr = buildUnaryExpr();
+	if(expr) {
+		return expr;
+	}
+
 	auto tok = getIf(TokenType::StringLiteral);
 	if(tok) {
 		mayParseAssign = false;
@@ -900,8 +906,34 @@ AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 	return result;
 }
 
+AstNode::Expr AstParser::buildUnaryOp() {
+	Token *tok = nullptr;
+	switch(iterator->type) {
+		case TokenType::And:
+			tok = &*iterator++;
+			break;
+		default:
+			return nullptr;
+	}
+
+	return std::make_unique<UnaryExpressionAstNode>(tok);
+}
+
 AstNode::Expr AstParser::buildUnaryExpr() {
-	return nullptr;
+	auto un = buildUnaryOp();
+	if(!un) {
+		return nullptr;
+	}
+
+	auto expr = buildPrimaryExpr();
+
+	if(!expr) {
+		return toExpr(unexpected() );
+	}
+
+	un->addChild(std::move(expr) );
+
+	return un;
 }
 
 Type AstParser::buildType(Token *token) {

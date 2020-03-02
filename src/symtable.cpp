@@ -385,7 +385,13 @@ void SymTable::visit(BinExpressionAstNode &node) {
 }
 
 void SymTable::visit(UnaryExpressionAstNode &node) {
-	//TODO: This
+	for(const auto &child : node.children) {
+		child->accept(*this);
+	}
+
+	if(node.type == TokenType::And) {
+		callArgTypes.back().isPtr--;
+	}
 }
 
 void SymTable::visit(MemberVariableAstNode &node) {

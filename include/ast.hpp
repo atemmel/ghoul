@@ -112,7 +112,7 @@ struct BinExpressionAstNode : public ExpressionAstNode {
 };
 
 struct UnaryExpressionAstNode : public ExpressionAstNode {
-	UnaryExpressionAstNode(TokenType type);
+	UnaryExpressionAstNode(Token *token);
 	void accept(AstVisitor &visitor) override;
 	TokenType type;
 };
@@ -210,6 +210,7 @@ private:
 	AstNode::Expr buildAssignExpr(AstNode::Expr &lhs);
 	AstNode::Expr buildBinOp();
 	AstNode::Expr buildBinExpr(AstNode::Expr &child);
+	AstNode::Expr buildUnaryOp();
 	AstNode::Expr buildUnaryExpr();
 
 	Type buildType(Token *token);

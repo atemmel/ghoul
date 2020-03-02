@@ -246,7 +246,20 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 }
 
 void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
-	//TODO: This
+	for(const auto &c : node.children) {
+		c->accept(*this);
+	}
+
+	if(node.type == TokenType::And) {
+		std::vector<llvm::Value*> values = { 
+			llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) )
+		};
+
+		llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(callParams.back(), values);
+		instructions.push_back(gep);
+		ctx->builder.Insert(gep);
+		callParams.back() = ctx->builder.CreateLoad(gep);
+	}
 }
 
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
@@ -443,7 +456,6 @@ void write(ModuleInfo *mi, Context *ctx) {
 
 void link(ModuleInfo *mi, Context *ctx) {
 	std::cout << "Linking to " << mi->name << '\n';
-	//system((std::string("gcc -O0 -static ") + mi->objName + " -o " + mi->name).c_str() );
 	std::string link;
 	for(const auto &str : mi->links) {
 		link += " -l";

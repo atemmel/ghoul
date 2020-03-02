@@ -1,0 +1,13 @@
+import "io"
+
+fn main(int argc, char **argv) {
+	printf("argc: %d\n", argc)
+
+	int i = argc
+	while i >= 0 {
+		printf(&argv)
+		i = i - 1
+	}
+
+	printf("\n")
+}
