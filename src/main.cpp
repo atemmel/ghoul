@@ -64,7 +64,6 @@ int main(int argc, char** argv) {
 
 	if(!buildFlag.empty() ) {
 		buildModuleInfo(mi, buildFlag);
-		Global::errStack.setFile(&mi.fileName);
 		compile(mi);
 	}
 }

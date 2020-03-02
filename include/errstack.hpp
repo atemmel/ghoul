@@ -17,6 +17,6 @@ private:
 		Token *token;
 	};
 
-	std::string *file = nullptr;
+	std::string *file;
 	std::vector<Error> stack;
 };
