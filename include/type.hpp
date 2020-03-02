@@ -11,7 +11,7 @@ struct Type {
 
 	//TODO: Reorder struct members
 	std::string name;
-	bool isPtr = false;	//TODO: Refactor as unsigned
+	unsigned isPtr = 0;	//TODO: Refactor as unsigned
 	std::vector<Member> members;
 };
 

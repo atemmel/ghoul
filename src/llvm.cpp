@@ -323,7 +323,11 @@ llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
 		return it->second;
 	}
 
-	return astType.isPtr ? type->getPointerTo() : type;
+	for(int i = 0; i < astType.isPtr; i++) {
+		type = type->getPointerTo();
+	}
+
+	return type;
 }
 
 void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs) {

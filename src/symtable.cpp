@@ -442,7 +442,7 @@ void SymTable::visit(BoolAstNode &node) {
 bool SymTable::demoteExprToBool(AstNode::Expr &expr) {
 	expr->accept(*this);
 	Type &result = callArgTypes.back();
-	if(result == Type{"int", false} || result.isPtr) { //Compare numeric values to zero		
+	if(result == Type{"int", false} || result.isPtr > 0) { //Compare numeric values to zero		
 		auto binop = std::make_unique<BinExpressionAstNode>(TokenType::NotEquivalence);
 		binop->addChild(std::move(expr) );
 		binop->addChild(std::make_unique<IntAstNode>(0) );

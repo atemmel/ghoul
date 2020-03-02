@@ -193,6 +193,8 @@ private:
 	AstNode::Expr buildBinOp();
 	AstNode::Expr buildBinExpr(AstNode::Expr &child);
 
+	Type buildType(Token *token);
+
 	template<typename T>
 	AstNode::Expr toExpr(std::unique_ptr<T> ptr) {
 		return nullptr;

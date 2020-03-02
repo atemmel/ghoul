@@ -332,8 +332,7 @@ AstNode::Child AstParser::buildFunction() {
 			return unexpected();
 		}
 
-		type.name = typeId->value;
-		type.isPtr = getIf(TokenType::Multiply);
+		type = buildType(typeId);
 		
 		auto parId = getIf(TokenType::Identifier);
 		if(!parId) {
@@ -352,7 +351,7 @@ AstNode::Child AstParser::buildFunction() {
 
 	auto ret = getIf(TokenType::Identifier);
 	if(ret) {
-		function->signature.returnType = {ret->value, getIf(TokenType::Multiply) };
+		function->signature.returnType = buildType(ret);
 	} else {
 		function->signature.returnType = {"void", false };
 	}
@@ -395,9 +394,7 @@ AstNode::Child AstParser::buildExtern() {
 	while(!getIf(TokenType::ParensClose) ) {
 		id = getIf(TokenType::Identifier);
 		if(id) {
-			Type type;
-			type.name = id->value;
-			type.isPtr = getIf(TokenType::Multiply);
+			Type type = buildType(id);
 			auto arg = getIf(TokenType::Identifier);
 			ext->signature.paramNames.push_back(arg ? arg->value : "");
 			ext->signature.parameters.push_back(type);
@@ -419,8 +416,7 @@ AstNode::Child AstParser::buildExtern() {
 	Type result;
 	id = getIf(TokenType::Identifier);
 	if(id) {
-		result.name = id->value;
-		result.isPtr = getIf(TokenType::Multiply);
+		result = buildType(id);
 	} else {
 		result.name = "void";
 	}
@@ -488,10 +484,7 @@ AstNode::Child AstParser::buildStatement() {
 }
 
 AstNode::Child AstParser::buildDecl(Token *token) {
-	Type type {
-		token->value,			//Type name
-		getIf(TokenType::Multiply)	//If ptr
-	};
+	Type type = buildType(token);	
 	auto id = getIf(TokenType::Identifier);
 	if(!id) {
 		return nullptr;
@@ -871,4 +864,13 @@ AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 
 	auto result = std::move(valStack.back() );
 	return result;
+}
+
+Type AstParser::buildType(Token *token) {
+	Type type;
+	type.name = token->value;
+	while(getIf(TokenType::Multiply) ) {
+		type.isPtr++;
+	}
+	return type;
 }
