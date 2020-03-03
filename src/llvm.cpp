@@ -67,6 +67,8 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 	llvm::BasicBlock *entry = llvm::BasicBlock::Create(ctx->context, "entrypoint", func);
 	ctx->builder.SetInsertPoint(entry);
 
+	//Uuum, okay?
+	//TODO: Extend check to see if function is recursive
 	if(node.signature.name == "main") {
 		ctx->builder.CreateAlloca(llvm::Type::getInt32Ty(ctx->context) );
 	}
@@ -74,12 +76,13 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 	locals = &allLocals[node.signature.name];
 	auto it = ctx->builder.GetInsertBlock();
 
-	//Uuum, okay?
-	//TODO: Extend check to see if function is recursive
+	//TODO: Is this also needed?
+	/*
 	if(node.signature.name == "main") {
 		auto alloca = new llvm::AllocaInst(llvm::Type::getInt32Ty(ctx->context), 0, "", it);
 		ctx->builder.CreateStore(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) ), alloca );
 	}
+	*/
 
 	for(auto &arg : func->args() ) {
 
@@ -160,18 +163,24 @@ void LLVMCodeGen::visit(BranchAstNode &node) {
 }
 
 void LLVMCodeGen::visit(LoopAstNode &node) {
-	node.expr->accept(*this);
 	llvm::BasicBlock *origin = ctx->builder.GetInsertBlock();
+	llvm::BasicBlock *cond = llvm::BasicBlock::Create(ctx->context, "", function);
+	ctx->builder.CreateBr(cond);
+	ctx->builder.SetInsertPoint(cond);
+
+	node.expr->accept(*this);
+
 	llvm::BasicBlock *branch = llvm::BasicBlock::Create(ctx->context, "", function);
 	llvm::BasicBlock *end = llvm::BasicBlock::Create(ctx->context, "", function);
+
 	ctx->builder.CreateCondBr(callParams.back(), branch, end);
 
 	ctx->builder.SetInsertPoint(branch);
 	for(const auto &child : node.children) {
 		child->accept(*this);
 	}
-	//ctx->builder.CreateBr(branch);
-	ctx->builder.CreateCondBr(callParams.back(), branch, end);
+
+	ctx->builder.CreateBr(cond);
 	ctx->builder.SetInsertPoint(end);
 }
 
@@ -417,6 +426,7 @@ bool gen(ModuleInfo *mi, Context *ctx) {
 	if(Global::config.verbose || Global::config.verboseIR) {
 		mi->module->print(llvm::errs(), nullptr);
 	}
+
 	write(mi, ctx);
 	return true;
 }
@@ -461,10 +471,12 @@ void write(ModuleInfo *mi, Context *ctx) {
 
 	pass.run(*mi->module);
 
+	/*
 	if(Global::config.verbose || Global::config.verboseIR) {
 		std::cerr << "Optimized IR:\n";
 		mi->module->print(llvm::errs(), nullptr);
 	}
+	*/
 
 	dest.flush();
 
