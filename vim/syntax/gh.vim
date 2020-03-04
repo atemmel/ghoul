@@ -4,7 +4,7 @@ endif
 
 let b:current_syntax = "gh"
 
-syn keyword Keyword fn if while
+syn keyword Keyword fn if while for
 
 syn keyword Statement return
 

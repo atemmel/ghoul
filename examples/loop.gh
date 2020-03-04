@@ -10,4 +10,9 @@ fn main() {
 	for int j = 0; j < 10; j = j + 1 {
 		printf("j is %d\n", j)
 	}
+
+	for ; i < 5; {
+		printf("i is %d\n", i)
+		i = i + 1
+	}
 }
