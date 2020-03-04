@@ -595,18 +595,16 @@ AstNode::Child AstParser::buildBranch() {
 }
 
 AstNode::Child AstParser::buildLoop() {
-	Token *tok = getIf(TokenType::While);
-	if(!tok) {
+	auto loop = buildWhile();
+	if(!loop) {
+		loop = buildFor();
+	}
+
+	if(!loop) {
 		return nullptr;
 	}
 
-	AstNode::Expr expr = buildExpr();
-
-	if(!expr) {
-		return unexpected();
-	}
-
-	tok = getIf(TokenType::BlockOpen);
+	Token *tok = getIf(TokenType::BlockOpen);
 	if(!tok) {
 		return unexpected();
 	}
@@ -616,8 +614,6 @@ AstNode::Child AstParser::buildLoop() {
 		return unexpected();
 	}
 
-	auto loop = std::make_unique<LoopAstNode>();
-	loop->expr = std::move(expr);
 	discardWhile(TokenType::Terminator);
 	auto stmnt = buildStatement();
 	while(stmnt) {
@@ -629,6 +625,68 @@ AstNode::Child AstParser::buildLoop() {
 	if(!getIf(TokenType::BlockClose) ) {
 		return unexpected();
 	}		
+
+	return loop;
+}
+
+AstNode::Child AstParser::buildWhile() {
+	Token *tok = getIf(TokenType::While);
+	if(!tok) {
+		return nullptr;
+	}
+
+	AstNode::Expr expr = buildExpr();
+
+	if(!expr) {
+		return unexpected();
+	}
+
+	auto loop = std::make_unique<LoopAstNode>();
+	loop->expr = std::move(expr);
+	loop->token = tok;
+	return loop;
+}
+
+AstNode::Child AstParser::buildFor() {
+	Token *tok = getIf(TokenType::For);
+	if(!tok) {
+		return nullptr;
+	}
+
+	auto loop = std::make_unique<LoopAstNode>();
+	loop->token = tok;
+
+	tok = getIf(TokenType::Identifier);
+
+	if(tok) {
+		mayParseAssign = true;
+		auto decl = buildDecl(tok);
+		loop->loopPrefix = std::move(decl);
+	}
+
+	tok = getIf(TokenType::Semicolon);
+	if(!tok) {
+		return unexpected();
+	}
+
+	AstNode::Expr expr = buildExpr();
+
+	if(!expr) {
+		return unexpected();
+	}
+
+	loop->expr = std::move(expr);
+
+	tok = getIf(TokenType::Semicolon);
+	if(!tok) {
+		return unexpected();
+	}
+
+	mayParseAssign = true;
+	expr = buildExpr();
+	if(expr) {
+		loop->loopSuffix = std::move(expr);
+	}
 
 	return loop;
 }

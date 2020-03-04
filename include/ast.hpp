@@ -93,6 +93,8 @@ struct BranchAstNode : public AstNode {
 struct LoopAstNode : public AstNode {
 	void accept(AstVisitor &visitor) override;
 	AstNode::Expr expr;
+	AstNode::Child loopPrefix;
+	AstNode::Child loopSuffix;
 };
 
 struct ExpressionAstNode : public AstNode {
@@ -210,6 +212,8 @@ private:
 	AstNode::Child buildDecl(Token *token);
 	AstNode::Child buildBranch();
 	AstNode::Child buildLoop();
+	AstNode::Child buildWhile();
+	AstNode::Child buildFor();
 	AstNode::Expr buildCall(const std::string &identifier);
 	AstNode::Expr buildExpr();
 	AstNode::Expr buildPrimaryExpr();

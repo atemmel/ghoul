@@ -164,6 +164,14 @@ void LLVMCodeGen::visit(BranchAstNode &node) {
 
 void LLVMCodeGen::visit(LoopAstNode &node) {
 	llvm::BasicBlock *origin = ctx->builder.GetInsertBlock();
+
+	if(node.loopPrefix) {
+		node.loopPrefix->accept(*this);
+		callParams.clear();
+		indicies.clear();
+		instructions.clear();
+	}
+
 	llvm::BasicBlock *cond = llvm::BasicBlock::Create(ctx->context, "", function);
 	ctx->builder.CreateBr(cond);
 	ctx->builder.SetInsertPoint(cond);
@@ -178,6 +186,13 @@ void LLVMCodeGen::visit(LoopAstNode &node) {
 	ctx->builder.SetInsertPoint(branch);
 	for(const auto &child : node.children) {
 		child->accept(*this);
+	}
+
+	if(node.loopSuffix) {
+		node.loopSuffix->accept(*this);
+		callParams.clear();
+		indicies.clear();
+		instructions.clear();
 	}
 
 	ctx->builder.CreateBr(cond);

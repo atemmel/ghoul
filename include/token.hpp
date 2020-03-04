@@ -14,6 +14,7 @@ enum struct TokenType {
 	Variadic,			// ...
 	Member,				// .
 	Comma,				// ,
+	Semicolon,			// ;
 
 	ParensOpen,         // (
 	ParensClose,        // )
@@ -90,6 +91,7 @@ struct Token {
 		"...",
 		".",
 		",",
+		";",
 
 		"(",
 		")",

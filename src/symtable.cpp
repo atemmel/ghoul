@@ -205,6 +205,7 @@ void SymTable::visit(ExternAstNode &node) {
 
 void SymTable::visit(VariableDeclareAstNode &node) {
 	//Check if type exists
+	std::cout << node.identifier << '\n';
 	if(!hasType(node.type.name) ){
 		Global::errStack.push("Type '" + node.type.name
 				+ "' is not defined\n", node.token);
@@ -264,12 +265,26 @@ void SymTable::visit(BranchAstNode &node) {
 }
 
 void SymTable::visit(LoopAstNode &node) {
-	if(!demoteExprToBool(node.expr) ) {
-		return;
+	blockDepth++;
+	if(node.loopPrefix) {
+		node.loopPrefix->accept(*this);
+		callArgTypes.clear();
 	}
 
-	blockDepth++;
+	node.expr->accept(*this);
 	callArgTypes.clear();
+	if(!demoteExprToBool(node.expr) ) {
+		blockDepth--;
+		return;
+	}
+	callArgTypes.clear();
+
+	if(node.loopSuffix) {
+		node.loopSuffix->accept(*this);
+		callArgTypes.clear();
+	}
+
+
 
 	//TODO: LOCALS?????
 	for(const auto &child : node.children) {
