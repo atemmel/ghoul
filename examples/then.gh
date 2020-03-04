@@ -1,0 +1,5 @@
+import "io"
+
+fn main() {
+	if true then printf("Yes\n")
+}

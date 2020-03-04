@@ -57,6 +57,7 @@ enum struct TokenType {
 	While,              // while
 	For,                // for
 	If,                 // if
+	Then,
 	Else,               // else
 	ElseIf,             // else if
 	True,               // true
@@ -129,6 +130,7 @@ struct Token {
 		"while",
 		"for",
 		"if",
+		"then",
 		"else",
 		"else if",
 		"true",

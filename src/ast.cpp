@@ -567,8 +567,19 @@ AstNode::Child AstParser::buildBranch() {
 		return unexpected();
 	}
 
+	auto br = std::make_unique<BranchAstNode>();
+	br->expr = std::move(expr);
+
 	tok = getIf(TokenType::BlockOpen);
 	if(!tok) {
+		tok = getIf(TokenType::Then);
+		if(tok) {
+			auto stmnt = buildStatement();
+			if(stmnt) {
+				br->addChild(std::move(stmnt) );
+				return br;
+			}
+		}
 		return unexpected();
 	}
 
@@ -577,8 +588,6 @@ AstNode::Child AstParser::buildBranch() {
 		return unexpected();
 	}
 
-	auto br = std::make_unique<BranchAstNode>();
-	br->expr = std::move(expr);
 	discardWhile(TokenType::Terminator);
 	auto stmnt = buildStatement();
 	while(stmnt) {
