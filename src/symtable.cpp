@@ -205,7 +205,6 @@ void SymTable::visit(ExternAstNode &node) {
 
 void SymTable::visit(VariableDeclareAstNode &node) {
 	//Check if type exists
-	std::cout << node.identifier << '\n';
 	if(!hasType(node.type.name) ){
 		Global::errStack.push("Type '" + node.type.name
 				+ "' is not defined\n", node.token);
