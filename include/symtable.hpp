@@ -49,10 +49,16 @@ private:
 		InsideFunction
 	};
 
+	struct Local {
+		const Type *type;
+		unsigned depth;
+	};
+
 	template <typename T>
 	using Map = std::unordered_map<std::string, T>;
 	using Set = std::unordered_set<std::string>;
-	using Locals = Map<const Type*>;
+	//using Locals = Map<const Type*>;
+	using Locals = Map<Local>;
 	using Structs = Map<Type>;
 
 	bool demoteExprToBool(AstNode::Expr &expr);

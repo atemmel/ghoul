@@ -41,7 +41,7 @@ void SymTable::setActiveFunction(const std::string &str) {
 }
 
 const Type *SymTable::getLocal(const std::string &str) const {
-	return (*locals)[str];
+	return (*locals)[str].type;
 }
 
 const FunctionSignature *SymTable::hasFunc(const std::string &identifier) const {
@@ -158,7 +158,7 @@ void SymTable::visit(StructAstNode &node) {
 	Member member;
 	for(const auto &visited : structMembers) {
 		member.identifier = visited.first;
-		member.type = *visited.second;
+		member.type = *visited.second.type;
 		type.members.push_back(member);
 	}
 
@@ -172,7 +172,7 @@ void SymTable::visit(FunctionAstNode &node) {
 	for(size_t i = 0; i < node.signature.parameters.size(); i++) {
 		locals->insert(std::make_pair(
 			node.signature.paramNames[i],
-			&node.signature.parameters[i]) );
+			Local{&node.signature.parameters[i], blockDepth}) );
 	}
 
 	//TODO: Trimming and analyzing the tree is probably not the SymTable's responsibility,
@@ -221,7 +221,7 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 	//Check variable redefinition
 	auto it = locals->find(node.identifier);
 	if(it == locals->end() ) {
-		locals->insert(std::make_pair(node.identifier, &node.type) );
+		locals->insert(std::make_pair(node.identifier, Local{&node.type, blockDepth}) );
 	} else {
 		Global::errStack.push("Redefinition of variable '"
 				+ node.identifier + '\'', node.token);
@@ -446,11 +446,11 @@ void SymTable::visit(MemberVariableAstNode &node) {
 
 void SymTable::visit(VariableAstNode &node) {
 	auto it = locals->find(node.name);
-	if(it == locals->end() ) {
+	if(it == locals->end() || it->second.depth > blockDepth) {
 		Global::errStack.push("Variable '"
 			+ node.name + "' used but never defined", node.token);
 	} else {
-		callArgTypes.push_back(*it->second);
+		callArgTypes.push_back(*it->second.type);
 		for(const auto &child : node.children) {
 			child->accept(*this);
 		}

@@ -1,0 +1,10 @@
+import "io"
+
+fn main() {
+	int i = 0
+	if false {
+		int j = 5
+	}
+
+	printf("%d\n", j)
+}
