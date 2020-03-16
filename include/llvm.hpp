@@ -76,6 +76,7 @@ private:
 	llvm::Function *function = nullptr;
 
 	const Type *lastType = nullptr;
+	unsigned getAddrsVisited = 0;
 	bool lastStatementVisitedWasReturn = false;
 };
 

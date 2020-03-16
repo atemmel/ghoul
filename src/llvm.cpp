@@ -270,16 +270,25 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 }
 
 void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
+	if(node.type == TokenType::Multiply) {
+		getAddrsVisited++;
+	}
+
 	for(const auto &c : node.children) {
 		c->accept(*this);
 	}
 
-	if(node.type == TokenType::And) {
+	if(node.type == TokenType::Multiply) {
+		getAddrsVisited--;
+	} else if(node.type == TokenType::And) {
 		std::vector<llvm::Value*> values = { 
 			llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) )
 		};
 
 		llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(callParams.back(), values);
+		if(!instructions.empty() ) {
+			instructions.pop_back();
+		}
 		instructions.push_back(gep);
 		ctx->builder.Insert(gep);
 		callParams.back() = ctx->builder.CreateLoad(gep);
@@ -328,8 +337,14 @@ void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 void LLVMCodeGen::visit(VariableAstNode &node) {
 	auto ld = (*locals)[node.name];
 	instructions.push_back(ld);
+
 	if(node.children.empty() ) {
-		callParams.push_back(ctx->builder.CreateAlignedLoad(ld, 4) );
+		const Type *type = mi->symtable->getLocal(node.name);
+		if(getAddrsVisited > 0) {
+			callParams.push_back(ld);
+		} else {
+			callParams.push_back(ctx->builder.CreateLoad(ld) );
+		}
 	} else {
 		lastType = mi->symtable->getLocal(node.name);
 		node.children.front()->accept(*this);

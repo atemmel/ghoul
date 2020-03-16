@@ -983,6 +983,7 @@ AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 AstNode::Expr AstParser::buildUnaryOp() {
 	Token *tok = nullptr;
 	switch(iterator->type) {
+		case TokenType::Multiply:
 		case TokenType::And:
 			tok = &*iterator;
 			break;
