@@ -5,13 +5,34 @@ struct Obj {
 	char *str
 }
 
+fn f(int *r) {
+	&r = 500000
+}
+
+fn g(Obj *obj) {
+	obj.member = 5
+}
+
 fn main() {
 	Obj o
 	o.str = "James bond" 
 
 	printf("%s starts with %c\n", o.str, &o.str)
 
-	&o.str = &"W"
+	int j = 0
+	int *i = *j
 
-	printf("%s starts with %c\n", o.str, &o.str)
+	printf("j: %d, i points to: %d\n", j, &i)
+
+	f(i)
+
+	printf("j: %d, i points to: %d\n", j, &i)
+
+	o.member = 320
+	o.str = "James bond"
+	printf("o.str: %s, o.member: %d\n", o.str, o.member)
+
+	printf("o.member is %d\n", o.member)
+	g(*o)
+	printf("o.member is %d\n", o.member)
 }

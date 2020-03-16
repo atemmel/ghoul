@@ -1,13 +1,5 @@
 import "io"
 
-fn f(int *r) {
-	&r = 500000
-}
 
 fn main() {
-	int j = 0
-	int *i = *j
-	printf("%d %d\n", j, &i)
-	f(i)
-	printf("%d %d\n", j, &i)
 }

@@ -314,20 +314,29 @@ void LLVMCodeGen::visit(CastExpressionAstNode &node) {
 }
 
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
+	if(lastType->isPtr > 0) {
+		for(int i = 0; i < lastType->isPtr; i++) {
+			llvm::Instruction *alloca = ctx->builder.CreateLoad(instructions.back() );
+			instructions.back() = alloca;
+		}
+	} 
+
 	indicies.clear();
 	unsigned u = mi->symtable->getMemberOffset(*lastType, node.name);
+		indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) ) );
 	indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, u, true) ) );
-	indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) ) );
 
+	std::cout << "here\n";
 	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(instructions.back(), indicies);
+	std::cout << "match\n";
 	instructions.back() = gep;
 	ctx->builder.Insert(gep);
-	
+
 	if(node.children.empty() ) {
 		callParams.push_back(ctx->builder.CreateLoad(gep) );
 		return;
 	}
-
+	
 	lastType = mi->symtable->typeHasMember(*lastType, node.name);
 	for(const auto &c : node.children) {
 		c->accept(*this);
@@ -394,7 +403,7 @@ llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
 			std::cerr << "UHOH\n";
 			return nullptr;
 		}
-		return it->second;
+		type = it->second;
 	}
 
 	for(int i = 0; i < astType.isPtr; i++) {

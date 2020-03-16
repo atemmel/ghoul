@@ -94,7 +94,7 @@ unsigned SymTable::getMemberOffset(const Type &type, const std::string &identifi
 	unsigned i = 0;
 	for(; i < members.size(); i++) {
 		if(identifier == members[i].identifier) {
-			break;
+			return i;
 		}
 	}
 	return i;
@@ -109,7 +109,7 @@ void SymTable::visit(ToplevelAstNode &node) {
 	for(auto ptr : node.functions) {
 		if(!pushFunc(ptr->signature.name, &ptr->signature) ) {
 			Global::errStack.push("Function redefinition '"
-					+ ptr->signature.name + "'", ptr->token);
+				+ ptr->signature.name + "'", ptr->token);
 		}
 		allLocals.insert(std::make_pair(
 					ptr->signature.name,
@@ -405,6 +405,8 @@ void SymTable::visit(UnaryExpressionAstNode &node) {
 
 	if(node.type == TokenType::And) {
 		callArgTypes.back().isPtr--;
+	} else if(node.type == TokenType::Multiply) { 
+		callArgTypes.back().isPtr++;
 	}
 }
 
