@@ -126,6 +126,12 @@ struct CastExpressionAstNode : public ExpressionAstNode {
 	Type type;
 };
 
+struct ArrayAstNode : public ExpressionAstNode {
+	void accept(AstVisitor &visitor) override;
+	AstNode::Expr length;
+	Type type;
+};
+
 struct MemberVariableAstNode : public ExpressionAstNode {
 	MemberVariableAstNode(const std::string &name);
 	void accept(AstVisitor &visitor) override;
@@ -173,6 +179,7 @@ public:
 	virtual void visit(BinExpressionAstNode &node)		= 0;
 	virtual void visit(UnaryExpressionAstNode &node)	= 0;
 	virtual void visit(CastExpressionAstNode &node)		= 0;
+	virtual void visit(ArrayAstNode &node)				= 0;
 	virtual void visit(MemberVariableAstNode &node)		= 0;
 	virtual void visit(VariableAstNode &node)			= 0;
 	virtual void visit(StringAstNode &node)				= 0;
@@ -209,7 +216,6 @@ private:
 	AstNode::Child buildParams();
 	AstNode::Child buildExtern();
 	AstNode::Child buildStatement();
-	//AstNode::Child buildDecl(Token *token);
 	AstNode::Child buildDecl();
 	AstNode::Child buildBranch();
 	AstNode::Child buildLoop();
@@ -226,6 +232,7 @@ private:
 	AstNode::Expr buildUnaryOp();
 	AstNode::Expr buildUnaryExpr();
 	AstNode::Expr buildCast();
+	AstNode::Expr buildArray();
 
 	Type buildType(Token *token);
 
@@ -243,6 +250,7 @@ private:
 	Tokens::iterator iterator;
 	ToplevelAstNode *root = nullptr;
 	SymTable *symtable = nullptr;
+
 	bool mayParseAssign = true;
 	bool isPanic = false;
 };

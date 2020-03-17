@@ -5,7 +5,7 @@
 #include <iostream>
 
 bool Type::operator==(const Type &rhs) const {
-	return name == rhs.name && isPtr == rhs.isPtr;
+	return name == rhs.name && isPtr == rhs.isPtr && isArray == rhs.isArray;
 }
 
 bool Type::operator!=(const Type &rhs) const {

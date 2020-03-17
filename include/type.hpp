@@ -12,6 +12,7 @@ struct Type {
 	//TODO: Reorder struct members
 	std::string name;
 	unsigned isPtr = 0;	//TODO: Refactor as unsigned
+	bool isArray = false;
 	std::vector<Member> members;
 };
 

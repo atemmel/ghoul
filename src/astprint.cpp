@@ -133,6 +133,15 @@ void AstPrinter::visit(CastExpressionAstNode &node) {
 	}
 }
 
+void AstPrinter::visit(ArrayAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Array : " << node.type.string() << '\n';
+	if(node.length) {
+		node.length->accept(*this);
+	}
+}
+
 void AstPrinter::visit(MemberVariableAstNode &node) {
 	Scope scope;
 	pad(scope.depth);

@@ -206,6 +206,11 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 		return;
 	}
 
+	if(node.type.name == "void" && node.type.isPtr == 0) { 
+		Global::errStack.push("May not declare variable of type 'void'", node.token);
+		return;
+	}
+
 	//Check function redefinition
 	if(hasFunc(node.identifier) ) { 
 		Global::errStack.push("Redefinition of identifier '" + node.identifier 
@@ -426,6 +431,19 @@ void SymTable::visit(CastExpressionAstNode &node) {
 
 	//I mean...
 	callArgTypes.back() = node.type;
+}
+
+void SymTable::visit(ArrayAstNode &node) {
+	if(node.length) {
+		node.length->accept(*this);
+		if(callArgTypes.back() != Type{"int", 0, false} ) {
+			Global::errStack.push("Array declaration expects length definition to be of type 'int'", 
+				node.length->token);
+		}
+		callArgTypes.back() = node.type;
+	} else {
+		callArgTypes.push_back(node.type);
+	}
 }
 
 void SymTable::visit(MemberVariableAstNode &node) {

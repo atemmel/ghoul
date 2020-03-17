@@ -313,6 +313,10 @@ void LLVMCodeGen::visit(CastExpressionAstNode &node) {
 	callParams.back() = v;
 }
 
+void LLVMCodeGen::visit(ArrayAstNode &node) {
+	//TODO: Call to malloc
+}
+
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 	if(lastType->isPtr > 0) {
 		for(int i = 0; i < lastType->isPtr; i++) {
@@ -326,9 +330,7 @@ void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 		indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) ) );
 	indicies.push_back(llvm::ConstantInt::get(ctx->context, llvm::APInt(32, u, true) ) );
 
-	std::cout << "here\n";
 	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(instructions.back(), indicies);
-	std::cout << "match\n";
 	instructions.back() = gep;
 	ctx->builder.Insert(gep);
 
@@ -408,6 +410,10 @@ llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
 	}
 
 	for(int i = 0; i < astType.isPtr; i++) {
+		type = type->getPointerTo();
+	}
+
+	if(astType.isArray) {
 		type = type->getPointerTo();
 	}
 

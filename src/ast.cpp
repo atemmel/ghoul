@@ -102,6 +102,10 @@ void CastExpressionAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
+void ArrayAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
 MemberVariableAstNode::MemberVariableAstNode(const std::string &name)
 	: name(name) {
 	precedence = Token::precedence(TokenType::Identifier);
@@ -162,7 +166,11 @@ AstNode::Root AstParser::buildTree(Tokens &&tokens, SymTable *symtable) {
 
 AstNode::Child AstParser::panic(const char *file, int line) {
 	isPanic = true;
-	Global::errStack.push("Unexpected token: '" + iterator->value + '\'', &*iterator);
+	if(iterator == tokens.cend() ) {
+		Global::errStack.push("Unexpected end of file", &*std::prev(iterator) );
+	} else {
+		Global::errStack.push(std::string("Unexpected token: '") + iterator->value + '\'', &*iterator);
+	}
 	Global::errStack.push(std::string(file) + " at " + std::to_string(line), nullptr);
 	discardUntil(TokenType::Terminator);	//Remember, no dupes!
 	discardWhile(TokenType::Terminator);
@@ -173,7 +181,11 @@ AstNode::Child AstParser::panic(const char *file, int line) {
 
 AstNode::Child AstParser::panic() {
 	isPanic = true;
-	Global::errStack.push("Unexpected token: '" + iterator->value + '\'', &*iterator);
+	if(iterator == tokens.cend() ) {
+		Global::errStack.push("Unexpected end of file", &*std::prev(iterator) );
+	} else {
+		Global::errStack.push(std::string("Unexpected token: '") + iterator->value + '\'', &*iterator);
+	}
 	discardUntil(TokenType::Terminator);	//Remember, no dupes!
 	discardWhile(TokenType::Terminator);
 	return nullptr;
@@ -768,6 +780,11 @@ AstNode::Expr AstParser::buildPrimaryExpr() {
 		return expr;
 	}
 
+	expr = buildArray();
+	if(expr) {
+		return expr;
+	}
+
 	auto tok = getIf(TokenType::StringLiteral);
 	if(tok) {
 		mayParseAssign = false;
@@ -992,6 +1009,9 @@ AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 
 AstNode::Expr AstParser::buildUnaryOp() {
 	Token *tok = nullptr;
+	if(iterator == tokens.cend() ) {
+		return nullptr;
+	}
 	switch(iterator->type) {
 		case TokenType::Multiply:
 		case TokenType::And:
@@ -1043,6 +1063,29 @@ AstNode::Expr AstParser::buildCast() {
 	}
 
 	return cast;
+}
+
+AstNode::Expr AstParser::buildArray() {
+	if(!getIf(TokenType::ArrayStart) ) {
+		return nullptr;
+	}
+
+	auto array = std::make_unique<ArrayAstNode>();
+	array->length = buildExpr();
+
+	if(!getIf(TokenType::ArrayEnd) ) {
+		return toExpr(unexpected() );
+	}
+
+	Token *token = getIf(TokenType::Identifier);
+	if(!token) {
+		return toExpr(unexpected() );
+	}
+
+	array->type = buildType(token);
+	array->type.isArray = true;
+
+	return array;
 }
 
 Type AstParser::buildType(Token *token) {
