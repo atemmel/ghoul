@@ -209,7 +209,8 @@ private:
 	AstNode::Child buildParams();
 	AstNode::Child buildExtern();
 	AstNode::Child buildStatement();
-	AstNode::Child buildDecl(Token *token);
+	//AstNode::Child buildDecl(Token *token);
+	AstNode::Child buildDecl();
 	AstNode::Child buildBranch();
 	AstNode::Child buildLoop();
 	AstNode::Child buildWhile();

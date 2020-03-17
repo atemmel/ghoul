@@ -336,7 +336,8 @@ AstNode::Child AstParser::buildStruct() {
 		if(!id) {
 			break;
 		}
-		child = buildDecl(id);
+		unget();
+		child = buildDecl();
 		if(!child) {
 			return unexpected();
 		}
@@ -475,13 +476,13 @@ AstNode::Child AstParser::buildExtern() {
 
 AstNode::Child AstParser::buildStatement() {
 	mayParseAssign = true;
+	auto decl = buildDecl();
+	if(decl) {
+		return decl;
+	}
 	Token *token = getIf(TokenType::Identifier);
 
 	if(token) {	//Declaration?
-		auto decl = buildDecl(token);
-		if(decl) {
-			return decl;
-		}
 		unget();
 	}
 
@@ -526,15 +527,23 @@ AstNode::Child AstParser::buildStatement() {
 	return nullptr;
 }
 
-AstNode::Child AstParser::buildDecl(Token *token) {
-	Type type = buildType(token);	
+//AstNode::Child AstParser::buildDecl(Token *token) {
+AstNode::Child AstParser::buildDecl() {
+	Token *token = getIf(TokenType::Identifier);
+	Type type;
+	if(token) {
+		type = buildType(token);	
+	} else if(!getIf(TokenType::Var) ){
+		return nullptr;
+	}
+
 	auto id = getIf(TokenType::Identifier);
 	if(!id) {
+		unget();
 		return nullptr;
 	}
 
 	auto decl = std::make_unique<VariableDeclareAstNode>();
-	decl->type = type;
 	decl->identifier = id->value;
 	//TODO: Token could be either token or id
 	decl->token = token;
@@ -550,8 +559,11 @@ AstNode::Child AstParser::buildDecl(Token *token) {
 		}
 
 		decl->addChild(std::move(assign) );
+	} else if(!token) {
+		Global::errStack.push("'var' declaration expects an assignment", &*iterator);
 	}
 
+	decl->type = type;
 	return decl;
 }
 
@@ -667,9 +679,9 @@ AstNode::Child AstParser::buildFor() {
 
 	tok = getIf(TokenType::Identifier);
 
-	if(tok) {
-		mayParseAssign = true;
-		auto decl = buildDecl(tok);
+	mayParseAssign = true;
+	auto decl = buildDecl();
+	if(decl) {
 		loop->loopPrefix = std::move(decl);
 	}
 

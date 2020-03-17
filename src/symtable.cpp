@@ -205,7 +205,7 @@ void SymTable::visit(ExternAstNode &node) {
 
 void SymTable::visit(VariableDeclareAstNode &node) {
 	//Check if type exists
-	if(!hasType(node.type.name) ){
+	if(!hasType(node.type.name) && !node.type.name.empty() ){
 		Global::errStack.push("Type '" + node.type.name
 				+ "' is not defined\n", node.token);
 		return;
@@ -222,6 +222,13 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 	auto it = locals->find(node.identifier);
 	if(it == locals->end() ) {
 		locals->insert(std::make_pair(node.identifier, Local{&node.type, blockDepth}) );
+		if(node.type.name.empty() ) {	//var case
+
+			//First child is binary expr (assignment), assignments rhs is expected type
+			node.children.front()->children.back()->accept(*this);
+			node.type = callArgTypes.front();
+			callArgTypes.clear();
+		}
 	} else {
 		Global::errStack.push("Redefinition of variable '"
 				+ node.identifier + '\'', node.token);

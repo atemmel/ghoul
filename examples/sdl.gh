@@ -1,14 +1,74 @@
+import "io"
+
 link "SDL2"
 extern fn SDL_Init() int
 extern fn SDL_Quit() int
 extern fn SDL_CreateWindow(char *, int, int, int, int, int) void*
 extern fn SDL_DestroyWindow(void *) int
 extern fn SDL_Delay(int) int
+extern fn SDL_GetWindowSurface(void *) SDL_Surface*
+extern fn SDL_FillRect(SDL_Surface *, SDL_Rect*, int) int
+extern fn SDL_MapRGB(SDL_PixelFormat *, char, char, char) int
+
+struct SDL_Rect {
+	int x
+	int y
+	int w
+	int h
+}
+
+struct SDL_PixelFormat {
+	int format
+	void *palette
+	char BitsPerPixel
+	char BytesPerPixel
+	char padding1
+	char padding2
+	int Rmask
+	int Gmask
+	int Bmask
+	int Amask
+	char Rloss
+	char Gloss
+	char Bloss
+	char Aloss
+	char Rshift
+	char Gshift
+	char Bshift
+	char Ashift
+	int refcount
+	SDL_PixelFormat *next
+}
+
+struct SDL_Surface {
+	int flags
+	SDL_PixelFormat *format
+	int w
+	int h
+	void *pixels
+	void *userdata
+	int locked
+	void *lock_data
+	SDL_Rect clip_rect
+	void *map
+	int refcount
+}
 
 fn main() {
 	SDL_Init()
-	void *ptr = SDL_CreateWindow("hello sdl2", 0, 0, 300, 300, 1)
+	void *window = SDL_CreateWindow("hello sdl2", 0, 0, 300, 300, 0)
+
+	printf("Getting surface...\n")
+	SDL_Surface *surface = SDL_GetWindowSurface(window)
+	printf("Got surface!\n")
+
+	//printf("Creating mapping...\n")
+	//int mapping = SDL_MapRGB(surface.format, 255, 255, 255)
+	//printf("Mapping created!\n")
+
+	//SDL_FillRect(surface, <SDL_Rect*>0, mapping)
+
 	SDL_Delay(2000)
-	SDL_DestroyWindow(ptr)
+	SDL_DestroyWindow(window)
 	SDL_Quit()
 }

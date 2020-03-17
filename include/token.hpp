@@ -57,12 +57,13 @@ enum struct TokenType {
 	While,              // while
 	For,                // for
 	If,                 // if
-	Then,
+	Then,				// then
 	Else,               // else
 	ElseIf,             // else if
 	True,               // true
 	False,              // false
 	Null,               // null
+	Var,
 	Struct,	            // struct
 	Extern,				// extern
 	Return,				// return
@@ -136,6 +137,7 @@ struct Token {
 		"true",
 		"false",
 		"null",
+		"var",
 		"struct",
 		"extern",
 		"return",

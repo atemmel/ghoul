@@ -1,0 +1,6 @@
+import "io"
+
+fn main() {
+	var x = 0
+	printf("x is %d\n", x)
+}
