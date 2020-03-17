@@ -677,8 +677,6 @@ AstNode::Child AstParser::buildFor() {
 	auto loop = std::make_unique<LoopAstNode>();
 	loop->token = tok;
 
-	tok = getIf(TokenType::Identifier);
-
 	mayParseAssign = true;
 	auto decl = buildDecl();
 	if(decl) {

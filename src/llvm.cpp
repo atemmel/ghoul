@@ -378,16 +378,17 @@ void LLVMCodeGen::visit(IntAstNode &node) {
 }
 
 void LLVMCodeGen::visit(BoolAstNode &node) {
-	auto type = llvm::IntegerType::getInt8Ty(ctx->context);
+	auto type = llvm::IntegerType::getInt1Ty(ctx->context);
 	callParams.push_back(static_cast<llvm::Value*>(llvm::ConstantInt::get(type,
-		llvm::APInt(8, node.value) ) ) );
+		llvm::APInt(1, node.value) ) ) );
 }
 
 llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
 	llvm::Type *type = nullptr;
-	if(astType.name == "char"
-			|| astType.name == "bool") {
+	if(astType.name == "char") {
 		type = ctx->builder.getInt8Ty();
+	} else if(astType.name == "bool") {
+		type = ctx->builder.getInt1Ty();
 	} else if(astType.name == "int") {
 		type = ctx->builder.getInt32Ty();
 	} else if(astType.name == "void") {

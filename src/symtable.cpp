@@ -2,20 +2,15 @@
 
 //Default types
 SymTable::SymTable() {
-	types.insert("void");
-	types.insert("char");
-	types.insert("int");
-	types.insert("float");
-	types.insert("bool");
+	structs.insert({"void" , {"void"}  });
+	structs.insert({"char" , {"char"}  });
+	structs.insert({"int"  , {"int"}   });
+	structs.insert({"float", {"float"} });
+	structs.insert({"bool" , {"bool"}  });
 }
 
 void SymTable::dump() const {
 	std::cerr << "Types:\n";
-	for(const auto &type : types) {
-		std::cerr << '\t' << type << '\n';
-	}
-
-	std::cerr << "User-defined types:\n";
 	for(const auto &type : structs) {
 		std:: cerr << type.second.string() << '\n';
 	}
@@ -50,11 +45,6 @@ const FunctionSignature *SymTable::hasFunc(const std::string &identifier) const 
 		return nullptr;
 	}
 	return it->second;
-}
-
-bool SymTable::hasType(const std::string &identifier) const {
-	auto it = types.find(identifier);
-	return it != types.end();
 }
 
 const Type* SymTable::hasStruct(const std::string &identifier) const {
@@ -115,6 +105,7 @@ void SymTable::visit(ToplevelAstNode &node) {
 					ptr->signature.name,
 					Locals() ) );
 	}
+
 	//Look ahead at all extern definitions
 	for(auto ptr : node.externs) {
 		if(!pushFunc(ptr->name, &ptr->signature) ) {
@@ -124,12 +115,16 @@ void SymTable::visit(ToplevelAstNode &node) {
 	}
 
 	for(auto ptr : node.structs) {
-		if(!hasType(ptr->name) ) {
-			types.insert(ptr->name);
+		if(!hasStruct(ptr->name) ) {
+			structs.insert({ptr->name, {ptr->name} });
 		} else {
 			Global::errStack.push("Type redefinition '"
 					+ ptr->name + "'", ptr->token);
 		}
+	}
+
+	for(auto ptr : node.structs) {
+		ptr->accept(*this);
 	}
 
 	for(const auto &child : node.children) {
@@ -162,7 +157,7 @@ void SymTable::visit(StructAstNode &node) {
 		type.members.push_back(member);
 	}
 
-	structs.insert({node.name, type} );
+	structs[node.name] = type;
 }
 
 void SymTable::visit(FunctionAstNode &node) {
@@ -205,7 +200,7 @@ void SymTable::visit(ExternAstNode &node) {
 
 void SymTable::visit(VariableDeclareAstNode &node) {
 	//Check if type exists
-	if(!hasType(node.type.name) && !node.type.name.empty() ){
+	if(!hasStruct(node.type.name) && !node.type.name.empty() ){
 		Global::errStack.push("Type '" + node.type.name
 				+ "' is not defined\n", node.token);
 		return;
@@ -422,7 +417,7 @@ void SymTable::visit(CastExpressionAstNode &node) {
 		child->accept(*this);
 	}
 
-	if(!hasType(node.type.name) ) {
+	if(!hasStruct(node.type.name) ) {
 		Global::errStack.push("Cannot cast '" + callArgTypes.back().name
 				+ "' into '" + node.type.name + "'", node.token);
 		callArgTypes.clear();
