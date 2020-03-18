@@ -6,4 +6,5 @@ fn main() {
 	//&arr = 0
 
 	printf("%d %d\n", empty, array)
+	printf("%d %d\n", empty[0], array[0] )
 }

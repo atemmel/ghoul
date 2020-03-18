@@ -132,6 +132,11 @@ struct ArrayAstNode : public ExpressionAstNode {
 	Type type;
 };
 
+struct IndexAstNode : public ExpressionAstNode { 
+	void accept(AstVisitor &visitor) override;
+	AstNode::Expr index;
+};
+
 struct MemberVariableAstNode : public ExpressionAstNode {
 	MemberVariableAstNode(const std::string &name);
 	void accept(AstVisitor &visitor) override;
@@ -180,6 +185,7 @@ public:
 	virtual void visit(UnaryExpressionAstNode &node)	= 0;
 	virtual void visit(CastExpressionAstNode &node)		= 0;
 	virtual void visit(ArrayAstNode &node)				= 0;
+	virtual void visit(IndexAstNode &node)				= 0;
 	virtual void visit(MemberVariableAstNode &node)		= 0;
 	virtual void visit(VariableAstNode &node)			= 0;
 	virtual void visit(StringAstNode &node)				= 0;
@@ -233,6 +239,7 @@ private:
 	AstNode::Expr buildUnaryExpr();
 	AstNode::Expr buildCast();
 	AstNode::Expr buildArray();
+	AstNode::Expr buildIndex();
 
 	Type buildType(Token *token);
 

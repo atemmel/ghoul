@@ -142,6 +142,13 @@ void AstPrinter::visit(ArrayAstNode &node) {
 	}
 }
 
+void AstPrinter::visit(IndexAstNode &node) {
+	Scope scope;
+	pad(scope.depth);
+	std::cerr << "Index []\n";
+	node.index->accept(*this);
+}
+
 void AstPrinter::visit(MemberVariableAstNode &node) {
 	Scope scope;
 	pad(scope.depth);

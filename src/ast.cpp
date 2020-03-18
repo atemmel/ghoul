@@ -106,6 +106,10 @@ void ArrayAstNode::accept(AstVisitor &visitor) {
 	visitor.visit(*this);
 }
 
+void IndexAstNode::accept(AstVisitor &visitor) {
+	visitor.visit(*this);
+}
+
 MemberVariableAstNode::MemberVariableAstNode(const std::string &name)
 	: name(name) {
 	precedence = Token::precedence(TokenType::Identifier);
@@ -408,7 +412,7 @@ AstNode::Child AstParser::buildFunction() {
 	auto ret = getIf(TokenType::Identifier);
 	if(ret) {
 		function->signature.returnType = buildType(ret);
-	} else {
+	} else {	//Implicit void
 		function->signature.returnType = {"void"};
 	}
 	
@@ -834,9 +838,16 @@ AstNode::Expr AstParser::buildPrimaryExpr() {
 AstNode::Expr AstParser::buildVariableExpr(Token *token) {
 	auto var = std::make_unique<VariableAstNode>(token->value);
 
+
 	auto child = buildMemberExpr();
 	if(child) {
 		var->addChild(std::move(child) );
+	} else {
+		//TODO: Build index
+		auto index = buildIndex();
+		if(index) {
+			var->addChild(std::move(index) );
+		}
 	}
 
 	return var;
@@ -853,6 +864,8 @@ AstNode::Expr AstParser::buildMemberExpr() {
 	}
 
 	auto member = std::make_unique<MemberVariableAstNode>(id->value);
+
+	//TODO: Build index
 
 	auto child = buildMemberExpr();
 
@@ -1086,6 +1099,27 @@ AstNode::Expr AstParser::buildArray() {
 	array->type.isArray = true;
 
 	return array;
+}
+
+AstNode::Expr AstParser::buildIndex() {
+	Token *start = getIf(TokenType::ArrayStart);
+	if(!start) {
+		return nullptr;
+	}
+
+	auto node = std::make_unique<IndexAstNode>();
+	auto index = buildExpr();
+
+	if(!index) {
+		return toExpr(unexpected() );
+	}
+
+	if(!getIf(TokenType::ArrayEnd) ) {
+		return toExpr(unexpected() );
+	}
+
+	node->index = std::move(index);
+	return node;
 }
 
 Type AstParser::buildType(Token *token) {

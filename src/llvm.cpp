@@ -333,6 +333,10 @@ void LLVMCodeGen::visit(ArrayAstNode &node) {
 	callParams.push_back(ctx->builder.CreateCall(func, {length}) );
 }
 
+void LLVMCodeGen::visit(IndexAstNode &node) {
+	//TODO: This
+}
+
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 	if(lastType->isPtr > 0) {
 		for(int i = 0; i < lastType->isPtr; i++) {

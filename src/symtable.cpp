@@ -450,6 +450,10 @@ void SymTable::visit(ArrayAstNode &node) {
 	}
 }
 
+void SymTable::visit(IndexAstNode &node) {
+	//TODO: This
+}
+
 void SymTable::visit(MemberVariableAstNode &node) {
 	auto &back = callArgTypes.back();
 	auto member = typeHasMember(back, node.name);

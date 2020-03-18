@@ -17,6 +17,7 @@ public:
 	void visit(UnaryExpressionAstNode &node) override;
 	void visit(CastExpressionAstNode &node) override;
 	void visit(ArrayAstNode &node) override;
+	void visit(IndexAstNode &node) override;
 	void visit(MemberVariableAstNode &node) override;
 	void visit(VariableAstNode &node) override;
 	void visit(StringAstNode &node) override;
