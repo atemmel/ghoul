@@ -17,11 +17,25 @@ std::string Type::string() const {
 		return "<unresolved>";
 	}
 
-	std::string buffer = name + ' ';
+	std::string buffer = name;
+	if(isPtr > 0) {
+		buffer.push_back(' ');
+	}
 	for(int i = 0; i < isPtr; i++) {
-		buffer += "*";
+		buffer.push_back('*');
+	}
+	if(isArray) {
+		buffer += " []";
+	}
+	return buffer;
+}
+
+std::string Type::fullString() const {
+	if(name.empty() ) {
+		return "<unresolved>";
 	}
 
+	std::string buffer = name;
 	for(const auto &member : members) {
 		buffer.push_back('\n');
 		buffer += member.type.string();

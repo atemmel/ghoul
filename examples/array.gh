@@ -1,5 +1,9 @@
 import "io"
 
 fn main() {
-	var arr = [1]int
+	var empty = [] int
+	var array = [1] int
+	//&arr = 0
+
+	printf("%d %d\n", empty, array)
 }

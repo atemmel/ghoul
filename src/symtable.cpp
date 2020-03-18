@@ -12,7 +12,7 @@ SymTable::SymTable() {
 void SymTable::dump() const {
 	std::cerr << "Types:\n";
 	for(const auto &type : structs) {
-		std:: cerr << type.second.string() << '\n';
+		std:: cerr << type.second.fullString() << '\n';
 	}
 
 	std::cerr << "Functions:\n";
@@ -411,6 +411,10 @@ void SymTable::visit(UnaryExpressionAstNode &node) {
 	}
 
 	if(node.type == TokenType::And) {
+		if(callArgTypes.back().isPtr < 1) {
+			Global::errStack.push("Cannot dereference further", node.token);
+			return;
+		}
 		callArgTypes.back().isPtr--;
 	} else if(node.type == TokenType::Multiply) { 
 		callArgTypes.back().isPtr++;

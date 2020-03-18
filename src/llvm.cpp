@@ -315,6 +315,22 @@ void LLVMCodeGen::visit(CastExpressionAstNode &node) {
 
 void LLVMCodeGen::visit(ArrayAstNode &node) {
 	//TODO: Call to malloc
+	llvm::Type *type = translateType(node.type);
+	llvm::Value *length = nullptr;
+	if(!node.length) {	//Only declared array type, null it
+		callParams.push_back(llvm::ConstantPointerNull::get(llvm::cast<llvm::PointerType>(type) ) );
+		return;
+	} else {
+		node.length->accept(*this);
+		length = callParams.back(); //* type->getPrimitiveSizeInBits();
+		callParams.pop_back();
+	}
+
+	llvm::Type *result = ctx->builder.getVoidTy()->getPointerTo();
+	llvm::Type *argsRef = ctx->builder.getInt32Ty();
+	llvm::FunctionType *funcType = llvm::FunctionType::get(result, {argsRef}, false);
+	llvm::FunctionCallee func = mi->module->getOrInsertFunction("malloc", funcType);
+	callParams.push_back(ctx->builder.CreateCall(func, {length}) );
 }
 
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
