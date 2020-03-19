@@ -3,6 +3,7 @@ import "io"
 fn main() {
 	var empty = [] int
 	var array = [1] int
+	int index = 0
 	//&arr = 0
 
 	printf("%d %d\n", empty, array)

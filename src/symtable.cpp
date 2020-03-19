@@ -451,7 +451,13 @@ void SymTable::visit(ArrayAstNode &node) {
 }
 
 void SymTable::visit(IndexAstNode &node) {
-	//TODO: This
+	node.index->accept(*this);
+	if(callArgTypes.back() != Type{"int", 0, false} ) {
+		Global::errStack.push("Indexing a variable requires the index to be of type 'int'",
+			node.index->token);
+	}
+	callArgTypes.pop_back();
+	callArgTypes.back().isArray = false;
 }
 
 void SymTable::visit(MemberVariableAstNode &node) {
