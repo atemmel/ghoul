@@ -3,6 +3,11 @@ import "io"
 struct Obj {
 	int member
 	char *str
+	Member *i
+}
+
+struct Member {
+	int i
 }
 
 fn f(int *r) {
@@ -11,6 +16,10 @@ fn f(int *r) {
 
 fn g(Obj *obj) {
 	obj.member = 5
+}
+
+fn h(Obj *obj) {
+	obj.i.i = 10
 }
 
 fn main() {
@@ -35,4 +44,9 @@ fn main() {
 	printf("o.member is %d\n", o.member)
 	g(*o)
 	printf("o.member is %d\n", o.member)
+
+	Member memb
+	o.i = *memb
+	h(*o)
+	printf("o.i.i is %d\n", o.i.i)
 }

@@ -335,6 +335,13 @@ void LLVMCodeGen::visit(ArrayAstNode &node) {
 
 void LLVMCodeGen::visit(IndexAstNode &node) {
 	//TODO: This
+	auto load = ctx->builder.CreateLoad(instructions.back() );
+	node.index->accept(*this);
+	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(load, 
+			{callParams.back()} );
+	ctx->builder.Insert(gep);
+	instructions.back() = gep;
+	callParams.back() = ctx->builder.CreateLoad(gep);
 }
 
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {

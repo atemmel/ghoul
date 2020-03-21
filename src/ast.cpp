@@ -847,6 +847,7 @@ AstNode::Expr AstParser::buildVariableExpr(Token *token) {
 		auto index = buildIndex();
 		if(index) {
 			var->addChild(std::move(index) );
+			mayParseAssign = true;
 		}
 	}
 

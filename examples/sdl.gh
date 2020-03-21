@@ -8,7 +8,7 @@ extern fn SDL_DestroyWindow(void *) int
 extern fn SDL_Delay(int) int
 extern fn SDL_GetWindowSurface(void *) SDL_Surface*
 extern fn SDL_FillRect(SDL_Surface *, SDL_Rect*, int) int
-extern fn SDL_MapRGB(SDL_PixelFormat *, char, char, char) int
+extern fn SDL_MapRGB(SDL_PixelFormat*, char, char, char) int
 
 struct SDL_Rect {
 	int x
