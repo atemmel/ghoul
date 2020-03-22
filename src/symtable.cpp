@@ -451,6 +451,10 @@ void SymTable::visit(ArrayAstNode &node) {
 }
 
 void SymTable::visit(IndexAstNode &node) {
+	if(!callArgTypes.back().isArray) {
+		Global::errStack.push("Cannot index into type '" + callArgTypes.back().string() + "'", node.token);
+	}
+
 	node.index->accept(*this);
 	if(callArgTypes.back() != Type{"int", 0, false} ) {
 		Global::errStack.push("Indexing a variable requires the index to be of type 'int'",

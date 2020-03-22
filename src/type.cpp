@@ -45,3 +45,29 @@ std::string Type::fullString() const {
 
 	return buffer;
 }
+
+int Type::size() const {
+	if(isPtr > 0) {
+		return 8;
+	}
+
+	if(!members.empty() ) {
+		int sum = 0;
+		for(auto &member : members) {
+			sum += member.type.size();
+		}
+		return sum;
+	}
+
+	if(name == "int") {
+		return 4;
+	} else if(name == "float") {
+		return 4;
+	} else if(name == "char") {
+		return 1;
+	} else if(name == "void") {
+		return 0;
+	}
+
+	return 0;
+}

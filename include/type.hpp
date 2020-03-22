@@ -9,6 +9,7 @@ struct Type {
 	bool operator!=(const Type &rhs) const;
 	std::string string() const;
 	std::string fullString() const;
+	int size() const;
 
 	//TODO: Reorder struct members
 	std::string name;

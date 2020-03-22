@@ -330,13 +330,15 @@ void LLVMCodeGen::visit(ArrayAstNode &node) {
 	llvm::Type *argsRef = ctx->builder.getInt32Ty();
 	llvm::FunctionType *funcType = llvm::FunctionType::get(result, {argsRef}, false);
 	llvm::FunctionCallee func = mi->module->getOrInsertFunction("malloc", funcType);
-	callParams.push_back(ctx->builder.CreateCall(func, {length}) );
+	callParams.push_back(ctx->builder.CreateCall(func, {ctx->builder.CreateMul(length, 
+		llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, node.type.size() ) ) ) }) );
 }
 
 void LLVMCodeGen::visit(IndexAstNode &node) {
-	//TODO: This
 	auto load = ctx->builder.CreateLoad(instructions.back() );
 	node.index->accept(*this);
+	//TODO: This
+	//ctx->builder.CreateMul(callParams.back(), llvm::APInt(32, lastType->size() ) );
 	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(load, 
 			{callParams.back()} );
 	ctx->builder.Insert(gep);
