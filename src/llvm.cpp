@@ -326,12 +326,14 @@ void LLVMCodeGen::visit(ArrayAstNode &node) {
 		callParams.pop_back();
 	}
 
-	llvm::Type *result = ctx->builder.getVoidTy()->getPointerTo();
+	llvm::Type *result = ctx->builder.getInt8Ty()->getPointerTo();
 	llvm::Type *argsRef = ctx->builder.getInt32Ty();
 	llvm::FunctionType *funcType = llvm::FunctionType::get(result, {argsRef}, false);
 	llvm::FunctionCallee func = mi->module->getOrInsertFunction("malloc", funcType);
-	callParams.push_back(ctx->builder.CreateCall(func, {ctx->builder.CreateMul(length, 
-		llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, node.type.size() ) ) ) }) );
+	llvm::Value *addr = ctx->builder.CreateCall(func, {ctx->builder.CreateMul(length, 
+		llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, node.type.size() ) ) ) });
+	llvm::Value *cast = ctx->builder.CreatePointerCast(addr, type);
+	callParams.push_back(cast);
 }
 
 void LLVMCodeGen::visit(IndexAstNode &node) {
