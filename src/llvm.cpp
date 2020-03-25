@@ -322,7 +322,7 @@ void LLVMCodeGen::visit(ArrayAstNode &node) {
 		return;
 	} else {
 		node.length->accept(*this);
-		length = callParams.back(); //* type->getPrimitiveSizeInBits();
+		length = callParams.back();
 		callParams.pop_back();
 	}
 
@@ -339,12 +339,19 @@ void LLVMCodeGen::visit(ArrayAstNode &node) {
 void LLVMCodeGen::visit(IndexAstNode &node) {
 	auto load = ctx->builder.CreateLoad(instructions.back() );
 	node.index->accept(*this);
-	//TODO: This
-	//ctx->builder.CreateMul(callParams.back(), llvm::APInt(32, lastType->size() ) );
+
 	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(load, 
 			{callParams.back()} );
 	ctx->builder.Insert(gep);
-	instructions.back() = gep;
+
+	if(instructions.size() == 1) {	//Edge case
+		instructions.back() = gep;
+	} else {
+		*(instructions.end() - 2) = gep;
+	}
+
+	//std::cout << node.token->row << ' ' << node.token->col << '\n';
+	//std::cout << instructions.size() << '\n';
 	callParams.back() = ctx->builder.CreateLoad(gep);
 }
 

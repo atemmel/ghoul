@@ -1109,6 +1109,7 @@ AstNode::Expr AstParser::buildIndex() {
 	}
 
 	auto node = std::make_unique<IndexAstNode>();
+	node->token = start;
 	auto index = buildExpr();
 
 	if(!index) {
