@@ -314,26 +314,19 @@ void LLVMCodeGen::visit(CastExpressionAstNode &node) {
 }
 
 void LLVMCodeGen::visit(ArrayAstNode &node) {
-	//TODO: Call to malloc
-	llvm::Type *type = translateType(node.type);
 	llvm::Value *length = nullptr;
 	if(!node.length) {	//Only declared array type, null it
+		llvm::Type *type = translateType(node.type);
 		callParams.push_back(llvm::ConstantPointerNull::get(llvm::cast<llvm::PointerType>(type) ) );
 		return;
-	} else {
-		node.length->accept(*this);
-		length = callParams.back();
-		callParams.pop_back();
-	}
+	} 
 
-	llvm::Type *result = ctx->builder.getInt8Ty()->getPointerTo();
-	llvm::Type *argsRef = ctx->builder.getInt32Ty();
-	llvm::FunctionType *funcType = llvm::FunctionType::get(result, {argsRef}, false);
-	llvm::FunctionCallee func = mi->module->getOrInsertFunction("malloc", funcType);
-	llvm::Value *addr = ctx->builder.CreateCall(func, {ctx->builder.CreateMul(length, 
-		llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, node.type.size() ) ) ) });
-	llvm::Value *cast = ctx->builder.CreatePointerCast(addr, type);
-	callParams.push_back(cast);
+	node.length->accept(*this);
+	length = callParams.back();
+	callParams.pop_back();
+
+	llvm::Value *heapAlloc = allocateHeap(node.type, length);
+	callParams.push_back(heapAlloc);
 }
 
 void LLVMCodeGen::visit(IndexAstNode &node) {
@@ -350,8 +343,6 @@ void LLVMCodeGen::visit(IndexAstNode &node) {
 		*(instructions.end() - 2) = gep;
 	}
 
-	//std::cout << node.token->row << ' ' << node.token->col << '\n';
-	//std::cout << instructions.size() << '\n';
 	callParams.back() = ctx->builder.CreateLoad(gep);
 }
 
@@ -423,35 +414,35 @@ void LLVMCodeGen::visit(BoolAstNode &node) {
 		llvm::APInt(1, node.value) ) ) );
 }
 
-llvm::Type *LLVMCodeGen::translateType(const Type &astType) const {
+llvm::Type *LLVMCodeGen::translateType(const Type &ghoulType) const {
 	llvm::Type *type = nullptr;
-	if(astType.name == "char") {
+	if(ghoulType.name == "char") {
 		type = ctx->builder.getInt8Ty();
-	} else if(astType.name == "bool") {
+	} else if(ghoulType.name == "bool") {
 		type = ctx->builder.getInt1Ty();
-	} else if(astType.name == "int") {
+	} else if(ghoulType.name == "int") {
 		type = ctx->builder.getInt32Ty();
-	} else if(astType.name == "void") {
+	} else if(ghoulType.name == "void") {
 		type = ctx->builder.getVoidTy();
-	} else if(astType.name == "float") {
+	} else if(ghoulType.name == "float") {
 		type = ctx->builder.getFloatTy();
-	} else if(astType.name == "...") {
+	} else if(ghoulType.name == "...") {
 		return nullptr;	
 	} else {
-		auto it = structTypes.find(astType.name);
+		auto it = structTypes.find(ghoulType.name);
 		if(it == structTypes.end() ) {
-			std::cerr << astType.string() << '\n';
+			std::cerr << ghoulType.string() << '\n';
 			std::cerr << "UHOH\n";
 			return nullptr;
 		}
 		type = it->second;
 	}
 
-	for(int i = 0; i < astType.isPtr; i++) {
+	for(int i = 0; i < ghoulType.isPtr; i++) {
 		type = type->getPointerTo();
 	}
 
-	if(astType.isArray) {
+	if(ghoulType.isArray) {	//TODO: Nu-uh
 		type = type->getPointerTo();
 	}
 
@@ -487,10 +478,30 @@ void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &
 
 void LLVMCodeGen::buildStructDefinitions(const std::vector<StructAstNode*> &structs) {
 	for(auto ptr : structs) {
-		
 		llvm::StructType *newStruct = llvm::StructType::create(ctx->context, ptr->name);
 		structTypes.insert({ptr->name, newStruct});
 	}
+}
+
+llvm::Value *LLVMCodeGen::allocateHeap(const Type &type, llvm::Value *length) {
+	static llvm::Type *result = ctx->builder.getInt8Ty()->getPointerTo();
+	static llvm::Type *argsRef = ctx->builder.getInt32Ty();
+	static llvm::FunctionType *funcType = llvm::FunctionType::get(result, {argsRef}, false);
+	const static llvm::FunctionCallee func = mi->module->getOrInsertFunction("malloc", funcType);
+
+	auto memLength = ctx->builder.CreateMul(length, llvm::ConstantInt::get(ctx->builder.getInt32Ty(),
+		llvm::APInt(32, type.size() ) ) );
+	auto heapAlloc = ctx->builder.CreateCall(func, {memLength});
+	auto cast = ctx->builder.CreatePointerCast(heapAlloc, translateType(type) );
+
+	return cast;
+}
+
+llvm::Type *LLVMCodeGen::getArrayType(llvm::Type *type) {
+	llvm::StructType *arrayType = llvm::StructType::create(ctx->context, std::string("[]")
+		+ type->getStructName().data() );
+	arrayType->setBody({type->getPointerTo(), ctx->builder.getInt32Ty(), ctx->builder.getInt32Ty()});
+	return arrayType;
 }
 
 bool gen(ModuleInfo *mi, Context *ctx) {

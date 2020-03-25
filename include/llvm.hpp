@@ -63,6 +63,10 @@ private:
 	void buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs);
 	void buildStructDefinitions(const std::vector<StructAstNode*> &structs);
 
+	//Array related
+	llvm::Value *allocateHeap(const Type &type, llvm::Value *length);
+	llvm::Type *getArrayType(llvm::Type *type);
+
 	ModuleInfo *mi = nullptr;
 	Context *ctx = nullptr;
 

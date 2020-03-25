@@ -4,14 +4,14 @@ fn main() {
 	var empty = [] int
 	var array = [5] int
 
+	//Regular index
 	printf("array[%d] is %d\n", 0, array[0])
 
+	//Iteratoion
 	for int i = 0; i < 5; i = i + 1 {
 		array[i] = i
 		printf("array[%d] is %d\n", i, array[i])
 	}
 
-	//for int i = 0; i < 5; i = i + 1 {
-		//printf("%d\n", i)
-	//}
+	
 }
