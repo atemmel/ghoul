@@ -7,7 +7,7 @@ fn main() {
 	//Regular index
 	printf("array[%d] is %d\n", 0, array[0])
 
-	//Iteratoion
+	//Iteration
 	for int i = 0; i < 5; i = i + 1 {
 		array[i] = i
 		printf("array[%d] is %d\n", i, array[i])

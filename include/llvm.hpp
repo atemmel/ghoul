@@ -58,14 +58,14 @@ private:
 	using Map = std::unordered_map<std::string, T>;
 	using Locals = Map<llvm::AllocaInst*>;
 
-	llvm::Type *translateType(const Type &type) const;
+	llvm::Type *translateType(const Type &type);
 	std::vector<FunctionAstNode*> getFuncsFromToplevel(ToplevelAstNode &node);
 	void buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs);
 	void buildStructDefinitions(const std::vector<StructAstNode*> &structs);
 
 	//Array related
 	llvm::Value *allocateHeap(const Type &type, llvm::Value *length);
-	llvm::Type *getArrayType(llvm::Type *type);
+	llvm::Type *getArrayType(llvm::Type *type, const std::string &name);
 
 	ModuleInfo *mi = nullptr;
 	Context *ctx = nullptr;
