@@ -62,13 +62,14 @@ private:
 	std::vector<FunctionAstNode*> getFuncsFromToplevel(ToplevelAstNode &node);
 	void buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs);
 	void buildStructDefinitions(const std::vector<StructAstNode*> &structs);
-	bool shouldAssignArray();
-	void assignArray();
-	void clear();
 
 	//Array related
 	llvm::Value *allocateHeap(const Type &type, llvm::Value *length);
 	llvm::Type *getArrayType(llvm::Type *type, const std::string &name);
+	bool shouldAssignArray();
+	void assignArray();
+	void clear();
+	llvm::Value *getArrayLength(llvm::Instruction *array);
 
 	ModuleInfo *mi = nullptr;
 	Context *ctx = nullptr;
@@ -87,6 +88,7 @@ private:
 	llvm::Value *arrayLength = nullptr;
 	const Type *lastType = nullptr;
 	unsigned getAddrsVisited = 0;
+	unsigned getLengthsVisited = 0;
 	bool lastStatementVisitedWasReturn = false;
 };
 

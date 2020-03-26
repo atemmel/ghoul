@@ -418,6 +418,8 @@ void SymTable::visit(UnaryExpressionAstNode &node) {
 		callArgTypes.back().isPtr--;
 	} else if(node.type == TokenType::Multiply) { 
 		callArgTypes.back().isPtr++;
+	} else if(node.type == TokenType::Ternary) {
+		callArgTypes.back() = {"int", 0, false};
 	}
 }
 

@@ -271,11 +271,15 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
 	if(node.type == TokenType::Multiply) {
 		getAddrsVisited++;
+	} else if(node.type == TokenType::Ternary) {
+		std::cout << "Felt cute, might die later\n";
+		getLengthsVisited++;
 	}
 
 	for(const auto &c : node.children) {
 		c->accept(*this);
 	}
+	std::cout << "Did not die!";
 
 	if(node.type == TokenType::Multiply) {
 		getAddrsVisited--;
@@ -291,6 +295,10 @@ void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
 		instructions.push_back(gep);
 		ctx->builder.Insert(gep);
 		callParams.back() = ctx->builder.CreateLoad(gep);
+	} else if(node.type == TokenType::Ternary) {
+		getLengthsVisited--;
+		callParams.back() = getArrayLength(instructions.back() );
+		instructions.pop_back();
 	}
 }
 
@@ -547,6 +555,14 @@ void LLVMCodeGen::clear() {
 	indicies.clear();
 	instructions.clear();
 	arrayLength = nullptr;
+}
+
+llvm::Value *LLVMCodeGen::getArrayLength(llvm::Instruction *array) {
+	llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
+	llvm::Value *llvmOne = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 1) );
+	auto size = llvm::GetElementPtrInst::CreateInBounds(array, {llvmZero, llvmOne} );
+	ctx->builder.Insert(size);
+	return ctx->builder.CreateLoad(size);
 }
 
 bool gen(ModuleInfo *mi, Context *ctx) {

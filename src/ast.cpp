@@ -779,7 +779,7 @@ AstNode::Expr AstParser::buildExpr() {
 AstNode::Expr AstParser::buildPrimaryExpr() {
 	AstNode::Expr expr = nullptr;
 
-	expr = buildUnaryExpr();
+	expr = buildPrefixUnaryExpr();
 	if(expr) {
 		return expr;
 	}
@@ -832,6 +832,10 @@ AstNode::Expr AstParser::buildPrimaryExpr() {
 	}
 
 	expr->token = tok;
+	auto parent = buildPostfixUnaryExpr(expr);
+	if(parent) {
+		return parent;
+	}
 	return expr;
 }
 
@@ -1021,7 +1025,7 @@ AstNode::Expr AstParser::buildBinExpr(AstNode::Expr &child) {
 	return result;
 }
 
-AstNode::Expr AstParser::buildUnaryOp() {
+AstNode::Expr AstParser::buildPrefixUnaryOp() {
 	Token *tok = nullptr;
 	if(iterator == tokens.cend() ) {
 		return nullptr;
@@ -1039,8 +1043,8 @@ AstNode::Expr AstParser::buildUnaryOp() {
 	return std::make_unique<UnaryExpressionAstNode>(tok);
 }
 
-AstNode::Expr AstParser::buildUnaryExpr() {
-	auto un = buildUnaryOp();
+AstNode::Expr AstParser::buildPrefixUnaryExpr() {
+	auto un = buildPrefixUnaryOp();
 	if(!un) {
 		un = buildCast();
 	}
@@ -1057,6 +1061,33 @@ AstNode::Expr AstParser::buildUnaryExpr() {
 
 	un->addChild(std::move(expr) );
 
+	return un;
+}
+
+AstNode::Expr AstParser::buildPostfixUnaryOp() {
+	Token *tok = nullptr;
+	if(iterator == tokens.cend() ) {
+		return nullptr;
+	}
+	switch(iterator->type) {
+		case TokenType::Ternary:
+			tok = &*iterator;
+			break;
+		default:
+			return nullptr;
+	}
+
+	iterator++;
+	return std::make_unique<UnaryExpressionAstNode>(tok);
+}
+
+AstNode::Expr AstParser::buildPostfixUnaryExpr(AstNode::Expr &child) {
+	auto un = buildPostfixUnaryOp();
+	if(!un) {
+		return nullptr;
+	}
+
+	un->addChild(std::move(child) );
 	return un;
 }
 

@@ -235,8 +235,10 @@ private:
 	AstNode::Expr buildAssignExpr(AstNode::Expr &lhs);
 	AstNode::Expr buildBinOp();
 	AstNode::Expr buildBinExpr(AstNode::Expr &child);
-	AstNode::Expr buildUnaryOp();
-	AstNode::Expr buildUnaryExpr();
+	AstNode::Expr buildPrefixUnaryOp();
+	AstNode::Expr buildPrefixUnaryExpr();
+	AstNode::Expr buildPostfixUnaryOp();
+	AstNode::Expr buildPostfixUnaryExpr(AstNode::Expr &child);
 	AstNode::Expr buildCast();
 	AstNode::Expr buildArray();
 	AstNode::Expr buildIndex();
