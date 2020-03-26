@@ -95,8 +95,7 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 	lastStatementVisitedWasReturn = false;
 	for(const auto &child : node.children) {
 		if(child) {
-			callParams.clear();
-			instructions.clear();
+			clear();
 			child->accept(*this);
 		}
 	}
@@ -167,9 +166,7 @@ void LLVMCodeGen::visit(LoopAstNode &node) {
 
 	if(node.loopPrefix) {
 		node.loopPrefix->accept(*this);
-		callParams.clear();
-		indicies.clear();
-		instructions.clear();
+		clear();
 	}
 
 	llvm::BasicBlock *cond = llvm::BasicBlock::Create(ctx->context, "", function);
@@ -190,9 +187,7 @@ void LLVMCodeGen::visit(LoopAstNode &node) {
 
 	if(node.loopSuffix) {
 		node.loopSuffix->accept(*this);
-		callParams.clear();
-		indicies.clear();
-		instructions.clear();
+		clear();
 	}
 
 	ctx->builder.CreateBr(cond);
@@ -240,8 +235,12 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 	auto &rhs = callParams.back();
 
 	if(node.type == TokenType::Assign) {
-		auto inst = instructions.front();
-		ctx->builder.CreateStore(callParams.back(), inst);
+		if(shouldAssignArray() ) {
+			assignArray();
+		} else {
+			auto inst = instructions.front();
+			ctx->builder.CreateStore(callParams.back(), inst);
+		}
 		params.push_back(callParams.back() );
 	} else if(node.type == TokenType::Add) {
 		params.push_back(ctx->builder.CreateAdd(lhs, rhs) );
@@ -518,6 +517,22 @@ llvm::Type *LLVMCodeGen::getArrayType(llvm::Type *type, const std::string &name)
 	}
 
 	return arrayType;
+}
+
+bool LLVMCodeGen::shouldAssignArray() {
+	return arrayLength;
+}
+
+void LLVMCodeGen::assignArray() {
+	auto inst = instructions.front();
+	ctx->builder.CreateStore(callParams.back(), inst);
+}
+
+void LLVMCodeGen::clear() {
+	callParams.clear();
+	indicies.clear();
+	instructions.clear();
+	arrayLength = nullptr;
 }
 
 bool gen(ModuleInfo *mi, Context *ctx) {
