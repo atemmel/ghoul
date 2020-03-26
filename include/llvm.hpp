@@ -88,7 +88,6 @@ private:
 	llvm::Value *arrayLength = nullptr;
 	const Type *lastType = nullptr;
 	unsigned getAddrsVisited = 0;
-	unsigned getLengthsVisited = 0;
 	bool lastStatementVisitedWasReturn = false;
 };
 

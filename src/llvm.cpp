@@ -271,15 +271,11 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
 	if(node.type == TokenType::Multiply) {
 		getAddrsVisited++;
-	} else if(node.type == TokenType::Ternary) {
-		std::cout << "Felt cute, might die later\n";
-		getLengthsVisited++;
-	}
+	} 
 
 	for(const auto &c : node.children) {
 		c->accept(*this);
 	}
-	std::cout << "Did not die!";
 
 	if(node.type == TokenType::Multiply) {
 		getAddrsVisited--;
@@ -296,7 +292,6 @@ void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
 		ctx->builder.Insert(gep);
 		callParams.back() = ctx->builder.CreateLoad(gep);
 	} else if(node.type == TokenType::Ternary) {
-		getLengthsVisited--;
 		callParams.back() = getArrayLength(instructions.back() );
 		instructions.pop_back();
 	}
