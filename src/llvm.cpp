@@ -313,22 +313,22 @@ void LLVMCodeGen::visit(CastExpressionAstNode &node) {
 }
 
 void LLVMCodeGen::visit(ArrayAstNode &node) {
-	llvm::Value *length = nullptr;
 	if(!node.length) {	//Only declared array type, null it
 		llvm::Type *arrayType = translateType(node.type);
 		llvm::Type *underlyingType = arrayType->getStructElementType(0);	//Hardcoded
 		callParams.push_back(llvm::ConstantPointerNull::get(
 			llvm::cast<llvm::PointerType>(underlyingType) ) );
+		arrayLength = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), 0);
 		return;
 	} 
 
 	node.length->accept(*this);
-	length = callParams.back();
+	arrayLength = callParams.back();
 	callParams.pop_back();
 
 	node.type.isArray = false;	//TODO: Correct this
 	node.type.isPtr++;
-	llvm::Value *heapAlloc = allocateHeap(node.type, length);
+	llvm::Value *heapAlloc = allocateHeap(node.type, arrayLength);
 	callParams.push_back(heapAlloc);
 }
 
@@ -520,12 +520,26 @@ llvm::Type *LLVMCodeGen::getArrayType(llvm::Type *type, const std::string &name)
 }
 
 bool LLVMCodeGen::shouldAssignArray() {
-	return arrayLength;
+	return arrayLength != nullptr;
 }
 
 void LLVMCodeGen::assignArray() {
+	llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
+	llvm::Value *llvmOne = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 1) );
+	llvm::Value *llvmTwo = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 2) );
+
 	auto inst = instructions.front();
-	ctx->builder.CreateStore(callParams.back(), inst);
+	auto addr = llvm::GetElementPtrInst::CreateInBounds(inst, {llvmZero, llvmZero} );
+	auto size = llvm::GetElementPtrInst::CreateInBounds(inst, {llvmZero, llvmOne} );
+	auto capacity = llvm::GetElementPtrInst::CreateInBounds(inst, {llvmZero, llvmTwo} );
+
+	ctx->builder.Insert(addr);
+	ctx->builder.Insert(size);
+	ctx->builder.Insert(capacity);
+
+	ctx->builder.CreateStore(callParams.back(), addr);
+	ctx->builder.CreateStore(arrayLength, size);
+	ctx->builder.CreateStore(arrayLength, capacity);
 }
 
 void LLVMCodeGen::clear() {
