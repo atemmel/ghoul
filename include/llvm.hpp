@@ -65,13 +65,14 @@ private:
 	void clear();
 
 	//Array related
-	llvm::Value *allocateHeap(const Type &type, llvm::Value *length);
+	llvm::Value *allocateHeap(Type type, llvm::Value *length);
 	llvm::Type *getArrayType(llvm::Type *type, const std::string &name);
 	bool shouldAssignArray();
 	void assignArray();
 	llvm::Value *getArrayLength(llvm::Instruction *array);
 	void setArrayLength(llvm::Instruction *array, llvm::Value *length);
 	void popArray(llvm::Instruction *array);
+	void pushArray(llvm::Instruction *array, llvm::Value *value);
 
 	ModuleInfo *mi = nullptr;
 	Context *ctx = nullptr;

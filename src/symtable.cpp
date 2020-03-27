@@ -379,6 +379,21 @@ void SymTable::visit(BinExpressionAstNode &node) {
 
 	auto &lhs = callArgTypes.front();
 	auto &rhs = callArgTypes.back();
+
+	if(node.type == TokenType::Push) {	//Push edge case
+		if(lhs.name == rhs.name 
+				&& lhs.isPtr == rhs.isPtr
+				&& lhs.isArray > rhs.isArray) {
+			types.push_back(rhs);
+			callArgTypes = std::move(types);
+			return;
+		} else {
+			Global::errStack.push(std::string("Type mismatch, cannot push '"
+				+ lhs.string() + "' into '" + rhs.string() + "'"), node.token);
+			return;
+		}
+	}
+
 	if(lhs != rhs) {
 		Global::errStack.push(std::string("Type mismatch, cannot perform '") 
 			+ Token::strings[static_cast<size_t>(node.type)].data()

@@ -177,6 +177,7 @@ struct Token {
 				return 1;
 			case TokenType::Assign:
 			case TokenType::Pop:
+			case TokenType::Push:
 				return 0;
 			default:
 				return -1;

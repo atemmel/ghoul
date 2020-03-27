@@ -31,5 +31,12 @@ fn main() {
 		printf("array is now empty\n")
 	}
 
+	array <- 42
+	empty <- 37
+
+	printf("%d\n", array[0])
+	printf("%d\n", empty[0])
+
 	free(array)
+	free(empty)
 }

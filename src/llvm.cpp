@@ -225,6 +225,7 @@ void LLVMCodeGen::visit(CallAstNode &node) {
 void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 	auto insts = std::move(instructions);
 	auto params = std::move(callParams);
+
 	for(const auto &child : node.children) {
 		if(child) {
 			child->accept(*this);
@@ -262,7 +263,10 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 		params.push_back(ctx->builder.CreateICmpSGT(lhs, rhs) );
 	} else if(node.type == TokenType::GreaterEquals) {
 		params.push_back(ctx->builder.CreateICmpSGE(lhs, rhs) );
-	} 
+	} else if(node.type == TokenType::Push) {
+		pushArray(instructions.back(), rhs);
+		params.push_back(rhs);
+	}
 
 	callParams = std::move(params);
 	instructions = std::move(insts);
@@ -288,6 +292,7 @@ void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
 		if(!instructions.empty() ) {
 			instructions.pop_back();
 		}
+
 		instructions.push_back(gep);
 		ctx->builder.Insert(gep);
 		callParams.back() = ctx->builder.CreateLoad(gep);
@@ -390,6 +395,7 @@ void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 void LLVMCodeGen::visit(VariableAstNode &node) {
 	auto ld = (*locals)[node.name];
 	instructions.push_back(ld);
+	lastType = mi->symtable->getLocal(node.name);
 
 	if(node.children.empty() ) {
 		const Type *type = mi->symtable->getLocal(node.name);
@@ -399,7 +405,6 @@ void LLVMCodeGen::visit(VariableAstNode &node) {
 			callParams.push_back(ctx->builder.CreateLoad(ld) );
 		}
 	} else {
-		lastType = mi->symtable->getLocal(node.name);
 		node.children.front()->accept(*this);
 	}
 }
@@ -496,14 +501,16 @@ void LLVMCodeGen::buildStructDefinitions(const std::vector<StructAstNode*> &stru
 	}
 }
 
-llvm::Value *LLVMCodeGen::allocateHeap(const Type &type, llvm::Value *length) {
+llvm::Value *LLVMCodeGen::allocateHeap(Type type, llvm::Value *length) {
 	static llvm::Type *result = ctx->builder.getInt8Ty()->getPointerTo();
 	static llvm::Type *argsRef = ctx->builder.getInt32Ty();
 	static llvm::FunctionType *funcType = llvm::FunctionType::get(result, {argsRef}, false);
 	const static llvm::FunctionCallee func = mi->module->getOrInsertFunction("malloc", funcType);
 
+	type.isPtr--;
 	auto memLength = ctx->builder.CreateMul(length, llvm::ConstantInt::get(ctx->builder.getInt32Ty(),
 		llvm::APInt(32, type.size() ) ) );
+	type.isPtr++;
 	auto heapAlloc = ctx->builder.CreateCall(func, {memLength});
 	auto cast = ctx->builder.CreatePointerCast(heapAlloc, translateType(type) );
 
@@ -578,10 +585,108 @@ void LLVMCodeGen::popArray(llvm::Instruction *array) {
 	setArrayLength(array, newLength);
 }
 
+void LLVMCodeGen::pushArray(llvm::Instruction *array, llvm::Value *value) {
+	llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
+	llvm::Value *llvmOne = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 1) );
+	llvm::Value *llvmTwo = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 2) );
+
+	auto addr = llvm::GetElementPtrInst::CreateInBounds(array, {llvmZero, llvmZero} );
+	auto size = llvm::GetElementPtrInst::CreateInBounds(array, {llvmZero, llvmOne} );
+	auto capacity = llvm::GetElementPtrInst::CreateInBounds(array, {llvmZero, llvmTwo} );
+
+	ctx->builder.Insert(addr);
+	ctx->builder.Insert(size);
+	ctx->builder.Insert(capacity);
+
+	llvm::BasicBlock *origin = ctx->builder.GetInsertBlock();
+
+	llvm::BasicBlock *nullCheckBr = llvm::BasicBlock::Create(ctx->context, "", function);
+	llvm::BasicBlock *capCheckBr = llvm::BasicBlock::Create(ctx->context, "", function);
+	llvm::BasicBlock *capCheckBrImpl = llvm::BasicBlock::Create(ctx->context, "", function);
+	llvm::BasicBlock *reallocBr = llvm::BasicBlock::Create(ctx->context, "", function);
+	llvm::BasicBlock *end = llvm::BasicBlock::Create(ctx->context, "", function);
+
+	auto loadedAddr = ctx->builder.CreateLoad(addr);
+
+	//Nullcheck
+	auto nullCheck = ctx->builder.CreateICmpEQ(loadedAddr,
+		llvm::ConstantPointerNull::get(llvm::cast<llvm::PointerType>(loadedAddr->getType() ) ) );
+	ctx->builder.CreateCondBr(nullCheck, nullCheckBr, capCheckBr);	// if addr is null
+
+	ctx->builder.SetInsertPoint(nullCheckBr);
+
+	auto dummyType = *lastType;
+	dummyType.isArray = false;
+	dummyType.isPtr++;
+	llvm::Value *mallocCall = allocateHeap(dummyType, llvmOne);
+
+	ctx->builder.CreateStore(mallocCall, addr);
+	ctx->builder.CreateStore(llvmOne, size);
+	ctx->builder.CreateStore(llvmOne, capacity);
+	auto index = llvm::GetElementPtrInst::CreateInBounds(addr, {llvmZero} );	//Assign
+	ctx->builder.Insert(index);
+	auto loadedIndex = ctx->builder.CreateLoad(index);
+	ctx->builder.CreateStore(value, loadedIndex);
+
+	ctx->builder.CreateBr(end);
+
+	//Capacitycheck
+	ctx->builder.SetInsertPoint(capCheckBr);
+
+	auto loadedCap = ctx->builder.CreateLoad(capacity);
+	auto loadedSize = ctx->builder.CreateLoad(size);
+	auto newSize = ctx->builder.CreateAdd(loadedSize, llvmOne);
+	auto capCheck = ctx->builder.CreateICmpSLE(newSize, loadedCap);
+
+	ctx->builder.CreateCondBr(capCheck, capCheckBrImpl, reallocBr);	// if new size <= capacity
+	ctx->builder.SetInsertPoint(capCheckBrImpl);
+	loadedSize = ctx->builder.CreateLoad(size);
+	index = llvm::GetElementPtrInst::CreateInBounds(addr, {loadedSize} );	//Assign
+	ctx->builder.Insert(index);
+	loadedIndex = ctx->builder.CreateLoad(index);
+	ctx->builder.CreateStore(value, loadedIndex);
+	ctx->builder.CreateStore(newSize, size);
+
+	ctx->builder.CreateBr(end);
+
+	//Realloc
+	ctx->builder.SetInsertPoint(reallocBr);
+
+	loadedCap = ctx->builder.CreateLoad(capacity);
+	auto newCap = ctx->builder.CreateShl(loadedCap, llvmOne);
+	dummyType.isPtr--;
+	auto typeSize = dummyType.size();
+	//auto typeSize = 4;
+	dummyType.isPtr++;
+	auto numBytes = ctx->builder.CreateMul(
+		llvm::ConstantInt::get(ctx->builder.getInt32Ty(), typeSize), loadedCap);
+	ctx->builder.CreateStore(newCap, capacity);
+	auto newMem = allocateHeap(dummyType, newCap);	//TODO: Replace with call to realloc?
+	ctx->builder.CreateMemCpy(newMem, typeSize, loadedAddr, typeSize, numBytes);			//Memcpy
+	ctx->builder.CreateStore(newMem, addr);	//TODO: Free old mem
+	loadedSize = ctx->builder.CreateLoad(size);								//Resize
+	newSize = ctx->builder.CreateAdd(loadedSize, llvmOne);
+	index = llvm::GetElementPtrInst::CreateInBounds(addr, {loadedSize} );	//Assign
+	ctx->builder.Insert(index);
+	loadedIndex = ctx->builder.CreateLoad(index);
+	ctx->builder.CreateStore(value, loadedIndex);
+	ctx->builder.CreateStore(newSize, size);
+
+	ctx->builder.CreateBr(end);
+
+	ctx->builder.SetInsertPoint(end);
+}
+
 bool gen(ModuleInfo *mi, Context *ctx) {
 	std::cout << "Generating...\n";
 
 	mi->module = std::make_unique<llvm::Module>(mi->name, ctx->context);
+
+	llvm::InitializeAllTargetInfos();
+	llvm::InitializeAllTargets();
+	llvm::InitializeAllTargetMCs();
+	llvm::InitializeAllAsmParsers();
+	llvm::InitializeAllAsmPrinters();
 
 	LLVMCodeGen codeGen;
 	codeGen.setContext(ctx);
@@ -601,11 +706,6 @@ bool gen(ModuleInfo *mi, Context *ctx) {
 }
 
 void write(ModuleInfo *mi, Context *ctx) {
-	llvm::InitializeAllTargetInfos();
-	llvm::InitializeAllTargets();
-	llvm::InitializeAllTargetMCs();
-	llvm::InitializeAllAsmParsers();
-	llvm::InitializeAllAsmPrinters();
 
 	auto targetTriple = llvm::sys::getDefaultTargetTriple();
 	mi->module->setTargetTriple(targetTriple);

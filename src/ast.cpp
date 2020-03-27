@@ -945,6 +945,9 @@ AstNode::Expr AstParser::buildBinOp() {
 	}
 	if(!token) {
 		token = getIf(TokenType::LessEquals);
+	} 
+	if(!token) {
+		token = getIf(TokenType::Push);
 	}
 
 	if(!token) {
