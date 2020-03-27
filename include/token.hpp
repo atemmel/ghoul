@@ -51,6 +51,8 @@ enum struct TokenType {
 	Inverse,            // !
 
 	Ternary,            // ?
+	Push,				// <-
+	Pop,				// ->
 
 	//Reserved words
 	Function,           // fn
@@ -126,6 +128,8 @@ struct Token {
 		">=",
 		"!",
 		"?",
+		"<-",
+		"->",
 
 		"fn",
 		"while",
@@ -172,6 +176,7 @@ struct Token {
 			case TokenType::Equivalence:
 				return 1;
 			case TokenType::Assign:
+			case TokenType::Pop:
 				return 0;
 			default:
 				return -1;

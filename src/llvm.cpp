@@ -294,6 +294,9 @@ void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
 	} else if(node.type == TokenType::Ternary) {
 		callParams.back() = getArrayLength(instructions.back() );
 		instructions.pop_back();
+	} else if(node.type == TokenType::Pop) {
+		//TODO: POP IT
+		popArray(instructions.back() );
 	}
 }
 
@@ -558,6 +561,21 @@ llvm::Value *LLVMCodeGen::getArrayLength(llvm::Instruction *array) {
 	auto size = llvm::GetElementPtrInst::CreateInBounds(array, {llvmZero, llvmOne} );
 	ctx->builder.Insert(size);
 	return ctx->builder.CreateLoad(size);
+}
+
+void LLVMCodeGen::setArrayLength(llvm::Instruction *array, llvm::Value *length) {
+	llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
+	llvm::Value *llvmOne = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 1) );
+	auto size = llvm::GetElementPtrInst::CreateInBounds(array, {llvmZero, llvmOne} );
+	ctx->builder.Insert(size);
+	ctx->builder.CreateStore(length, size);
+}
+
+void LLVMCodeGen::popArray(llvm::Instruction *array) {
+	auto llvmOne = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 1) );
+	auto length = getArrayLength(array);
+	auto newLength = ctx->builder.CreateSub(length, llvmOne);
+	setArrayLength(array, newLength);
 }
 
 bool gen(ModuleInfo *mi, Context *ctx) {

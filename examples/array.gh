@@ -22,5 +22,14 @@ fn main() {
 		printf("array[%d] is %d\n", i, array[i])
 	}
 
+	//Clear array
+	while array? {	
+		array ->
+	}
+
+	if array? == 0 {
+		printf("array is now empty\n")
+	}
+
 	free(array)
 }

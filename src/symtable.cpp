@@ -415,6 +415,10 @@ void SymTable::visit(UnaryExpressionAstNode &node) {
 		child->accept(*this);
 	}
 
+	if(callArgTypes.empty() ) {
+		return;
+	}
+
 	if(node.type == TokenType::And) {
 		if(callArgTypes.back().isPtr < 1) {
 			Global::errStack.push("Cannot dereference further", node.token);
@@ -425,6 +429,8 @@ void SymTable::visit(UnaryExpressionAstNode &node) {
 		callArgTypes.back().isPtr++;
 	} else if(node.type == TokenType::Ternary) {
 		callArgTypes.back() = {"int", 0, false};
+	} else if(node.type == TokenType::Pop) {
+		callArgTypes.back() = {"void", 0, false};
 	}
 }
 

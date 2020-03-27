@@ -1071,6 +1071,7 @@ AstNode::Expr AstParser::buildPostfixUnaryOp() {
 	}
 	switch(iterator->type) {
 		case TokenType::Ternary:
+		case TokenType::Pop:
 			tok = &*iterator;
 			break;
 		default:
