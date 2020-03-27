@@ -1,4 +1,5 @@
 import "io"
+import "array"
 
 fn main() {
 	var empty = [] int
@@ -21,5 +22,5 @@ fn main() {
 		printf("array[%d] is %d\n", i, array[i])
 	}
 
-	
+	free(array)
 }

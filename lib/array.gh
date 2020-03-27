@@ -1,0 +1,2 @@
+extern fn malloc(int) char*
+extern fn free(void*)

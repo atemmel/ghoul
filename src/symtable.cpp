@@ -315,8 +315,13 @@ void SymTable::visit(CallAstNode &node) {
 
 	auto matches = [](const std::vector<Type> &sig, const std::vector<Type> &args) {
 		size_t overlap = 0;
+		Type voidPtrTy = {"void", 1, false};
 		for(auto sigit = sig.cbegin(), argsit = args.cbegin(); 
 				sigit != sig.cend() && argsit != args.cend(); sigit++, argsit++, overlap++) {
+			if(*sigit == voidPtrTy && (argsit->isPtr > 0 || argsit->isArray) ) {
+				continue;
+			}
+
 			if(*sigit != *argsit) {
 				break;
 			}
