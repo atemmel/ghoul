@@ -66,6 +66,7 @@ private:
 
 	//Array related
 	llvm::Value *allocateHeap(Type type, llvm::Value *length);
+	llvm::Value *reallocateHeap(Type type, llvm::Value *addr, llvm::Value *length);
 	llvm::Type *getArrayType(llvm::Type *type, const std::string &name);
 	bool shouldAssignArray();
 	void assignArray();

@@ -300,7 +300,6 @@ void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
 		callParams.back() = getArrayLength(instructions.back() );
 		instructions.pop_back();
 	} else if(node.type == TokenType::Pop) {
-		//TODO: POP IT
 		popArray(instructions.back() );
 	}
 }
@@ -517,6 +516,23 @@ llvm::Value *LLVMCodeGen::allocateHeap(Type type, llvm::Value *length) {
 	return cast;
 }
 
+llvm::Value *LLVMCodeGen::reallocateHeap(Type type, llvm::Value *addr, llvm::Value *length) {
+	static llvm::Type *result = ctx->builder.getVoidTy()->getPointerTo();
+	static llvm::Type *ptrArg = ctx->builder.getVoidTy()->getPointerTo();
+	static llvm::Type *countArg = ctx->builder.getInt32Ty();
+	static llvm::FunctionType *funcType = llvm::FunctionType::get(result, {ptrArg, countArg}, false);
+	const static llvm::FunctionCallee func = mi->module->getOrInsertFunction("realloc", funcType);
+
+	type.isPtr--;
+	auto memLength = ctx->builder.CreateMul(length, llvm::ConstantInt::get(ctx->builder.getInt32Ty(),
+		llvm::APInt(32, type.size() ) ) );
+	type.isPtr++;
+	auto heapAlloc = ctx->builder.CreateCall(func, {addr, memLength});
+	auto cast = ctx->builder.CreatePointerCast(heapAlloc, translateType(type) );
+
+	return cast;
+}
+
 llvm::Type *LLVMCodeGen::getArrayType(llvm::Type *type, const std::string &name) {
 	std::string newName = "[]" + name;
 	auto it = structTypes.find(newName);
@@ -661,8 +677,9 @@ void LLVMCodeGen::pushArray(llvm::Instruction *array, llvm::Value *value) {
 	auto numBytes = ctx->builder.CreateMul(
 		llvm::ConstantInt::get(ctx->builder.getInt32Ty(), typeSize), loadedCap);
 	ctx->builder.CreateStore(newCap, capacity);
-	auto newMem = allocateHeap(dummyType, newCap);	//TODO: Replace with call to realloc?
-	ctx->builder.CreateMemCpy(newMem, typeSize, loadedAddr, typeSize, numBytes);			//Memcpy
+	auto newMem = reallocateHeap(dummyType, loadedAddr, newCap);
+	//auto newMem = allocateHeap(dummyType, newCap);	//TODO: Replace with call to realloc?
+	//ctx->builder.CreateMemCpy(newMem, typeSize, loadedAddr, typeSize, numBytes);			//Memcpy
 	ctx->builder.CreateStore(newMem, addr);	//TODO: Free old mem
 	loadedSize = ctx->builder.CreateLoad(size);								//Resize
 	newSize = ctx->builder.CreateAdd(loadedSize, llvmOne);

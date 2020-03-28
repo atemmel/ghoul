@@ -22,6 +22,9 @@ fn main() {
 		printf("array[%d] is %d\n", i, array[i])
 	}
 
+	//array <- 15
+	//printf("element no %d is %d\n", array?, array[array? - 1])
+
 	//Clear array
 	while array? {	
 		array ->
