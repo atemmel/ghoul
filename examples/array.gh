@@ -22,8 +22,9 @@ fn main() {
 		printf("array[%d] is %d\n", i, array[i])
 	}
 
-	//array <- 15
-	//printf("element no %d is %d\n", array?, array[array? - 1])
+	//Push
+	array <- 15
+	printf("element no %d is %d\n", array?, array[array? - 1])
 
 	//Clear array
 	while array? {	
@@ -34,7 +35,10 @@ fn main() {
 		printf("array is now empty\n")
 	}
 
+	//Push to array with capacity
 	array <- 42
+
+	//Push to previously empty array
 	empty <- 37
 
 	printf("%d\n", array[0])

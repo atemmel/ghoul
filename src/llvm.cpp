@@ -678,15 +678,12 @@ void LLVMCodeGen::pushArray(llvm::Instruction *array, llvm::Value *value) {
 		llvm::ConstantInt::get(ctx->builder.getInt32Ty(), typeSize), loadedCap);
 	ctx->builder.CreateStore(newCap, capacity);
 	auto newMem = reallocateHeap(dummyType, loadedAddr, newCap);
-	//auto newMem = allocateHeap(dummyType, newCap);	//TODO: Replace with call to realloc?
-	//ctx->builder.CreateMemCpy(newMem, typeSize, loadedAddr, typeSize, numBytes);			//Memcpy
-	ctx->builder.CreateStore(newMem, addr);	//TODO: Free old mem
+	ctx->builder.CreateStore(newMem, addr);
 	loadedSize = ctx->builder.CreateLoad(size);								//Resize
 	newSize = ctx->builder.CreateAdd(loadedSize, llvmOne);
-	index = llvm::GetElementPtrInst::CreateInBounds(addr, {loadedSize} );	//Assign
+	index = llvm::GetElementPtrInst::CreateInBounds(newMem, {loadedSize} , "Inbounds");	//Assign
 	ctx->builder.Insert(index);
-	loadedIndex = ctx->builder.CreateLoad(index);
-	ctx->builder.CreateStore(value, loadedIndex);
+	ctx->builder.CreateStore(value, index);
 	ctx->builder.CreateStore(newSize, size);
 
 	ctx->builder.CreateBr(end);
