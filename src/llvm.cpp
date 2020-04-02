@@ -681,13 +681,40 @@ void LLVMCodeGen::pushArray(llvm::Instruction *array, llvm::Value *value) {
 	ctx->builder.CreateStore(newMem, addr);
 	loadedSize = ctx->builder.CreateLoad(size);								//Resize
 	newSize = ctx->builder.CreateAdd(loadedSize, llvmOne);
-	index = llvm::GetElementPtrInst::CreateInBounds(newMem, {loadedSize} , "Inbounds");	//Assign
+	index = llvm::GetElementPtrInst::CreateInBounds(newMem, {loadedSize});	//Assign
 	ctx->builder.Insert(index);
 	ctx->builder.CreateStore(value, index);
 	ctx->builder.CreateStore(newSize, size);
 
 	ctx->builder.CreateBr(end);
 
+	ctx->builder.SetInsertPoint(end);
+}
+
+void LLVMCodeGen::memcpy(llvm::Instruction *src, llvm::Instruction *dest, llvm::Value *length) {
+	//TODO: Draft for assignment function
+	llvm::BasicBlock *cond = llvm::BasicBlock::Create(ctx->context, "", function);
+	ctx->builder.CreateBr(cond);
+	ctx->builder.SetInsertPoint(cond);
+
+	llvm::BasicBlock *branch = llvm::BasicBlock::Create(ctx->context, "", function);
+	llvm::BasicBlock *end = llvm::BasicBlock::Create(ctx->context, "", function);
+
+	auto it = ctx->builder.CreateAlloca(ctx->builder.getInt32Ty() );
+	auto cmp = ctx->builder.CreateICmpEQ(it, length);
+
+	ctx->builder.CreateCondBr(cmp, branch, end);
+
+	ctx->builder.SetInsertPoint(branch);
+
+	llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
+
+	auto rhs = ctx->builder.CreateGEP(dest, {it, llvmZero} );
+	auto lhs = ctx->builder.CreateGEP(src, {it, llvmZero} );
+	auto loadedRhs = ctx->builder.CreateLoad(rhs);
+	ctx->builder.CreateStore(loadedRhs, lhs);
+
+	ctx->builder.CreateBr(cond);
 	ctx->builder.SetInsertPoint(end);
 }
 
