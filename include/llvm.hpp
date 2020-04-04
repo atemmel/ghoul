@@ -59,6 +59,7 @@ private:
 	using Locals = Map<llvm::AllocaInst*>;
 
 	llvm::Type *translateType(const Type &type);
+	llvm::Type *translateType(const Type &type, std::string &name);
 	std::vector<FunctionAstNode*> getFuncsFromToplevel(ToplevelAstNode &node);
 	void buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs);
 	void buildStructDefinitions(const std::vector<StructAstNode*> &structs);
@@ -67,7 +68,7 @@ private:
 	//Array related
 	llvm::Value *allocateHeap(Type type, llvm::Value *length);
 	llvm::Value *reallocateHeap(Type type, llvm::Value *addr, llvm::Value *length);
-	llvm::Type *getArrayType(llvm::Type *type, const std::string &name);
+	llvm::Type *getArrayType(llvm::Type *type, const Type &ghoulType);
 	bool shouldAssignArray();
 	void assignArray();
 	llvm::Value *getArrayLength(llvm::Instruction *array);

@@ -1,0 +1,9 @@
+import "io"
+
+fn main() {
+	[][]int matA
+
+	var matB = [4][] int
+
+	[]*[]*int*** strange
+}

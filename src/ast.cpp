@@ -387,12 +387,17 @@ AstNode::Child AstParser::buildFunction() {
 		}
 
 		Type type;
+		/*
 		auto typeId = getIf(TokenType::Identifier);
 		if(!typeId) {
 			return unexpected();
 		}
 
 		type = buildType(typeId);
+		*/
+		if(!buildType(type) ) {
+			return unexpected();
+		}
 		
 		auto parId = getIf(TokenType::Identifier);
 		if(!parId) {
@@ -409,12 +414,21 @@ AstNode::Child AstParser::buildFunction() {
 		}
 	}
 
+	/*
 	auto ret = getIf(TokenType::Identifier);
 	if(ret) {
 		function->signature.returnType = buildType(ret);
 	} else {	//Implicit void
 		function->signature.returnType = {"void"};
 	}
+	*/
+
+	Type type;
+	if(!buildType(type) ) {
+		type.name = "void";
+	} 
+
+	function->signature.returnType = type;
 	
 	if(!getIf(TokenType::BlockOpen) ) {
 		return unexpected();
@@ -452,6 +466,7 @@ AstNode::Child AstParser::buildExtern() {
 	auto ext = std::make_unique<ExternAstNode>(id->value);
 	ext->token = id;
 	while(!getIf(TokenType::ParensClose) ) {
+		/*
 		id = getIf(TokenType::Identifier);
 		if(id) {
 			Type type = buildType(id);
@@ -460,6 +475,17 @@ AstNode::Child AstParser::buildExtern() {
 			ext->signature.parameters.push_back(type);
 		} else if(getIf(TokenType::Variadic) ) {
 			ext->signature.parameters.push_back({"...", false});
+			ext->signature.paramNames.push_back("");
+		*/
+		Type type;
+		if(buildType(type) ) {
+			auto arg = getIf(TokenType::Identifier);
+			ext->signature.paramNames.push_back(arg ? arg->value : "");
+			ext->signature.parameters.push_back(type);
+		} else if(getIf(TokenType::Variadic) ) {
+			type.name = "...";
+			type.arrayOf.reset();
+			ext->signature.parameters.push_back(type);
 			ext->signature.paramNames.push_back("");
 		} else {
 			return unexpected();
@@ -474,12 +500,20 @@ AstNode::Child AstParser::buildExtern() {
 	}
 
 	Type result;
+	/*
 	id = getIf(TokenType::Identifier);
 	if(id) {
 		result = buildType(id);
 	} else {
 		result.name = "void";
 	}
+	*/
+
+	if(iterator->type == TokenType::Terminator) {
+		result.name = "void";
+	} else if(!buildType(result) ) {
+		return unexpected();
+	} 
 
 	ext->signature.returnType = result;
 
@@ -545,11 +579,20 @@ AstNode::Child AstParser::buildStatement() {
 
 //AstNode::Child AstParser::buildDecl(Token *token) {
 AstNode::Child AstParser::buildDecl() {
+	/*
 	Token *token = getIf(TokenType::Identifier);
 	Type type;
 	if(token) {
 		type = buildType(token);	
 	} else if(!getIf(TokenType::Var) ){
+		return nullptr;
+	}
+	*/
+
+	Type type;
+	Token *token = &*iterator;
+	bool builtType = buildType(type);
+	if(!builtType && !getIf(TokenType::Var) ) { 
 		return nullptr;
 	}
 
@@ -575,7 +618,7 @@ AstNode::Child AstParser::buildDecl() {
 		}
 
 		decl->addChild(std::move(assign) );
-	} else if(!token) {
+	} else if(!builtType) {
 		Global::errStack.push("'var' declaration expects an assignment", &*iterator);
 	}
 
@@ -1100,12 +1143,21 @@ AstNode::Expr AstParser::buildCast() {
 		return nullptr;
 	}
 
+	/*
 	Token *token = getIf(TokenType::Identifier);
 	if(!token) {
 		return toExpr(unexpected() );
 	}
 
 	auto cast = std::make_unique<CastExpressionAstNode>(buildType(token) );
+	*/
+
+	Type type;
+	if(!buildType(type) ) {
+		return toExpr(unexpected() );
+	}
+
+	auto cast = std::make_unique<CastExpressionAstNode>(type);
 
 	if(!getIf(TokenType::Greater) ) {
 		return nullptr;
@@ -1126,6 +1178,7 @@ AstNode::Expr AstParser::buildArray() {
 		return toExpr(unexpected() );
 	}
 
+	/*
 	Token *token = getIf(TokenType::Identifier);
 	if(!token) {
 		return toExpr(unexpected() );
@@ -1133,6 +1186,15 @@ AstNode::Expr AstParser::buildArray() {
 
 	array->type = buildType(token);
 	array->type.isArray = true;
+	*/
+
+	Type underlyingType; 
+
+	if(!buildType(underlyingType) ) {
+		return toExpr(unexpected() );
+	}
+
+	array->type.arrayOf = std::make_unique<Type>(underlyingType);
 
 	return array;
 }
@@ -1159,6 +1221,47 @@ AstNode::Expr AstParser::buildIndex() {
 	return node;
 }
 
+bool AstParser::buildType(Type &type) {
+	auto checkpoint = iterator;
+
+	if(getIf(TokenType::ArrayStart) ) {
+		if(!getIf(TokenType::ArrayEnd) ) { 
+			iterator = checkpoint;
+			return false;
+		}
+
+		if(getIf(TokenType::Multiply) ) {
+			type.isPtr++;
+		}
+
+		Type subType;
+
+		if(!buildType(subType) ) {
+			iterator = checkpoint;
+			return false;
+		}
+
+		type.arrayOf = std::make_unique<Type>(subType);
+	} 
+
+	if(type.arrayOf) {
+		return true;
+	}
+	
+	auto id = getIf(TokenType::Identifier);
+	if(id) {
+		type.name = id->value;
+		while(getIf(TokenType::Multiply) ) {
+			type.isPtr++;
+		}
+		return true;
+	} 
+	
+	iterator = checkpoint;
+	return false;
+}
+
+/*
 Type AstParser::buildType(Token *token) {
 	Type type;
 	type.name = token->value;
@@ -1167,3 +1270,4 @@ Type AstParser::buildType(Token *token) {
 	}
 	return type;
 }
+*/

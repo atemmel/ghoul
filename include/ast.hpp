@@ -243,7 +243,9 @@ private:
 	AstNode::Expr buildArray();
 	AstNode::Expr buildIndex();
 
-	Type buildType(Token *token);
+	//Type buildType(Token *token);
+	bool buildType(Type &type);
+	bool buildSubType(Type &type);
 
 	template<typename T>
 	AstNode::Expr toExpr(std::unique_ptr<T> ptr) {

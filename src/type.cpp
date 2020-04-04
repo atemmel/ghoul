@@ -4,28 +4,55 @@
 #include <algorithm>
 #include <iostream>
 
+Type::Type(const Type &rhs) {
+	name = rhs.name;
+	isPtr = rhs.isPtr;
+	members = rhs.members;
+	if(rhs.arrayOf) {
+		arrayOf = std::make_unique<Type>(*rhs.arrayOf);
+	}
+}
+
+Type Type::operator=(Type rhs) {
+	swap(rhs);
+	return *this;
+}
+
 bool Type::operator==(const Type &rhs) const {
-	return name == rhs.name && isPtr == rhs.isPtr && isArray == rhs.isArray;
+	if(arrayOf && !(rhs.arrayOf && *arrayOf == *rhs.arrayOf) ) {
+		return false;
+	}
+
+	return name == rhs.name && isPtr == rhs.isPtr;
 }
 
 bool Type::operator!=(const Type &rhs) const {
 	return !(*this == rhs);
 }
 
+void Type::swap(Type &rhs) {
+	std::swap(name, rhs.name);
+	std::swap(isPtr, rhs.isPtr);
+	std::swap(members, rhs.members);
+	std::swap(arrayOf, rhs.arrayOf);
+}
+
 std::string Type::string() const {
-	if(name.empty() ) {
-		return "<unresolved>";
+	std::string buffer = name;
+	if(arrayOf) {
+		buffer += "[]";
 	}
 
-	std::string buffer = name;
-	if(isPtr > 0) {
-		buffer.push_back(' ');
-	}
 	for(int i = 0; i < isPtr; i++) {
 		buffer.push_back('*');
 	}
-	if(isArray) {
-		buffer += " []";
+
+	if(arrayOf) {
+		buffer += arrayOf->string();
+	}
+
+	if(buffer.empty() ) {
+		return "<unresolved>";
 	}
 	return buffer;
 }
@@ -49,6 +76,10 @@ std::string Type::fullString() const {
 int Type::size() const {
 	if(isPtr > 0) {
 		return 8;
+	}
+
+	if(arrayOf) {
+		return 8 + 4 + 4;
 	}
 
 	if(!members.empty() ) {

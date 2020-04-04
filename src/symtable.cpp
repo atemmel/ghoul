@@ -2,11 +2,17 @@
 
 //Default types
 SymTable::SymTable() {
-	structs.insert({"void" , {"void"}  });
-	structs.insert({"char" , {"char"}  });
-	structs.insert({"int"  , {"int"}   });
-	structs.insert({"float", {"float"} });
-	structs.insert({"bool" , {"bool"}  });
+	Type type;
+	type.name = "void";
+	structs.insert({"void" , type});
+	type.name = "char";
+	structs.insert({"char" , type});
+	type.name = "int";
+	structs.insert({"int"  , type});
+	type.name = "float";
+	structs.insert({"float", type});
+	type.name = "bool";
+	structs.insert({"bool" , type});
 }
 
 void SymTable::dump() const {
@@ -116,7 +122,9 @@ void SymTable::visit(ToplevelAstNode &node) {
 
 	for(auto ptr : node.structs) {
 		if(!hasStruct(ptr->name) ) {
-			structs.insert({ptr->name, {ptr->name} });
+			Type type;
+			type.name = ptr->name;
+			structs.insert({ptr->name, type});
 		} else {
 			Global::errStack.push("Type redefinition '"
 					+ ptr->name + "'", ptr->token);
@@ -182,10 +190,12 @@ void SymTable::visit(FunctionAstNode &node) {
 		callArgTypes.clear();
 	}
 
+	Type voidType;
+	voidType.name = "void";
 	//Check to see if a function returning data does not return any
 	if(!foundEarlyReturn &&
 	//TODO: Create type table to prevent these kind of necessities
-			currentFunction->returnType != Type{"void", false} ) {
+			currentFunction->returnType != voidType ) {
 		Global::errStack.push("Function '" + node.signature.name 
 				+ "' does not return a value, expected return of type '" 
 				+ node.signature.returnType.string() + "'", node.token);
@@ -222,7 +232,7 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 	auto it = locals->find(node.identifier);
 	if(it == locals->end() ) {
 		locals->insert(std::make_pair(node.identifier, Local{&node.type, blockDepth}) );
-		if(node.type.name.empty() ) {	//var case
+		if(node.type.name.empty() && !node.type.arrayOf) {	//var case
 
 			//First child is binary expr (assignment), assignments rhs is expected type
 			node.children.front()->children.back()->accept(*this);
@@ -315,10 +325,12 @@ void SymTable::visit(CallAstNode &node) {
 
 	auto matches = [](const std::vector<Type> &sig, const std::vector<Type> &args) {
 		size_t overlap = 0;
-		Type voidPtrTy = {"void", 1, false};
+		Type voidPtrTy;
+		voidPtrTy.name = "void",
+		voidPtrTy.isPtr = 1;
 		for(auto sigit = sig.cbegin(), argsit = args.cbegin(); 
 				sigit != sig.cend() && argsit != args.cend(); sigit++, argsit++, overlap++) {
-			if(*sigit == voidPtrTy && (argsit->isPtr > 0 || argsit->isArray) ) {
+			if(*sigit == voidPtrTy && (argsit->isPtr > 0 || argsit->arrayOf) ) {
 				continue;
 			}
 
@@ -381,15 +393,13 @@ void SymTable::visit(BinExpressionAstNode &node) {
 	auto &rhs = callArgTypes.back();
 
 	if(node.type == TokenType::Push) {	//Push edge case
-		if(lhs.name == rhs.name 
-				&& lhs.isPtr == rhs.isPtr
-				&& lhs.isArray > rhs.isArray) {
+		if(lhs.isPtr == 0 && *lhs.arrayOf == rhs) {
 			types.push_back(rhs);
 			callArgTypes = std::move(types);
 			return;
 		} else {
 			Global::errStack.push(std::string("Type mismatch, cannot push '"
-				+ lhs.string() + "' into '" + rhs.string() + "'"), node.token);
+				+ rhs.string() + "' into '" + lhs.string() + "'"), node.token);
 			return;
 		}
 	}
@@ -398,8 +408,10 @@ void SymTable::visit(BinExpressionAstNode &node) {
 		Global::errStack.push(std::string("Type mismatch, cannot perform '") 
 			+ Token::strings[static_cast<size_t>(node.type)].data()
 			+ "' with '" + lhs.string() + "' and a '" + rhs.string() + '\'', node.token);
-		types.push_back({"", false});
+		types.push_back(Type() );
 	} else {
+		Type boolType;
+		boolType.name = "bool";
 		switch(node.type) {
 			case TokenType::Add:
 			case TokenType::Multiply:
@@ -414,7 +426,7 @@ void SymTable::visit(BinExpressionAstNode &node) {
 			case TokenType::GreaterEquals:
 			case TokenType::Less:
 			case TokenType::LessEquals:
-				types.push_back({"bool", false});
+				types.push_back(boolType);
 				break;
 			default:
 				Global::errStack.push("Missing case for binary operator '" + node.token->value
@@ -443,9 +455,13 @@ void SymTable::visit(UnaryExpressionAstNode &node) {
 	} else if(node.type == TokenType::Multiply) { 
 		callArgTypes.back().isPtr++;
 	} else if(node.type == TokenType::Ternary) {
-		callArgTypes.back() = {"int", 0, false};
+		Type intType;
+		intType.name = "int";
+		callArgTypes.back() = intType;
 	} else if(node.type == TokenType::Pop) {
-		callArgTypes.back() = {"void", 0, false};
+		Type voidType;
+		voidType.name = "void";
+		callArgTypes.back() = voidType;
 	}
 }
 
@@ -468,7 +484,9 @@ void SymTable::visit(CastExpressionAstNode &node) {
 void SymTable::visit(ArrayAstNode &node) {
 	if(node.length) {
 		node.length->accept(*this);
-		if(callArgTypes.back() != Type{"int", 0, false} ) {
+		Type intType;
+		intType.name = "int";
+		if(callArgTypes.back() != intType) {
 			Global::errStack.push("Array declaration expects length definition to be of type 'int'", 
 				node.length->token);
 		}
@@ -479,17 +497,19 @@ void SymTable::visit(ArrayAstNode &node) {
 }
 
 void SymTable::visit(IndexAstNode &node) {
-	if(!callArgTypes.back().isArray) {
+	if(!callArgTypes.back().arrayOf) {
 		Global::errStack.push("Cannot index into type '" + callArgTypes.back().string() + "'", node.token);
 	}
 
 	node.index->accept(*this);
-	if(callArgTypes.back() != Type{"int", 0, false} ) {
+	Type intType;
+	intType.name = "int";
+	if(callArgTypes.back() != intType) {
 		Global::errStack.push("Indexing a variable requires the index to be of type 'int'",
 			node.index->token);
 	}
 	callArgTypes.pop_back();
-	callArgTypes.back().isArray = false;
+	callArgTypes.back() = *callArgTypes.back().arrayOf;
 }
 
 void SymTable::visit(MemberVariableAstNode &node) {
@@ -526,36 +546,36 @@ void SymTable::visit(VariableAstNode &node) {
 }
 
 void SymTable::visit(StringAstNode &node) {
-	callArgTypes.push_back({
-		"char",
-		true
-	});
+	Type charPtrType;
+	charPtrType.name = "char";
+	charPtrType.isPtr = 1;
+	callArgTypes.push_back(charPtrType);
 }
 
 void SymTable::visit(IntAstNode &node) {
-	callArgTypes.push_back({
-		"int",
-		false
-	});
-	
+	Type intType;
+	intType.name = "int";
+	callArgTypes.push_back(intType);
 }
 
 void SymTable::visit(BoolAstNode &node) {
-	callArgTypes.push_back({
-		"bool",
-		false
-	});
+	Type boolType;
+	boolType.name = "bool";
+	callArgTypes.push_back(boolType);
 }
 
 bool SymTable::demoteExprToBool(AstNode::Expr &expr) {
 	expr->accept(*this);
 	Type &result = callArgTypes.back();
-	if(result == Type{"int", false} || result.isPtr > 0) { //Compare numeric values to zero		
+	Type intType, boolType;
+	intType.name = "int";
+	boolType.name = "bool";
+	if(result == intType || result.isPtr > 0) { //Compare numeric values to zero		
 		auto binop = std::make_unique<BinExpressionAstNode>(TokenType::NotEquivalence);
 		binop->addChild(std::move(expr) );
 		binop->addChild(std::make_unique<IntAstNode>(0) );
 		expr = std::move(binop);
-	} else if(result != Type{"bool", false}) {	//If non bool expr
+	} else if(result != boolType) {	//If non bool expr
 		Global::errStack.push("Cannot translate result of expression into type'bool'", 
 				expr->token);
 		callArgTypes.clear();

@@ -325,7 +325,7 @@ void LLVMCodeGen::visit(CastExpressionAstNode &node) {
 void LLVMCodeGen::visit(ArrayAstNode &node) {
 	if(!node.length) {	//Only declared array type, null it
 		llvm::Type *arrayType = translateType(node.type);
-		llvm::Type *underlyingType = arrayType->getStructElementType(0);	//Hardcoded
+		llvm::Type *underlyingType = arrayType->getStructElementType(0)->getPointerTo();	//Hardcoded
 		callParams.push_back(llvm::ConstantPointerNull::get(
 			llvm::cast<llvm::PointerType>(underlyingType) ) );
 		arrayLength = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), 0);
@@ -336,9 +336,8 @@ void LLVMCodeGen::visit(ArrayAstNode &node) {
 	arrayLength = callParams.back();
 	callParams.pop_back();
 
-	node.type.isArray = false;	//TODO: Correct this
-	node.type.isPtr++;
-	llvm::Value *heapAlloc = allocateHeap(node.type, arrayLength);
+	//node.type.isPtr++;
+	llvm::Value *heapAlloc = allocateHeap(*node.type.arrayOf, arrayLength);
 	callParams.push_back(heapAlloc);
 }
 
@@ -432,6 +431,11 @@ void LLVMCodeGen::visit(BoolAstNode &node) {
 }
 
 llvm::Type *LLVMCodeGen::translateType(const Type &ghoulType) {
+	std::string name = ghoulType.name;
+	return translateType(ghoulType, name);
+}
+
+llvm::Type *LLVMCodeGen::translateType(const Type &ghoulType, std::string &name) {
 	llvm::Type *type = nullptr;
 	if(ghoulType.name == "char") {
 		type = ctx->builder.getInt8Ty();
@@ -445,7 +449,7 @@ llvm::Type *LLVMCodeGen::translateType(const Type &ghoulType) {
 		type = ctx->builder.getFloatTy();
 	} else if(ghoulType.name == "...") {
 		return nullptr;	
-	} else {
+	} else if(!ghoulType.arrayOf) {
 		auto it = structTypes.find(ghoulType.name);
 		if(it == structTypes.end() ) {
 			std::cerr << ghoulType.string() << '\n';
@@ -455,13 +459,25 @@ llvm::Type *LLVMCodeGen::translateType(const Type &ghoulType) {
 		type = it->second;
 	}
 
+	if(!ghoulType.name.empty() ) {
+		name = ghoulType.name;
+	}
+
+	if(ghoulType.arrayOf) {
+		type = translateType(*ghoulType.arrayOf, name);
+		type = getArrayType(type, ghoulType);
+		//std::cerr << &*type->getStructName().begin() << '\n';
+	}
+
 	for(int i = 0; i < ghoulType.isPtr; i++) {
 		type = type->getPointerTo();
 	}
 
-	if(ghoulType.isArray) {	//TODO: Nu-uh
+	/*
+	if(ghoulType.isArray > 0) {
 		type = getArrayType(type, ghoulType.name);
 	}
+	*/
 
 	return type;
 }
@@ -506,12 +522,12 @@ llvm::Value *LLVMCodeGen::allocateHeap(Type type, llvm::Value *length) {
 	static llvm::FunctionType *funcType = llvm::FunctionType::get(result, {argsRef}, false);
 	const static llvm::FunctionCallee func = mi->module->getOrInsertFunction("malloc", funcType);
 
-	type.isPtr--;
+	//type.isPtr--;
 	auto memLength = ctx->builder.CreateMul(length, llvm::ConstantInt::get(ctx->builder.getInt32Ty(),
 		llvm::APInt(32, type.size() ) ) );
-	type.isPtr++;
+	//type.isPtr++;
 	auto heapAlloc = ctx->builder.CreateCall(func, {memLength});
-	auto cast = ctx->builder.CreatePointerCast(heapAlloc, translateType(type) );
+	auto cast = ctx->builder.CreatePointerCast(heapAlloc, translateType(type)->getPointerTo() );
 
 	return cast;
 }
@@ -533,14 +549,14 @@ llvm::Value *LLVMCodeGen::reallocateHeap(Type type, llvm::Value *addr, llvm::Val
 	return cast;
 }
 
-llvm::Type *LLVMCodeGen::getArrayType(llvm::Type *type, const std::string &name) {
-	std::string newName = "[]" + name;
-	auto it = structTypes.find(newName);
+llvm::Type *LLVMCodeGen::getArrayType(llvm::Type *type, const Type &ghoulType) {
+	std::string name = ghoulType.string();
+	auto it = structTypes.find(name);
 	llvm::StructType *arrayType;
 	if(it == structTypes.end() ) {
-		arrayType = llvm::StructType::create(ctx->context, newName);
+		arrayType = llvm::StructType::create(ctx->context, name);
 		arrayType->setBody({type->getPointerTo(), ctx->builder.getInt32Ty(), ctx->builder.getInt32Ty()});
-		structTypes.insert({newName, arrayType});
+		structTypes.insert({name, arrayType});
 	} else {
 		arrayType = it->second;
 	}
@@ -631,8 +647,7 @@ void LLVMCodeGen::pushArray(llvm::Instruction *array, llvm::Value *value) {
 
 	ctx->builder.SetInsertPoint(nullCheckBr);
 
-	auto dummyType = *lastType;
-	dummyType.isArray = false;
+	auto dummyType = *lastType->arrayOf;
 	dummyType.isPtr++;
 	llvm::Value *mallocCall = allocateHeap(dummyType, llvmOne);
 
