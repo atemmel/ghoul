@@ -462,6 +462,14 @@ void SymTable::visit(UnaryExpressionAstNode &node) {
 		Type voidType;
 		voidType.name = "void";
 		callArgTypes.back() = voidType;
+	} else if(node.type == TokenType::Tilde) {
+		if(!callArgTypes.back().arrayOf) {
+			Global::errStack.push("Cannot free non-array construct", node.token);
+		}
+
+		Type voidType;
+		voidType.name = "void";
+		callArgTypes.back() = voidType;
 	}
 }
 

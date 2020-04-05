@@ -2,12 +2,11 @@ import "io"
 
 fn main() {
 	[][]int matA = [4][] int
+	//[][]int matB
 
-	for int i = 0; i < matA? ; i = i + 1 {
-		//matA[i] = [4] int
-	}
+	//matB <- [4] int
 
-	[]**[]*int*** strange
+	//[]**[]*int*** strange
 
-	//matA <- [4] int
+	~matA
 }

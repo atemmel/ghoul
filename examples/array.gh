@@ -44,6 +44,6 @@ fn main() {
 	printf("%d\n", array[0])
 	printf("%d\n", empty[0])
 
-	free(array)
-	free(empty)
+	~ array
+	~ empty
 }

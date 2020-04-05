@@ -1079,6 +1079,7 @@ AstNode::Expr AstParser::buildPrefixUnaryOp() {
 	switch(iterator->type) {
 		case TokenType::Multiply:
 		case TokenType::And:
+		case TokenType::Tilde:
 			tok = &*iterator;
 			break;
 		default:

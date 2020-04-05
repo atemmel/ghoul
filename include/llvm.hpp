@@ -75,6 +75,7 @@ private:
 	void setArrayLength(llvm::Instruction *array, llvm::Value *length);
 	void popArray(llvm::Instruction *array);
 	void pushArray(llvm::Instruction *array, llvm::Value *value);
+	void freeArray(llvm::Instruction *array);
 	void memcpy(llvm::Instruction *src, llvm::Instruction *dest, llvm::Value *length);
 
 	ModuleInfo *mi = nullptr;

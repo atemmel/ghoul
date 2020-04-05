@@ -302,6 +302,8 @@ void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
 		instructions.pop_back();
 	} else if(node.type == TokenType::Pop) {
 		popArray(instructions.back() );
+	} else if(node.type == TokenType::Tilde) {
+		freeArray(instructions.back() );
 	}
 }
 
@@ -707,6 +709,21 @@ void LLVMCodeGen::pushArray(llvm::Instruction *array, llvm::Value *value) {
 	ctx->builder.CreateBr(end);
 
 	ctx->builder.SetInsertPoint(end);
+}
+
+void LLVMCodeGen::freeArray(llvm::Instruction *array) {
+	static llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
+	static llvm::Type *result = ctx->builder.getVoidTy();
+	static llvm::Type *argsRef = ctx->builder.getVoidTy()->getPointerTo();
+	static llvm::FunctionType *funcType = llvm::FunctionType::get(result, {argsRef}, false);
+	const static llvm::FunctionCallee func = mi->module->getOrInsertFunction("free", funcType);
+
+	auto addr = llvm::GetElementPtrInst::CreateInBounds(array, {llvmZero, llvmZero} );
+
+	ctx->builder.Insert(addr);
+	auto loadedAddr = ctx->builder.CreateLoad(addr);
+	auto cast = ctx->builder.CreatePointerCast(loadedAddr, argsRef);
+	ctx->builder.CreateCall(func, cast);
 }
 
 void LLVMCodeGen::memcpy(llvm::Instruction *src, llvm::Instruction *dest, llvm::Value *length) {

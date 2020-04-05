@@ -15,6 +15,7 @@ enum struct TokenType {
 	Member,				// .
 	Comma,				// ,
 	Semicolon,			// ;
+	Tilde,				// ~
 
 	ParensOpen,         // (
 	ParensClose,        // )
@@ -96,6 +97,7 @@ struct Token {
 		".",
 		",",
 		";",
+		"~",
 
 		"(",
 		")",
@@ -178,6 +180,7 @@ struct Token {
 			case TokenType::Assign:
 			case TokenType::Pop:
 			case TokenType::Push:
+			case TokenType::Tilde:
 				return 0;
 			default:
 				return -1;
