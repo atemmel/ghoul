@@ -1230,7 +1230,7 @@ bool AstParser::buildType(Type &type) {
 			return false;
 		}
 
-		if(getIf(TokenType::Multiply) ) {
+		while(getIf(TokenType::Multiply) ) {
 			type.isPtr++;
 		}
 

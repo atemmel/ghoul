@@ -235,6 +235,7 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 	auto &lhs = callParams.front();
 	auto &rhs = callParams.back();
 
+	//TODO: Fix array/matrix assignment
 	if(node.type == TokenType::Assign) {
 		if(shouldAssignArray() ) {
 			assignArray();
@@ -464,9 +465,11 @@ llvm::Type *LLVMCodeGen::translateType(const Type &ghoulType, std::string &name)
 	}
 
 	if(ghoulType.arrayOf) {
+		int isPtr = ghoulType.arrayOf->isPtr;
+		ghoulType.arrayOf->isPtr = 0;	//Get underlying type if ptr
 		type = translateType(*ghoulType.arrayOf, name);
+		ghoulType.arrayOf->isPtr = isPtr;
 		type = getArrayType(type, ghoulType);
-		//std::cerr << &*type->getStructName().begin() << '\n';
 	}
 
 	for(int i = 0; i < ghoulType.isPtr; i++) {
