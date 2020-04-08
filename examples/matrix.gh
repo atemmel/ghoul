@@ -1,12 +1,12 @@
 import "io"
 
 fn main() {
-	[][]int matA = [4][] int
+	[][]int matA = [4] []int
 	//[][]int matB
 
 	//matB <- [4] int
 
-	//[]**[]*int*** strange
+	[]**[]*int*** strange
 
 	~matA
 }

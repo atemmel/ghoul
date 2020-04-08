@@ -41,6 +41,9 @@ std::string Type::string() const {
 	std::string buffer = name;
 	if(arrayOf) {
 		buffer += "[]";
+		if(realignedArray) {
+			buffer += "@";
+		}
 	}
 
 	for(int i = 0; i < isPtr; i++) {
@@ -101,4 +104,15 @@ int Type::size() const {
 	}
 
 	return 0;
+}
+
+bool Type::isStruct() const {
+	if(name == "int" 
+			|| name == "float" 
+			|| name == "char" 
+			|| name == "void") {
+		return false;
+	}
+
+	return true;
 }

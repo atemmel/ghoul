@@ -16,6 +16,7 @@ enum struct TokenType {
 	Comma,				// ,
 	Semicolon,			// ;
 	Tilde,				// ~
+	At,					// @
 
 	ParensOpen,         // (
 	ParensClose,        // )
@@ -98,6 +99,7 @@ struct Token {
 		",",
 		";",
 		"~",
+		"@",
 
 		"(",
 		")",

@@ -1230,6 +1230,10 @@ bool AstParser::buildType(Type &type) {
 			iterator = checkpoint;
 			return false;
 		}
+		
+		if(getIf(TokenType::At) ) {
+			type.realignedArray = true;
+		}
 
 		while(getIf(TokenType::Multiply) ) {
 			type.isPtr++;

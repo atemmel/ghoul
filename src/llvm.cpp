@@ -339,7 +339,6 @@ void LLVMCodeGen::visit(ArrayAstNode &node) {
 	arrayLength = callParams.back();
 	callParams.pop_back();
 
-	//node.type.isPtr++;
 	llvm::Value *heapAlloc = allocateHeap(*node.type.arrayOf, arrayLength);
 	callParams.push_back(heapAlloc);
 }
@@ -478,12 +477,6 @@ llvm::Type *LLVMCodeGen::translateType(const Type &ghoulType, std::string &name)
 		type = type->getPointerTo();
 	}
 
-	/*
-	if(ghoulType.isArray > 0) {
-		type = getArrayType(type, ghoulType.name);
-	}
-	*/
-
 	return type;
 }
 
@@ -527,10 +520,8 @@ llvm::Value *LLVMCodeGen::allocateHeap(Type type, llvm::Value *length) {
 	static llvm::FunctionType *funcType = llvm::FunctionType::get(result, {argsRef}, false);
 	const static llvm::FunctionCallee func = mi->module->getOrInsertFunction("malloc", funcType);
 
-	//type.isPtr--;
 	auto memLength = ctx->builder.CreateMul(length, llvm::ConstantInt::get(ctx->builder.getInt32Ty(),
 		llvm::APInt(32, type.size() ) ) );
-	//type.isPtr++;
 	auto heapAlloc = ctx->builder.CreateCall(func, {memLength});
 	auto cast = ctx->builder.CreatePointerCast(heapAlloc, translateType(type)->getPointerTo() );
 
@@ -692,7 +683,6 @@ void LLVMCodeGen::pushArray(llvm::Instruction *array, llvm::Value *value) {
 	auto newCap = ctx->builder.CreateShl(loadedCap, llvmOne);
 	dummyType.isPtr--;
 	auto typeSize = dummyType.size();
-	//auto typeSize = 4;
 	dummyType.isPtr++;
 	auto numBytes = ctx->builder.CreateMul(
 		llvm::ConstantInt::get(ctx->builder.getInt32Ty(), typeSize), loadedCap);
