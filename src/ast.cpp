@@ -1203,12 +1203,11 @@ AstNode::Expr AstParser::buildIndex() {
 		return nullptr;
 	}
 
-	bool oldAssign = mayParseAssign;
-
 	auto node = std::make_unique<IndexAstNode>();
 	node->token = start;
-	auto index = buildExpr();
 
+	bool oldAssign = mayParseAssign;
+	auto index = buildExpr();
 	mayParseAssign = oldAssign;
 
 	if(!index) {
@@ -1220,6 +1219,17 @@ AstNode::Expr AstParser::buildIndex() {
 	}
 
 	node->index = std::move(index);
+
+	auto child = buildIndex();
+	if(child) {
+		node->addChild(std::move(child) );
+	} else {
+		child = buildMemberExpr();
+		if(child) {
+			node->addChild(std::move(child) );
+		}
+	}
+
 	return node;
 }
 

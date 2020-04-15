@@ -12,9 +12,13 @@ fn main() {
 
 	[]RGBA pixelsA = [4]RGBA
 
-	for int i = 0; i < pixelsA? ; i = i + 1 {
-		pixelsA[i].r = 255
-	}
+	pixelsA[0].g = 1
+
+		//for int i = 0; i < pixelsA? ; i = i + 1 {
+		//pixelsA[i].r = 255
+		//pixelsA[i].g = 0
+			//printf("r is %d\n", pixelsA[i].r)
+			//}
 
 	//[]@RGBA pixelsB = [5] RGBA
 }

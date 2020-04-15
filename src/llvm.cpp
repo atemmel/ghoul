@@ -362,6 +362,10 @@ void LLVMCodeGen::visit(IndexAstNode &node) {
 	}
 
 	callParams.back() = ctx->builder.CreateLoad(gep);
+
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
 }
 
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
