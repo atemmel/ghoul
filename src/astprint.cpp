@@ -56,11 +56,7 @@ void AstPrinter::visit(VariableDeclareAstNode &node) {
 	Scope scope;
 	pad(scope.depth);
 	std::cerr << "Decl : " << node.identifier << " as " 
-		<< node.type.name;
-	for(int i = 0; i < node.type.isPtr; i++) {
-		std::cerr << '*';
-	}
-	std::cerr << '\n';
+		<< node.type.string()  << '\n';
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}

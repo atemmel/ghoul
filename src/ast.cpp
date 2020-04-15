@@ -885,16 +885,13 @@ AstNode::Expr AstParser::buildPrimaryExpr() {
 AstNode::Expr AstParser::buildVariableExpr(Token *token) {
 	auto var = std::make_unique<VariableAstNode>(token->value);
 
-
 	auto child = buildMemberExpr();
 	if(child) {
 		var->addChild(std::move(child) );
 	} else {
-		//TODO: Build index
 		auto index = buildIndex();
 		if(index) {
 			var->addChild(std::move(index) );
-			mayParseAssign = true;
 		}
 	}
 
@@ -1206,9 +1203,13 @@ AstNode::Expr AstParser::buildIndex() {
 		return nullptr;
 	}
 
+	bool oldAssign = mayParseAssign;
+
 	auto node = std::make_unique<IndexAstNode>();
 	node->token = start;
 	auto index = buildExpr();
+
+	mayParseAssign = oldAssign;
 
 	if(!index) {
 		return toExpr(unexpected() );

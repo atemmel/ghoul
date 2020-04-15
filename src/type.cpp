@@ -8,6 +8,7 @@ Type::Type(const Type &rhs) {
 	name = rhs.name;
 	isPtr = rhs.isPtr;
 	members = rhs.members;
+	realignedArray = rhs.realignedArray;
 	if(rhs.arrayOf) {
 		arrayOf = std::make_unique<Type>(*rhs.arrayOf);
 	}
@@ -35,6 +36,7 @@ void Type::swap(Type &rhs) {
 	std::swap(isPtr, rhs.isPtr);
 	std::swap(members, rhs.members);
 	std::swap(arrayOf, rhs.arrayOf);
+	std::swap(realignedArray, rhs.realignedArray);
 }
 
 std::string Type::string() const {
@@ -107,7 +109,8 @@ int Type::size() const {
 }
 
 bool Type::isStruct() const {
-	if(name == "int" 
+	if(isPtr > 0
+			|| name == "int" 
 			|| name == "float" 
 			|| name == "char" 
 			|| name == "void") {

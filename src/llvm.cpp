@@ -470,7 +470,11 @@ llvm::Type *LLVMCodeGen::translateType(const Type &ghoulType, std::string &name)
 		ghoulType.arrayOf->isPtr = 0;	//Get underlying type if ptr
 		type = translateType(*ghoulType.arrayOf, name);
 		ghoulType.arrayOf->isPtr = isPtr;
-		type = getArrayType(type, ghoulType);
+		if(ghoulType.realignedArray) {
+			type = getRAArrayType(type, ghoulType);
+		} else {
+			type = getArrayType(type, ghoulType);
+		}
 	}
 
 	for(int i = 0; i < ghoulType.isPtr; i++) {
@@ -741,6 +745,41 @@ void LLVMCodeGen::memcpy(llvm::Instruction *src, llvm::Instruction *dest, llvm::
 
 	ctx->builder.CreateBr(cond);
 	ctx->builder.SetInsertPoint(end);
+}
+
+llvm::Type *LLVMCodeGen::getRAArrayType(llvm::Type *type, const Type &ghoulType) {
+	std::string name = ghoulType.string();
+	auto it = structTypes.find(name);
+	llvm::StructType *arrayType;
+	if(it == structTypes.end() ) {
+		arrayType = llvm::StructType::create(ctx->context, name);
+
+		std::vector<llvm::Type*> body = { ctx->builder.getInt32Ty(), ctx->builder.getInt32Ty() };
+		//const Type *verboseType = mi->symtable->hasStruct(ghoulType.name);
+		//std::cerr << ghoulType.name << " " << verboseType << '\n';
+		//type->
+
+		/*
+		for(const auto &memb : verboseType->members) {
+			Type ty = memb.type;
+			ty.isPtr++;
+			body.push_back(translateType(ty) );
+		}
+		*/
+	
+		llvm::StructType *structTy = llvm::cast<llvm::StructType>(type);
+
+		for(auto ty : structTy->elements() ) {
+			body.push_back(ty->getPointerTo() );
+		}
+
+		arrayType->setBody(body);
+		structTypes.insert({name, arrayType});
+	} else {
+		arrayType = it->second;
+	}
+
+	return arrayType;
 }
 
 bool gen(ModuleInfo *mi, Context *ctx) {

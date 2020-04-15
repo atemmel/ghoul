@@ -221,6 +221,12 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 		return;
 	}
 
+	if(node.type.realignedArray && !node.type.arrayOf->isStruct() ) {
+		Global::errStack.push("May not declare special array of non-struct type '"
+			+ node.type.arrayOf->string() + "'", node.token);
+		return;
+	}
+
 	//Check function redefinition
 	if(hasFunc(node.identifier) ) { 
 		Global::errStack.push("Redefinition of identifier '" + node.identifier 

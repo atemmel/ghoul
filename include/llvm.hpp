@@ -78,6 +78,10 @@ private:
 	void freeArray(llvm::Instruction *array);
 	void memcpy(llvm::Instruction *src, llvm::Instruction *dest, llvm::Value *length);
 
+	//CFArray related
+	llvm::Type *getRAArrayType(llvm::Type *type, const Type &ghoulType);
+	
+
 	ModuleInfo *mi = nullptr;
 	Context *ctx = nullptr;
 
