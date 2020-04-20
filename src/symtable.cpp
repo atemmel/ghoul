@@ -523,8 +523,10 @@ void SymTable::visit(IndexAstNode &node) {
 		Global::errStack.push("Indexing a variable requires the index to be of type 'int'",
 			node.index->token);
 	} else {
-		callArgTypes.pop_back();
+		return;
 	}
+
+	callArgTypes.pop_back();
 	callArgTypes.back() = *callArgTypes.back().arrayOf;
 
 	for(auto &c : node.children) {

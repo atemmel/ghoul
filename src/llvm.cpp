@@ -349,7 +349,10 @@ void LLVMCodeGen::visit(IndexAstNode &node) {
 			{llvmZero, llvmZero} );	//First dereferences, second specifies member
 	ctx->builder.Insert(addrFromStruct);
 	auto load = ctx->builder.CreateLoad(addrFromStruct);
+
+	auto prevType = lastType;
 	node.index->accept(*this);
+	lastType = prevType;
 
 	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(load, 
 			{callParams.back()} );
@@ -363,6 +366,7 @@ void LLVMCodeGen::visit(IndexAstNode &node) {
 
 	callParams.back() = ctx->builder.CreateLoad(gep);
 
+	lastType = lastType->arrayOf.get();
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}
