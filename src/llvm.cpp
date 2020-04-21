@@ -351,6 +351,8 @@ void LLVMCodeGen::visit(IndexAstNode &node) {
 	auto load = ctx->builder.CreateLoad(addrFromStruct);
 
 	auto prevType = lastType;
+	auto oldVals = std::move(callParams);
+	auto oldInsts = std::move(instructions);
 	node.index->accept(*this);
 	lastType = prevType;
 
@@ -358,13 +360,20 @@ void LLVMCodeGen::visit(IndexAstNode &node) {
 			{callParams.back()} );
 	ctx->builder.Insert(gep);
 
+	callParams = std::move(oldVals);
+	instructions = std::move(oldInsts);
+
 	if(instructions.size() == 1) {	//Edge case
 		instructions.back() = gep;
 	} else {
 		*(instructions.end() - 2) = gep;
 	}
 
-	callParams.back() = ctx->builder.CreateLoad(gep);
+
+	if(node.children.empty() ) {
+		callParams.push_back(ctx->builder.CreateLoad(gep) );
+		return;
+	}
 
 	lastType = lastType->arrayOf.get();
 	for(auto &c : node.children) {
