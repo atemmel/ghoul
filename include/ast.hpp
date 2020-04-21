@@ -130,6 +130,7 @@ struct ArrayAstNode : public ExpressionAstNode {
 	void accept(AstVisitor &visitor) override;
 	AstNode::Expr length;
 	Type type;
+	bool raArray = false;
 };
 
 struct IndexAstNode : public ExpressionAstNode { 

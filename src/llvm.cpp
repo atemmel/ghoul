@@ -238,7 +238,11 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 	//TODO: Fix array/matrix assignment
 	if(node.type == TokenType::Assign) {
 		if(shouldAssignArray() ) {
-			assignArray();
+			if(lhsIsRAArray) {
+				assignRAArray();
+			} else {
+				assignArray();
+			}
 		} else {
 			auto inst = instructions.front();
 			ctx->builder.CreateStore(callParams.back(), inst);
@@ -326,21 +330,11 @@ void LLVMCodeGen::visit(CastExpressionAstNode &node) {
 }
 
 void LLVMCodeGen::visit(ArrayAstNode &node) {
-	if(!node.length) {	//Only declared array type, null it
-		llvm::Type *arrayType = translateType(node.type);
-		llvm::Type *underlyingType = arrayType->getStructElementType(0)->getPointerTo();	//Hardcoded
-		callParams.push_back(llvm::ConstantPointerNull::get(
-			llvm::cast<llvm::PointerType>(underlyingType) ) );
-		arrayLength = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), 0);
-		return;
-	} 
-
-	node.length->accept(*this);
-	arrayLength = callParams.back();
-	callParams.pop_back();
-
-	llvm::Value *heapAlloc = allocateHeap(*node.type.arrayOf, arrayLength);
-	callParams.push_back(heapAlloc);
+	if(lhsIsRAArray) {
+		createRAArray(node);
+	} else {
+		createArray(node);
+	}
 }
 
 void LLVMCodeGen::visit(IndexAstNode &node) {
@@ -413,6 +407,7 @@ void LLVMCodeGen::visit(VariableAstNode &node) {
 	auto ld = (*locals)[node.name];
 	instructions.push_back(ld);
 	lastType = mi->symtable->getLocal(node.name);
+	lhsIsRAArray = lastType->realignedArray;
 
 	if(node.children.empty() ) {
 		const Type *type = mi->symtable->getLocal(node.name);
@@ -581,6 +576,24 @@ llvm::Type *LLVMCodeGen::getArrayType(llvm::Type *type, const Type &ghoulType) {
 	return arrayType;
 }
 
+void LLVMCodeGen::createArray(ArrayAstNode &node) {
+	if(!node.length) {	//Only declared array type, null it
+		llvm::Type *arrayType = translateType(node.type);
+		llvm::Type *underlyingType = arrayType->getStructElementType(0)->getPointerTo();	//Hardcoded
+		callParams.push_back(llvm::ConstantPointerNull::get(
+			llvm::cast<llvm::PointerType>(underlyingType) ) );
+		arrayLength = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), 0);
+		return;
+	} 
+
+	node.length->accept(*this);
+	arrayLength = callParams.back();
+	callParams.pop_back();
+
+	llvm::Value *heapAlloc = allocateHeap(*node.type.arrayOf, arrayLength);
+	callParams.push_back(heapAlloc);
+}
+
 bool LLVMCodeGen::shouldAssignArray() {
 	return arrayLength != nullptr;
 }
@@ -609,6 +622,7 @@ void LLVMCodeGen::clear() {
 	indicies.clear();
 	instructions.clear();
 	arrayLength = nullptr;
+	lhsIsRAArray = false;
 }
 
 llvm::Value *LLVMCodeGen::getArrayLength(llvm::Instruction *array) {
@@ -797,6 +811,55 @@ llvm::Type *LLVMCodeGen::getRAArrayType(llvm::Type *type, const Type &ghoulType)
 	}
 
 	return arrayType;
+}
+
+void LLVMCodeGen::createRAArray(ArrayAstNode &node) {
+	node.type.realignedArray = true;
+	llvm::Type *arrayType = translateType(node.type);
+	lastLLVMType = arrayType;
+
+	if(!node.length) {	//Only declared array type, null it
+		for(int i = 2; i < arrayType->getStructNumElements(); i++) {
+			llvm::Type *underlyingType = arrayType->getStructElementType(i)->getPointerTo();	//Hardcoded
+			callParams.push_back(llvm::ConstantPointerNull::get(
+				llvm::cast<llvm::PointerType>(underlyingType) ) );
+		}
+		arrayLength = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), 0);
+		return;
+	} 
+
+	//TODO: This
+	node.length->accept(*this);
+	arrayLength = callParams.back();
+	callParams.pop_back();
+
+	llvm::Value *heapAlloc = allocateHeap(*node.type.arrayOf, arrayLength);
+	callParams.push_back(heapAlloc);
+}
+
+void LLVMCodeGen::assignRAArray() {
+	llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
+	llvm::Value *llvmOne = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 1) );
+	llvm::Value *llvmTwo = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 2) );
+
+	auto inst = instructions.front();
+	auto size = llvm::GetElementPtrInst::CreateInBounds(inst, {llvmZero, llvmZero} );
+	auto capacity = llvm::GetElementPtrInst::CreateInBounds(inst, {llvmZero, llvmOne} );
+
+	ctx->builder.Insert(size);
+	ctx->builder.Insert(capacity);
+
+	//ctx->builder.CreateStore(callParams.back(), addr);
+	ctx->builder.CreateStore(arrayLength, size);
+	ctx->builder.CreateStore(arrayLength, capacity);
+
+	for(int i = lastLLVMType->getStructNumElements() - 1; i > 1; i--) {
+		auto gep = llvm::GetElementPtrInst::CreateInBounds(inst, {llvmZero,
+				llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, i) )});
+		ctx->builder.Insert(gep);
+		ctx->builder.CreateStore(callParams.back(), gep);
+		callParams.pop_back();
+	}
 }
 
 bool gen(ModuleInfo *mi, Context *ctx) {

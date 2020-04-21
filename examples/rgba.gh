@@ -10,15 +10,17 @@ struct RGBA {
 fn main() {
 	//[]@int nonsensical
 
-	[]RGBA pixelsA = [4]RGBA
+	//[]RGBA pixelsA = [4]RGBA
 
-	pixelsA[0].g = 1
-
-		//for int i = 0; i < pixelsA? ; i = i + 1 {
+	//for int i = 0; i < pixelsA? ; i = i + 1 {
 		//pixelsA[i].r = 255
 		//pixelsA[i].g = 0
-			//printf("r is %d\n", pixelsA[i].r)
-			//}
+		//printf("r is %d\n", pixelsA[i].r)
+	//}
 
 	//[]@RGBA pixelsB = [5] RGBA
+
+	[]@RGBA pixelsB = [] RGBA
+
+	//printf("r is %d\n", pixelsB[0].r)
 }

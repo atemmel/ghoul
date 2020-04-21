@@ -69,6 +69,7 @@ private:
 	llvm::Value *allocateHeap(Type type, llvm::Value *length);
 	llvm::Value *reallocateHeap(Type type, llvm::Value *addr, llvm::Value *length);
 	llvm::Type *getArrayType(llvm::Type *type, const Type &ghoulType);
+	void createArray(ArrayAstNode &node);
 	bool shouldAssignArray();
 	void assignArray();
 	llvm::Value *getArrayLength(llvm::Instruction *array);
@@ -78,8 +79,10 @@ private:
 	void freeArray(llvm::Instruction *array);
 	void memcpy(llvm::Instruction *src, llvm::Instruction *dest, llvm::Value *length);
 
-	//CFArray related
+	//RAArray related
 	llvm::Type *getRAArrayType(llvm::Type *type, const Type &ghoulType);
+	void createRAArray(ArrayAstNode &node);
+	void assignRAArray();
 	
 
 	ModuleInfo *mi = nullptr;
@@ -97,9 +100,11 @@ private:
 	llvm::Function *function = nullptr;
 
 	llvm::Value *arrayLength = nullptr;
+	llvm::Type *lastLLVMType = nullptr;
 	const Type *lastType = nullptr;
 	unsigned getAddrsVisited = 0;
 	bool lastStatementVisitedWasReturn = false;
+	bool lhsIsRAArray = false;
 };
 
 bool gen(ModuleInfo *mi, Context *ctx);
