@@ -85,7 +85,9 @@ private:
 	llvm::Type *getRAArrayType(llvm::Type *type, const Type &ghoulType);
 	void createRAArray(ArrayAstNode &node);
 	void indexRAArray(IndexAstNode &node);
+	void indexRAArrayMember(MemberVariableAstNode &node);
 	void assignRAArray();
+	llvm::Value *getRAArrayLength(llvm::Instruction *raArray);
 	
 
 	ModuleInfo *mi = nullptr;
@@ -108,6 +110,7 @@ private:
 	unsigned getAddrsVisited = 0;
 	bool lastStatementVisitedWasReturn = false;
 	bool lhsIsRAArray = false;
+	bool visitedRAAIndex = false;
 };
 
 bool gen(ModuleInfo *mi, Context *ctx);

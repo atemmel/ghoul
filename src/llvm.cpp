@@ -302,7 +302,11 @@ void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
 		ctx->builder.Insert(gep);
 		callParams.back() = ctx->builder.CreateLoad(gep);
 	} else if(node.type == TokenType::Ternary) {
-		callParams.back() = getArrayLength(instructions.back() );
+		if(lhsIsRAArray) {
+			callParams.back() = getRAArrayLength(instructions.back() );
+		} else {
+			callParams.back() = getArrayLength(instructions.back() );
+		}
 		instructions.pop_back();
 	} else if(node.type == TokenType::Pop) {
 		popArray(instructions.back() );
@@ -346,6 +350,12 @@ void LLVMCodeGen::visit(IndexAstNode &node) {
 }
 
 void LLVMCodeGen::visit(MemberVariableAstNode &node) {
+	if(visitedRAAIndex) {
+		visitedRAAIndex = false;
+		indexRAArrayMember(node);
+		return;
+	}
+
 	if(lastType->isPtr > 0) {
 		for(int i = 0; i < lastType->isPtr; i++) {
 			llvm::Instruction *alloca = ctx->builder.CreateLoad(instructions.back() );
@@ -864,40 +874,53 @@ void LLVMCodeGen::createRAArray(ArrayAstNode &node) {
 }
 
 void LLVMCodeGen::indexRAArray(IndexAstNode &node) {
-	llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
-	llvm::Instruction *addrFromStruct = llvm::GetElementPtrInst::CreateInBounds(instructions.back(), 
-			{llvmZero, llvmZero} );	//First dereferences, second specifies member
-	ctx->builder.Insert(addrFromStruct);
-	auto load = ctx->builder.CreateLoad(addrFromStruct);
-
 	auto prevType = lastType;
 	auto oldVals = std::move(callParams);
 	auto oldInsts = std::move(instructions);
 	node.index->accept(*this);
 	lastType = prevType;
 
-	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(load, 
-			{callParams.back()} );
-	ctx->builder.Insert(gep);
+	oldVals.push_back(callParams.back() );
 
 	callParams = std::move(oldVals);
 	instructions = std::move(oldInsts);
 
-	if(instructions.size() == 1) {	//Edge case
-		instructions.back() = gep;
-	} else {
-		*(instructions.end() - 2) = gep;
+	lastType = lastType->arrayOf.get();
+	visitedRAAIndex = true;
+	for(auto &c : node.children) {
+		c->accept(*this);
 	}
+}
 
+void LLVMCodeGen::indexRAArrayMember(MemberVariableAstNode &node) {
+	unsigned u = mi->symtable->getMemberOffset(*lastType, node.name);
+	auto llvmZero = llvm::ConstantInt::get(ctx->context, llvm::APInt(32, 0, true) );
+	auto structIndex = llvm::ConstantInt::get(ctx->context, llvm::APInt(32, u + 2, true) );
+	auto arrayIndex = callParams.back();
+
+	callParams.pop_back();
+
+	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(instructions.back(), 
+		{llvmZero, structIndex});
+
+	ctx->builder.Insert(gep);
+	auto loadedGep = ctx->builder.CreateLoad(gep);
+
+	llvm::Instruction *element = llvm::GetElementPtrInst::CreateInBounds(loadedGep,
+		{arrayIndex} );
+
+	ctx->builder.Insert(element);
+
+	instructions.back() = element;
+	
 
 	if(node.children.empty() ) {
-		callParams.push_back(ctx->builder.CreateLoad(gep) );
+		callParams.push_back(ctx->builder.CreateLoad(element) );
 		return;
 	}
-
-	lastType = lastType->arrayOf.get();
-	//TODO: This
-	for(auto &c : node.children) {
+	
+	lastType = mi->symtable->typeHasMember(*lastType, node.name);
+	for(const auto &c : node.children) {
 		c->accept(*this);
 	}
 }
@@ -925,6 +948,13 @@ void LLVMCodeGen::assignRAArray() {
 		ctx->builder.CreateStore(callParams.back(), gep);
 		callParams.pop_back();
 	}
+}
+
+llvm::Value *LLVMCodeGen::getRAArrayLength(llvm::Instruction *raArray) {
+	llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
+	auto size = llvm::GetElementPtrInst::CreateInBounds(raArray, {llvmZero, llvmZero} );
+	ctx->builder.Insert(size);
+	return ctx->builder.CreateLoad(size);
 }
 
 bool gen(ModuleInfo *mi, Context *ctx) {
