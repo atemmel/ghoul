@@ -18,9 +18,17 @@ fn main() {
 		//printf("r is %d\n", pixelsA[i].r)
 	//}
 
-	//[]@RGBA pixelsB = [5] RGBA
+	//[]@RGBA pixelsB = [] RGBA
 
-	[]@RGBA pixelsB = [] RGBA
+	[]@RGBA pixelsB = [2] RGBA
 
-	//printf("r is %d\n", pixelsB[0].r)
+	//for int i = 0; i < pixelsB? ; i = i + 1 {
+	//pixelsB[i].r = 255
+	//pixelsB[i].g = 0
+	//printf("r is %d\n", pixelsB[i].r)
+	//}
+
+	pixelsB[0].r = 5
+	pixelsB[0].g = 2
+	printf("r is %d\n", pixelsB[0].r)
 }

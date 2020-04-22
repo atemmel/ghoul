@@ -527,6 +527,12 @@ void SymTable::visit(IndexAstNode &node) {
 	}
 
 	callArgTypes.pop_back();
+
+	if(callArgTypes.back().realignedArray && node.children.empty() ) {
+		Global::errStack.push("Cannot index into a realigned array without also specifying a member",
+			node.index->token);
+	}
+
 	callArgTypes.back() = *callArgTypes.back().arrayOf;
 
 	for(auto &c : node.children) {

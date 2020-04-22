@@ -3,7 +3,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/VariadicFunction.h"
+//#include "llvm/ADT/VariadicFunction.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -338,40 +338,10 @@ void LLVMCodeGen::visit(ArrayAstNode &node) {
 }
 
 void LLVMCodeGen::visit(IndexAstNode &node) {
-	llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
-	llvm::Instruction *addrFromStruct = llvm::GetElementPtrInst::CreateInBounds(instructions.back(), 
-			{llvmZero, llvmZero} );	//First dereferences, second specifies member
-	ctx->builder.Insert(addrFromStruct);
-	auto load = ctx->builder.CreateLoad(addrFromStruct);
-
-	auto prevType = lastType;
-	auto oldVals = std::move(callParams);
-	auto oldInsts = std::move(instructions);
-	node.index->accept(*this);
-	lastType = prevType;
-
-	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(load, 
-			{callParams.back()} );
-	ctx->builder.Insert(gep);
-
-	callParams = std::move(oldVals);
-	instructions = std::move(oldInsts);
-
-	if(instructions.size() == 1) {	//Edge case
-		instructions.back() = gep;
+	if(lhsIsRAArray) {
+		indexRAArray(node);
 	} else {
-		*(instructions.end() - 2) = gep;
-	}
-
-
-	if(node.children.empty() ) {
-		callParams.push_back(ctx->builder.CreateLoad(gep) );
-		return;
-	}
-
-	lastType = lastType->arrayOf.get();
-	for(auto &c : node.children) {
-		c->accept(*this);
+		indexArray(node);
 	}
 }
 
@@ -530,6 +500,7 @@ void LLVMCodeGen::buildStructDefinitions(const std::vector<StructAstNode*> &stru
 	}
 }
 
+//TODO: Remove all calls to this
 llvm::Value *LLVMCodeGen::allocateHeap(Type type, llvm::Value *length) {
 	static llvm::Type *result = ctx->builder.getInt8Ty()->getPointerTo();
 	static llvm::Type *argsRef = ctx->builder.getInt32Ty();
@@ -540,6 +511,20 @@ llvm::Value *LLVMCodeGen::allocateHeap(Type type, llvm::Value *length) {
 		llvm::APInt(32, type.size() ) ) );
 	auto heapAlloc = ctx->builder.CreateCall(func, {memLength});
 	auto cast = ctx->builder.CreatePointerCast(heapAlloc, translateType(type)->getPointerTo() );
+
+	return cast;
+}
+
+llvm::Value *LLVMCodeGen::allocateHeap(llvm::Type *type, llvm::Value *length) {
+	static llvm::Type *result = ctx->builder.getInt8Ty()->getPointerTo();
+	static llvm::Type *argsRef = ctx->builder.getInt32Ty();
+	static llvm::FunctionType *funcType = llvm::FunctionType::get(result, {argsRef}, false);
+	const static llvm::FunctionCallee func = mi->module->getOrInsertFunction("malloc", funcType);
+
+	auto memLength = ctx->builder.CreateMul(length, llvm::ConstantInt::get(ctx->builder.getInt32Ty(),
+		llvm::APInt(32, mi->module->getDataLayout().getTypeAllocSize(type) ) ) );
+	auto heapAlloc = ctx->builder.CreateCall(func, {memLength});
+	auto cast = ctx->builder.CreatePointerCast(heapAlloc, type->getPointerTo() );
 
 	return cast;
 }
@@ -577,8 +562,8 @@ llvm::Type *LLVMCodeGen::getArrayType(llvm::Type *type, const Type &ghoulType) {
 }
 
 void LLVMCodeGen::createArray(ArrayAstNode &node) {
+	llvm::Type *arrayType = translateType(node.type);
 	if(!node.length) {	//Only declared array type, null it
-		llvm::Type *arrayType = translateType(node.type);
 		llvm::Type *underlyingType = arrayType->getStructElementType(0)->getPointerTo();	//Hardcoded
 		callParams.push_back(llvm::ConstantPointerNull::get(
 			llvm::cast<llvm::PointerType>(underlyingType) ) );
@@ -590,8 +575,46 @@ void LLVMCodeGen::createArray(ArrayAstNode &node) {
 	arrayLength = callParams.back();
 	callParams.pop_back();
 
-	llvm::Value *heapAlloc = allocateHeap(*node.type.arrayOf, arrayLength);
+	llvm::Value *heapAlloc = allocateHeap(arrayType, arrayLength);
 	callParams.push_back(heapAlloc);
+}
+
+void LLVMCodeGen::indexArray(IndexAstNode &node) {
+	llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
+	llvm::Instruction *addrFromStruct = llvm::GetElementPtrInst::CreateInBounds(instructions.back(), 
+			{llvmZero, llvmZero} );	//First dereferences, second specifies member
+	ctx->builder.Insert(addrFromStruct);
+	auto load = ctx->builder.CreateLoad(addrFromStruct);
+
+	auto prevType = lastType;
+	auto oldVals = std::move(callParams);
+	auto oldInsts = std::move(instructions);
+	node.index->accept(*this);
+	lastType = prevType;
+
+	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(load, 
+			{callParams.back()} );
+	ctx->builder.Insert(gep);
+
+	callParams = std::move(oldVals);
+	instructions = std::move(oldInsts);
+
+	if(instructions.size() == 1) {	//Edge case
+		instructions.back() = gep;
+	} else {
+		*(instructions.end() - 2) = gep;
+	}
+
+
+	if(node.children.empty() ) {
+		callParams.push_back(ctx->builder.CreateLoad(gep) );
+		return;
+	}
+
+	lastType = lastType->arrayOf.get();
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
 }
 
 bool LLVMCodeGen::shouldAssignArray() {
@@ -833,8 +856,50 @@ void LLVMCodeGen::createRAArray(ArrayAstNode &node) {
 	arrayLength = callParams.back();
 	callParams.pop_back();
 
-	llvm::Value *heapAlloc = allocateHeap(*node.type.arrayOf, arrayLength);
-	callParams.push_back(heapAlloc);
+	for(int i = 2; i < arrayType->getStructNumElements(); i++) {
+		llvm::Type *underlyingType = arrayType->getStructElementType(i);
+		auto ha = allocateHeap(underlyingType, arrayLength);
+		callParams.push_back(ha);
+	}
+}
+
+void LLVMCodeGen::indexRAArray(IndexAstNode &node) {
+	llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
+	llvm::Instruction *addrFromStruct = llvm::GetElementPtrInst::CreateInBounds(instructions.back(), 
+			{llvmZero, llvmZero} );	//First dereferences, second specifies member
+	ctx->builder.Insert(addrFromStruct);
+	auto load = ctx->builder.CreateLoad(addrFromStruct);
+
+	auto prevType = lastType;
+	auto oldVals = std::move(callParams);
+	auto oldInsts = std::move(instructions);
+	node.index->accept(*this);
+	lastType = prevType;
+
+	llvm::Instruction *gep = llvm::GetElementPtrInst::CreateInBounds(load, 
+			{callParams.back()} );
+	ctx->builder.Insert(gep);
+
+	callParams = std::move(oldVals);
+	instructions = std::move(oldInsts);
+
+	if(instructions.size() == 1) {	//Edge case
+		instructions.back() = gep;
+	} else {
+		*(instructions.end() - 2) = gep;
+	}
+
+
+	if(node.children.empty() ) {
+		callParams.push_back(ctx->builder.CreateLoad(gep) );
+		return;
+	}
+
+	lastType = lastType->arrayOf.get();
+	//TODO: This
+	for(auto &c : node.children) {
+		c->accept(*this);
+	}
 }
 
 void LLVMCodeGen::assignRAArray() {
@@ -916,7 +981,7 @@ void write(ModuleInfo *mi, Context *ctx) {
 	llvm::raw_fd_ostream dest(mi->objName, ec, llvm::sys::fs::F_None);
 
 	llvm::legacy::PassManager pass;
-	auto fileType = llvm::TargetMachine::CGFT_ObjectFile;
+	auto fileType = llvm::CGFT_ObjectFile;
 
 	if(theTargetMachine->addPassesToEmitFile(pass, dest, nullptr, fileType) ) {
 		std::cerr << "TargetMachine cannot emit a file of this type\n";

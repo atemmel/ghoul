@@ -67,9 +67,11 @@ private:
 
 	//Array related
 	llvm::Value *allocateHeap(Type type, llvm::Value *length);
+	llvm::Value *allocateHeap(llvm::Type *type, llvm::Value *length);
 	llvm::Value *reallocateHeap(Type type, llvm::Value *addr, llvm::Value *length);
 	llvm::Type *getArrayType(llvm::Type *type, const Type &ghoulType);
 	void createArray(ArrayAstNode &node);
+	void indexArray(IndexAstNode &node);
 	bool shouldAssignArray();
 	void assignArray();
 	llvm::Value *getArrayLength(llvm::Instruction *array);
@@ -82,6 +84,7 @@ private:
 	//RAArray related
 	llvm::Type *getRAArrayType(llvm::Type *type, const Type &ghoulType);
 	void createRAArray(ArrayAstNode &node);
+	void indexRAArray(IndexAstNode &node);
 	void assignRAArray();
 	
 
