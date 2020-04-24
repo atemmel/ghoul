@@ -88,6 +88,7 @@ private:
 	void indexRAArrayMember(MemberVariableAstNode &node);
 	void assignRAArray();
 	llvm::Value *getRAArrayLength(llvm::Instruction *raArray);
+	void freeRAArray(llvm::Instruction *array);
 	
 
 	ModuleInfo *mi = nullptr;

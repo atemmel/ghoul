@@ -311,7 +311,11 @@ void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
 	} else if(node.type == TokenType::Pop) {
 		popArray(instructions.back() );
 	} else if(node.type == TokenType::Tilde) {
-		freeArray(instructions.back() );
+		if(lhsIsRAArray) {
+			freeRAArray(instructions.back() );
+		} else {
+			freeArray(instructions.back() );
+		}
 	}
 }
 
@@ -955,6 +959,24 @@ llvm::Value *LLVMCodeGen::getRAArrayLength(llvm::Instruction *raArray) {
 	auto size = llvm::GetElementPtrInst::CreateInBounds(raArray, {llvmZero, llvmZero} );
 	ctx->builder.Insert(size);
 	return ctx->builder.CreateLoad(size);
+}
+
+void LLVMCodeGen::freeRAArray(llvm::Instruction *array) {
+	static llvm::Value *llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
+	static llvm::Type *result = ctx->builder.getVoidTy();
+	static llvm::Type *argsRef = ctx->builder.getVoidTy()->getPointerTo();
+	static llvm::FunctionType *funcType = llvm::FunctionType::get(result, {argsRef}, false);
+	const static llvm::FunctionCallee func = mi->module->getOrInsertFunction("free", funcType);
+
+	for(int i = 2; i < lastLLVMType->getStructNumElements(); i++) {
+		auto index = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, i) );
+		auto addr = llvm::GetElementPtrInst::CreateInBounds(array, {llvmZero, index} );
+
+		ctx->builder.Insert(addr);
+		auto loadedAddr = ctx->builder.CreateLoad(addr);
+		auto cast = ctx->builder.CreatePointerCast(loadedAddr, argsRef);
+		ctx->builder.CreateCall(func, cast);
+	}
 }
 
 bool gen(ModuleInfo *mi, Context *ctx) {

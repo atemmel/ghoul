@@ -10,20 +10,29 @@ struct RGBA {
 fn main() {
 	//[]@int nonsensical
 
+	printf("Ordinary array\n")
+
 	[]RGBA pixelsA = [4]RGBA
 
 	for int i = 0; i < pixelsA? ; i = i + 1 {
 		pixelsA[i].r = 255
 		pixelsA[i].g = 0
 		printf("r is %d\n", pixelsA[i].r)
+		printf("g is %d\n", pixelsA[i].g)
 	}
 
-	[]@RGBA pixelsB = [2] RGBA
+	~ pixelsA
 
-	for int i = 0; i < pixelsB? ; i = i + 1 {
-		pixelsB[i].r = 255
-		pixelsB[i].g = 0
-		printf("r is %d\n", pixelsB[i].r)
-		printf("g is %d\n", pixelsB[i].g)
+	printf("\nRAArray\n")
+
+	[]@RGBA pixelsB = [3] RGBA
+
+	for int j = 0; j < pixelsB? ; j = j + 1 {
+		pixelsB[j].r = 255
+		pixelsB[j].g = 0
+		printf("r is %d\n", pixelsB[j].r)
+		printf("g is %d\n", pixelsB[j].g)
 	}
+
+	~ pixelsB
 }
