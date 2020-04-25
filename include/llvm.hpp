@@ -89,6 +89,9 @@ private:
 	void assignRAArray();
 	llvm::Value *getRAArrayLength(llvm::Instruction *raArray);
 	void freeRAArray(llvm::Instruction *array);
+
+	//Struct related
+	void assignStruct(llvm::Instruction *lhs, llvm::Value *rhs, llvm::Type *type);
 	
 
 	ModuleInfo *mi = nullptr;

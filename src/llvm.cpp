@@ -226,11 +226,21 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 	auto insts = std::move(instructions);
 	auto params = std::move(callParams);
 
+	/*
 	for(const auto &child : node.children) {
 		if(child) {
 			child->accept(*this);
 		}
 	}
+	*/
+
+	node.children.front()->accept(*this);
+	const Type *lhsType = lastType;
+	auto lhsLLVMType = translateType(*lhsType);
+
+	node.children.back()->accept(*this);
+	const Type *rhsType = lastType;
+	auto rhsLLVMType = translateType(*rhsType);
 
 	auto &lhs = callParams.front();
 	auto &rhs = callParams.back();
@@ -243,6 +253,9 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 			} else {
 				assignArray();
 			}
+		} else if(lhsType->isStruct() && rhsType->isStruct() ) {
+			auto inst = instructions.front();
+			assignStruct(inst, rhs, lhsLLVMType);
 		} else {
 			auto inst = instructions.front();
 			ctx->builder.CreateStore(callParams.back(), inst);
@@ -376,12 +389,12 @@ void LLVMCodeGen::visit(MemberVariableAstNode &node) {
 	instructions.back() = gep;
 	ctx->builder.Insert(gep);
 
+	lastType = mi->symtable->typeHasMember(*lastType, node.name);
 	if(node.children.empty() ) {
 		callParams.push_back(ctx->builder.CreateLoad(gep) );
 		return;
 	}
 	
-	lastType = mi->symtable->typeHasMember(*lastType, node.name);
 	for(const auto &c : node.children) {
 		c->accept(*this);
 	}
@@ -394,8 +407,7 @@ void LLVMCodeGen::visit(VariableAstNode &node) {
 	lhsIsRAArray = lastType->realignedArray;
 
 	if(node.children.empty() ) {
-		const Type *type = mi->symtable->getLocal(node.name);
-		if(getAddrsVisited > 0) {
+		if(getAddrsVisited > 0 || lastType->isStruct() ) {
 			callParams.push_back(ld);
 		} else {
 			callParams.push_back(ctx->builder.CreateLoad(ld) );
@@ -619,13 +631,17 @@ void LLVMCodeGen::indexArray(IndexAstNode &node) {
 		*(instructions.end() - 2) = gep;
 	}
 
+	lastType = lastType->arrayOf.get();
 
 	if(node.children.empty() ) {
-		callParams.push_back(ctx->builder.CreateLoad(gep) );
+		if(lastType->isStruct() ) {
+			callParams.push_back(gep);
+		} else {
+			callParams.push_back(ctx->builder.CreateLoad(gep) );
+		}
 		return;
 	}
 
-	lastType = lastType->arrayOf.get();
 	for(auto &c : node.children) {
 		c->accept(*this);
 	}
@@ -917,13 +933,13 @@ void LLVMCodeGen::indexRAArrayMember(MemberVariableAstNode &node) {
 
 	instructions.back() = element;
 	
+	lastType = mi->symtable->typeHasMember(*lastType, node.name);
 
 	if(node.children.empty() ) {
 		callParams.push_back(ctx->builder.CreateLoad(element) );
 		return;
 	}
 	
-	lastType = mi->symtable->typeHasMember(*lastType, node.name);
 	for(const auto &c : node.children) {
 		c->accept(*this);
 	}
@@ -976,6 +992,30 @@ void LLVMCodeGen::freeRAArray(llvm::Instruction *array) {
 		auto loadedAddr = ctx->builder.CreateLoad(addr);
 		auto cast = ctx->builder.CreatePointerCast(loadedAddr, argsRef);
 		ctx->builder.CreateCall(func, cast);
+	}
+}
+
+void LLVMCodeGen::assignStruct(llvm::Instruction *lhs, llvm::Value *rhs, llvm::Type *type) {
+	const static auto llvmZero = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, 0) );
+	llvm::StructType *strTy = llvm::cast<llvm::StructType>(type);
+
+	for(int i = 0; i < strTy->getNumElements(); i++) {
+		const auto gepIndex = llvm::ConstantInt::get(ctx->builder.getInt32Ty(), llvm::APInt(32, i) );
+		auto memberTy = strTy->getStructElementType(i);
+
+		auto lhsGep = llvm::GetElementPtrInst::CreateInBounds(lhs, { llvmZero, gepIndex } );
+		auto rhsGep = llvm::GetElementPtrInst::CreateInBounds(rhs, { llvmZero, gepIndex } );
+
+		ctx->builder.Insert(lhsGep, "jens");
+		ctx->builder.Insert(rhsGep, "jonte");
+
+		auto rhsLoad = ctx->builder.CreateLoad(rhsGep);
+
+		if(auto subStruct = llvm::dyn_cast<llvm::StructType>(memberTy) ) {
+			assignStruct(lhsGep, rhsLoad, subStruct);
+		} else {
+			ctx->builder.CreateStore(rhsLoad, lhsGep);
+		}
 	}
 }
 
