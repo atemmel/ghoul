@@ -60,6 +60,7 @@ struct StructAstNode : public AstNode {
 	StructAstNode(const std::string &name);
 	void accept(AstVisitor &visitor) override;
 	std::string name;
+	bool isVolatile = false;
 };
 
 struct FunctionAstNode : public AstNode {

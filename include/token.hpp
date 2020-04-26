@@ -73,6 +73,7 @@ enum struct TokenType {
 	Return,				// return
 	Link,				// link
 	Import,				// import
+	Volatile,			// volatile
 
 
 	//Keep this one last
@@ -150,7 +151,8 @@ struct Token {
 		"extern",
 		"return",
 		"link",
-		"import"
+		"import",
+		"volatile"
 	};
 
 	constexpr static std::array<std::string_view, 5> altStrs = {

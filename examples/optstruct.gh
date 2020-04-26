@@ -1,0 +1,16 @@
+import "io"
+
+struct Object {
+	int integer
+	char *str
+}
+
+struct VolatileObject volatile {
+	int integer
+	char *str
+}
+
+fn main() {
+	Object o
+	VolatileObject vo
+}

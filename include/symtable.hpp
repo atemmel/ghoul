@@ -18,7 +18,7 @@ public:
 
 	const FunctionSignature *hasFunc(const std::string &identifier) const;
 
-	const Type* hasStruct(const std::string &identifier) const;
+	Type* hasStruct(const std::string &identifier);
 	const Type* typeHasMember(const Type &type, const std::string &identifier) const;
 	unsigned getMemberOffset(const Type &type, const std::string &identifier) const;
 

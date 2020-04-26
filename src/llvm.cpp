@@ -49,10 +49,19 @@ void LLVMCodeGen::visit(ToplevelAstNode &node) {
 
 void LLVMCodeGen::visit(StructAstNode &node) {
 	std::vector<llvm::Type*> types;
-	const Type *struc = mi->symtable->hasStruct(node.name);
-	for(const auto &member : struc->members) {
-		types.push_back(translateType(member.type) );
+	Type *struc = mi->symtable->hasStruct(node.name);
+
+	if(!node.isVolatile) {
+		auto &members = struc->members;
+		std::sort(members.begin(), members.end(), [](Member &lhs, Member &rhs) {
+			return lhs.type.size() < rhs.type.size();
+		});
 	}
+
+	for(auto it = struc->members.rbegin(); it != struc->members.rend(); it++) {
+		types.push_back(translateType(it->type) );
+	}
+
 	//TODO: Sort members for compact layout
 	structTypes[node.name]->setBody(types);
 }

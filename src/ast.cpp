@@ -337,12 +337,19 @@ AstNode::Child AstParser::buildLink() {
 
 AstNode::Child AstParser::buildStruct() {
 	Token *token = getIf(TokenType::Identifier);
+	bool isVolatile = false;
+
+	if(getIf(TokenType::Volatile) ) {
+		isVolatile = true;
+	}
+
 	if(!token || !getIf(TokenType::BlockOpen) ) {
 		return unexpected();
 	}
 
 	auto struc = std::make_unique<StructAstNode>(token->value);
 	struc->token = token;
+	struc->isVolatile = isVolatile;
 
 	discardWhile(TokenType::Terminator);
 

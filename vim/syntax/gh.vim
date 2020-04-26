@@ -8,7 +8,7 @@ syn keyword Keyword fn if while for then var
 
 syn keyword Statement return
 
-syn keyword Keyword struct true false
+syn keyword Keyword struct true false volatile
 
 syn keyword Type void char int float bool
 

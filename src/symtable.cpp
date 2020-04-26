@@ -54,7 +54,7 @@ const FunctionSignature *SymTable::hasFunc(const std::string &identifier) const 
 	return it->second;
 }
 
-const Type* SymTable::hasStruct(const std::string &identifier) const {
+Type* SymTable::hasStruct(const std::string &identifier) {
 	auto it = structs.find(identifier);
 	if(it == structs.end() ) {
 		return nullptr;
