@@ -16,6 +16,7 @@ extern fn SDL_UpdateWindowSurface(void *) int
 extern fn SDL_PollEvent(SDL_Event *) int
 extern fn SDL_LoadBMP_RW(void *, int) SDL_Surface*
 
+//TODO: Inspect why this call does not work
 //extern fn SDL_BlitSurface(SDL_Surface *, SDL_Rect *, SDL_Surface *, SDL_Rect *) int
 
 //Internal
@@ -91,27 +92,38 @@ fn SDL_LoadBMP(char *str) SDL_Surface* {
 extern fn exit(int) int
 
 fn main() {
-	var bmp = SDL_LoadBMP("image.bmp")
+	var bmp = SDL_LoadBMP("dvd.bmp")
 
 	if bmp == <SDL_Surface*>0 {
 		printf("Could not open image!\n")
 		exit(0)
 	}
 
+	printf("Loaded %dx%d image\n", bmp.w, bmp.h)
+
 	SDL_Init()
-	void *window = SDL_CreateWindow("ghoul demo", 0, 0, 800, 600, 0)
+
+	int windowWidth = 800
+	int windowHeight = 600
+
+	var window = SDL_CreateWindow("ghoul demo", 0, 0, windowWidth, windowHeight, 0)
 
 	printf("Getting surface...\n")
 	SDL_Surface *surface = SDL_GetWindowSurface(window)
 	printf("Got surface!\n")
 
-	//printf("Creating mapping...\n")
-	//int mapping = SDL_MapRGB(surface.format, 255, 0, 0)
-	//printf("Mapping created!\n")
+	printf("Creating mapping...\n")
+	int mapping = SDL_MapRGB(surface.format, 0, 0, 0)
+	printf("Mapping created!\n")
 
-	//SDL_FillRect(surface, <SDL_Rect*>0, mapping)
 
-	SDL_UpperBlit(bmp, <SDL_Rect*>0, surface, <SDL_Rect*>0)
+	SDL_Rect pos
+
+	pos.x = 20
+	pos.y = 80
+
+	int velX = 1
+	int velY = 1
 
 	SDL_Event ev
 	int quitFlag = 256
@@ -122,12 +134,25 @@ fn main() {
 			//exit loop
 			if ev.type == quitFlag then running = false
 		}
-		SDL_UpdateWindowSurface(window)
-		SDL_Delay(33)	//sleep for 33ms
+
+		pos.x = pos.x + velX
+		pos.y = pos.y + velY
+
+		if pos.x <= 0 then velX = 1
+		if pos.y <= 0 then velY = 1
+
+		if pos.x + bmp.w >= windowWidth  then velX = 0 - 1
+		if pos.y + bmp.h >= windowHeight then velY = 0 - 1
+
+		SDL_FillRect(surface, <SDL_Rect*>0, mapping)	//clear
+		SDL_UpperBlit(bmp, <SDL_Rect*>0, surface, *pos)	//draw call
+		SDL_UpdateWindowSurface(window)					//display
+		SDL_Delay(17)	//sleep for 17ms
 	}
 
 	printf("Exiting...\n")
 
+	SDL_FreeSurface(bmp)
 	SDL_DestroyWindow(window)
 	SDL_Quit()
 }

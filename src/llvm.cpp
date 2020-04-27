@@ -54,11 +54,12 @@ void LLVMCodeGen::visit(StructAstNode &node) {
 	if(!node.isVolatile) {
 		auto &members = struc->members;
 		std::sort(members.begin(), members.end(), [](Member &lhs, Member &rhs) {
-			return lhs.type.size() < rhs.type.size();
+			return lhs.type.size() > rhs.type.size();
 		});
 	}
 
-	for(auto it = struc->members.rbegin(); it != struc->members.rend(); it++) {
+	types.reserve(struc->members.size() );
+	for(auto it = struc->members.begin(); it != struc->members.end(); it++) {
 		types.push_back(translateType(it->type) );
 	}
 
@@ -208,6 +209,7 @@ void LLVMCodeGen::visit(CallAstNode &node) {
 	auto oldInsts = std::move(instructions);
 	std::vector<llvm::Type*> callArgs;
 	auto sig = mi->symtable->hasFunc(node.identifier);
+	callArgs.reserve(sig->parameters.size() );
 	for(auto &p : sig->parameters) {
 		callArgs.push_back(translateType(p) );
 	}
@@ -225,8 +227,7 @@ void LLVMCodeGen::visit(CallAstNode &node) {
 		}
 	}
 
-	llvm::ArrayRef<llvm::Value*> paramRef(callParams);
-	oldParams.push_back(ctx->builder.CreateCall(func, paramRef) );
+	oldParams.push_back(ctx->builder.CreateCall(func, callParams) );
 	callParams = std::move(oldParams);
 	instructions = std::move(oldInsts);
 }
