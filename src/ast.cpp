@@ -217,28 +217,6 @@ void AstParser::discardUntil(TokenType type) {
 	}
 }
 
-AstNode::Root AstParser::mergeTrees(AstNode::Root &&lhs, AstNode::Root &&rhs) {
-	auto product = std::make_unique<ToplevelAstNode>();
-
-	product->children = std::move(lhs->children);
-	product->functions = std::move(lhs->functions);
-	product->externs = std::move(lhs->externs);
-
-	//We can be smart about this
-	product->children.reserve(product->children.size() + rhs->children.size() );
-	product->functions.reserve(product->functions.size() + rhs->functions.size() );
-	product->externs.reserve(product->externs.size() + rhs->externs.size() );
-
-	//These need to be moved
-	std::move(rhs->children.begin(), rhs->children.end(), std::back_inserter(product->children) );
-
-	//These can be copied
-	std::copy(rhs->functions.begin(), rhs->functions.end(), std::back_inserter(product->functions) );
-	std::copy(rhs->externs.begin(), rhs->externs.end(), std::back_inserter(product->externs) );
-
-	return product;
-}
-
 AstNode::Root AstParser::buildTree() {
 	auto toplevel = std::make_unique<ToplevelAstNode>();
 
@@ -254,6 +232,7 @@ AstNode::Root AstParser::buildTree() {
 		auto import = buildImport();
 		if(import) {
 			//toplevel = mergeTrees(std::move(toplevel), std::move(import) );
+			toplevel->toplevels.push_back(import.get() );
 			toplevel->addChild(std::move(import) );
 			continue;
 		}

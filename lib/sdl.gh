@@ -1,0 +1,89 @@
+link "SDL2"
+link "SDL2_image"
+
+extern fn SDL_Init() int
+extern fn SDL_Quit() int
+extern fn SDL_CreateWindow(char *, int, int, int, int, int) void*
+extern fn SDL_DestroyWindow(void *) int
+extern fn SDL_Delay(int) int
+extern fn SDL_GetWindowSurface(void *) SDL_Surface*
+extern fn SDL_FreeSurface(SDL_Surface *)
+extern fn SDL_FillRect(SDL_Surface *, SDL_Rect*, int) int
+extern fn SDL_MapRGB(SDL_PixelFormat*, char, char, char) int
+extern fn SDL_UpdateWindowSurface(void *) int
+extern fn SDL_PollEvent(SDL_Event *) int
+
+fn SDL_LoadBMP(char *str) SDL_Surface* {
+	var ops = SDL_RWFromFile(str, "rb")
+	return SDL_LoadBMP_RW(ops, 1)
+}
+
+fn SDL_BlitSurface(SDL_Surface *srcS, SDL_Rect *srcR, SDL_Surface *destS, SDL_Rect *destR) int {
+	return SDL_UpperBlit(srcS, srcR, destS, destR)
+}
+
+struct SDL_Rect volatile {
+	int x
+	int y
+	int w
+	int h
+}
+
+struct SDL_PixelFormat volatile {
+	int format
+	void *palette
+	char BitsPerPixel
+	char BytesPerPixel
+	char paddingA
+	char paddingB
+	int Rmask
+	int Gmask
+	int Bmask
+	int Amask
+	char Rloss
+	char Gloss
+	char Bloss
+	char Aloss
+	char Rshift
+	char Gshift
+	char Bshift
+	char Ashift
+	int refcount
+	SDL_PixelFormat *next
+}
+
+struct SDL_Surface volatile {
+	int flags
+	SDL_PixelFormat *format
+	int w
+	int h
+	void *pixels
+	void *userdata
+	int locked
+	void *lock_data
+	SDL_Rect clip_rect
+	void *map
+	int refcount
+}
+
+struct SDL_Event volatile {	//wip
+	int type
+	int dummyA
+	int dummyB
+	int dummyC
+	int dummyD
+	int dummyE
+	int dummyF
+	int dummyG
+	int dummyH
+    int dummyI
+    int dummyJ
+    int dummyK
+    int dummyL
+    int dummyM
+}
+
+//Internal
+extern fn SDL_RWFromFile(char *, char *) void*
+extern fn SDL_UpperBlit(SDL_Surface *, SDL_Rect *, SDL_Surface *, SDL_Rect *) int
+extern fn SDL_LoadBMP_RW(void *, int) SDL_Surface*

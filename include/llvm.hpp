@@ -60,6 +60,7 @@ private:
 
 	llvm::Type *translateType(const Type &type);
 	llvm::Type *translateType(const Type &type, std::string &name);
+	void prepareToplevelNode(ToplevelAstNode &node);
 	std::vector<FunctionAstNode*> getFuncsFromToplevel(ToplevelAstNode &node);
 	void buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs);
 	void buildStructDefinitions(const std::vector<StructAstNode*> &structs);

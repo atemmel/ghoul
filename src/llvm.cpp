@@ -39,8 +39,7 @@ void LLVMCodeGen::setContext(Context *ctx) {
 
 void LLVMCodeGen::visit(ToplevelAstNode &node) {
 	FunctionAstNode *main = nullptr;
-	buildStructDefinitions(node.structs);
-	buildFunctionDefinitions(node.functions);
+	prepareToplevelNode(node);
 
 	for(const auto &child : node.children) {
 		child->accept(*this);
@@ -117,6 +116,11 @@ void LLVMCodeGen::visit(FunctionAstNode &node) {
 }
 
 void LLVMCodeGen::visit(ExternAstNode &node) {
+	if(node.visited) {
+		return;
+	}
+
+	node.visited = true;
 	std::vector<llvm::Type*> callArgs;
 	auto result = translateType(node.signature.returnType);
 	for(const auto &type : node.signature.parameters) {
@@ -502,6 +506,18 @@ llvm::Type *LLVMCodeGen::translateType(const Type &ghoulType, std::string &name)
 	}
 
 	return type;
+}
+
+void LLVMCodeGen::prepareToplevelNode(ToplevelAstNode &node) {
+	buildStructDefinitions(node.structs);
+	buildFunctionDefinitions(node.functions);
+	for(auto ext : node.externs) {
+		visit(*ext);
+	}
+
+	for(auto toplevel : node.toplevels) {
+		prepareToplevelNode(*toplevel);
+	}
 }
 
 void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs) {

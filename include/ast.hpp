@@ -47,6 +47,7 @@ struct ToplevelAstNode : public AstNode {
 	std::vector<FunctionAstNode*> functions;
 	std::vector<ExternAstNode*> externs;
 	std::vector<StructAstNode*> structs;
+	std::vector<ToplevelAstNode*> toplevels;
 
 	bool analyzed = false;
 };
@@ -74,6 +75,7 @@ struct ExternAstNode : public AstNode {
 	void accept(AstVisitor &visitor) override;
 	FunctionSignature signature;
 	std::string name;
+	bool visited = false;
 };
 
 struct VariableDeclareAstNode : public AstNode {
@@ -215,7 +217,7 @@ private:
 	void unget();
 	void discardWhile(TokenType type);
 	void discardUntil(TokenType type);
-	AstNode::Root mergeTrees(AstNode::Root &&lhs, AstNode::Root &&rhs);
+
 	AstNode::Root buildTree();
 	AstNode::Root buildImport();
 	AstNode::Child buildLink();
@@ -259,7 +261,7 @@ private:
 		return nullptr;
 	}
 
-	Tokens tokens;
+	std::vector<Token> tokens;
 	Tokens::iterator iterator;
 	ToplevelAstNode *root = nullptr;
 	SymTable *symtable = nullptr;

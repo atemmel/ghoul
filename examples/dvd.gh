@@ -1,0 +1,70 @@
+import "io"
+import "sdl"
+
+extern fn exit(int) int
+
+fn main() {
+	var bmp = SDL_LoadBMP("dvd.bmp")
+
+	if bmp == <SDL_Surface*>0 {
+		printf("Could not open image!\n")
+		exit(0)
+	}
+
+	printf("Loaded %dx%d image\n", bmp.w, bmp.h)
+
+	SDL_Init()
+
+	int windowWidth = 800
+	int windowHeight = 600
+
+	var window = SDL_CreateWindow("ghoul demo", 0, 0, windowWidth, windowHeight, 0)
+
+	printf("Getting surface...\n")
+	SDL_Surface *surface = SDL_GetWindowSurface(window)
+	printf("Got surface!\n")
+
+	printf("Creating mapping...\n")
+	int mapping = SDL_MapRGB(surface.format, 0, 0, 0)
+	printf("Mapping created!\n")
+
+
+	SDL_Rect pos
+
+	pos.x = 20
+	pos.y = 80
+
+	int velX = 1
+	int velY = 1
+
+	SDL_Event ev
+	int quitFlag = 256
+	bool running = true
+
+	while running {
+		while SDL_PollEvent(*ev) {
+			//exit loop
+			if ev.type == quitFlag then running = false
+		}
+
+		pos.x = pos.x + velX
+		pos.y = pos.y + velY
+
+		if pos.x <= 0 then velX = 1
+		if pos.y <= 0 then velY = 1
+
+		if pos.x + bmp.w >= windowWidth  then velX = 0 - 1
+		if pos.y + bmp.h >= windowHeight then velY = 0 - 1
+
+		SDL_FillRect(surface, <SDL_Rect*>0, mapping)	//clear
+		SDL_BlitSurface(bmp, <SDL_Rect*>0, surface, *pos)	//draw call
+		SDL_UpdateWindowSurface(window)					//display
+		SDL_Delay(17)	//sleep for 17ms
+	}
+
+	printf("Exiting...\n")
+
+	SDL_FreeSurface(bmp)
+	SDL_DestroyWindow(window)
+	SDL_Quit()
+}
