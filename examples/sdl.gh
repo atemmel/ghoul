@@ -1,6 +1,7 @@
 import "io"
 
 link "SDL2"
+link "SDL2_image"
 
 extern fn SDL_Init() int
 extern fn SDL_Quit() int
@@ -8,10 +9,18 @@ extern fn SDL_CreateWindow(char *, int, int, int, int, int) void*
 extern fn SDL_DestroyWindow(void *) int
 extern fn SDL_Delay(int) int
 extern fn SDL_GetWindowSurface(void *) SDL_Surface*
+extern fn SDL_FreeSurface(SDL_Surface *)
 extern fn SDL_FillRect(SDL_Surface *, SDL_Rect*, int) int
 extern fn SDL_MapRGB(SDL_PixelFormat*, char, char, char) int
 extern fn SDL_UpdateWindowSurface(void *) int
 extern fn SDL_PollEvent(SDL_Event *) int
+extern fn SDL_LoadBMP_RW(void *, int) SDL_Surface*
+
+//extern fn SDL_BlitSurface(SDL_Surface *, SDL_Rect *, SDL_Surface *, SDL_Rect *) int
+
+//Internal
+extern fn SDL_RWFromFile(char *, char *) void*
+extern fn SDL_UpperBlit(SDL_Surface *, SDL_Rect *, SDL_Surface *, SDL_Rect *) int
 
 struct SDL_Rect volatile {
 	int x
@@ -57,7 +66,7 @@ struct SDL_Surface volatile {
 	int refcount
 }
 
-struct SDL_Event volatile {
+struct SDL_Event volatile {	//wip
 	int type
 	int dummyA
 	int dummyB
@@ -74,19 +83,35 @@ struct SDL_Event volatile {
     int dummyM
 }
 
+fn SDL_LoadBMP(char *str) SDL_Surface* {
+	var ops = SDL_RWFromFile(str, "rb")
+	return SDL_LoadBMP_RW(ops, 1)
+}
+
+extern fn exit(int) int
+
 fn main() {
+	var bmp = SDL_LoadBMP("image.bmp")
+
+	if bmp == <SDL_Surface*>0 {
+		printf("Could not open image!\n")
+		exit(0)
+	}
+
 	SDL_Init()
-	void *window = SDL_CreateWindow("ghoul demo", 0, 0, 300, 300, 0)
+	void *window = SDL_CreateWindow("ghoul demo", 0, 0, 800, 600, 0)
 
 	printf("Getting surface...\n")
 	SDL_Surface *surface = SDL_GetWindowSurface(window)
 	printf("Got surface!\n")
 
-	printf("Creating mapping...\n")
-	int mapping = SDL_MapRGB(surface.format, 255, 0, 0)
-	printf("Mapping created!\n")
+	//printf("Creating mapping...\n")
+	//int mapping = SDL_MapRGB(surface.format, 255, 0, 0)
+	//printf("Mapping created!\n")
 
-	SDL_FillRect(surface, <SDL_Rect*>0, mapping)
+	//SDL_FillRect(surface, <SDL_Rect*>0, mapping)
+
+	SDL_UpperBlit(bmp, <SDL_Rect*>0, surface, <SDL_Rect*>0)
 
 	SDL_Event ev
 	int quitFlag = 256
