@@ -263,6 +263,8 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 				assignArray();
 			}
 		} else if(lhsType->isStruct() && rhsType->isStruct() ) {
+			std::cerr << "Assigning struct at " << node.token << '\n';
+			std::cerr << "lhs: " << lhsType->string() << " rhs: " << rhsType->string() << '\n';
 			auto inst = instructions.front();
 			assignStruct(inst, rhs, lhsLLVMType);
 		} else {

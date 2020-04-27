@@ -112,6 +112,7 @@ bool Type::isStruct() const {
 	if(isPtr > 0
 			|| name == "int" 
 			|| name == "float" 
+			|| name == "bool"
 			|| name == "char" 
 			|| name == "void") {
 		return false;

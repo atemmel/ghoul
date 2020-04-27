@@ -1,6 +1,7 @@
 import "io"
 
 link "SDL2"
+
 extern fn SDL_Init() int
 extern fn SDL_Quit() int
 extern fn SDL_CreateWindow(char *, int, int, int, int, int) void*
@@ -9,15 +10,17 @@ extern fn SDL_Delay(int) int
 extern fn SDL_GetWindowSurface(void *) SDL_Surface*
 extern fn SDL_FillRect(SDL_Surface *, SDL_Rect*, int) int
 extern fn SDL_MapRGB(SDL_PixelFormat*, char, char, char) int
+extern fn SDL_UpdateWindowSurface(void *) int
+extern fn SDL_PollEvent(SDL_Event *) int
 
-struct SDL_Rect {
+struct SDL_Rect volatile {
 	int x
 	int y
 	int w
 	int h
 }
 
-struct SDL_PixelFormat {
+struct SDL_PixelFormat volatile {
 	int format
 	void *palette
 	char BitsPerPixel
@@ -40,7 +43,7 @@ struct SDL_PixelFormat {
 	SDL_PixelFormat *next
 }
 
-struct SDL_Surface {
+struct SDL_Surface volatile {
 	int flags
 	SDL_PixelFormat *format
 	int w
@@ -54,21 +57,52 @@ struct SDL_Surface {
 	int refcount
 }
 
+struct SDL_Event volatile {
+	int type
+	int dummyA
+	int dummyB
+	int dummyC
+	int dummyD
+	int dummyE
+	int dummyF
+	int dummyG
+	int dummyH
+    int dummyI
+    int dummyJ
+    int dummyK
+    int dummyL
+    int dummyM
+}
+
 fn main() {
 	SDL_Init()
-	void *window = SDL_CreateWindow("hello sdl2", 0, 0, 300, 300, 0)
+	void *window = SDL_CreateWindow("ghoul demo", 0, 0, 300, 300, 0)
 
 	printf("Getting surface...\n")
 	SDL_Surface *surface = SDL_GetWindowSurface(window)
 	printf("Got surface!\n")
 
-	//printf("Creating mapping...\n")
-	//int mapping = SDL_MapRGB(surface.format, 255, 255, 255)
-	//printf("Mapping created!\n")
+	printf("Creating mapping...\n")
+	int mapping = SDL_MapRGB(surface.format, 255, 0, 0)
+	printf("Mapping created!\n")
 
-	//SDL_FillRect(surface, <SDL_Rect*>0, mapping)
+	SDL_FillRect(surface, <SDL_Rect*>0, mapping)
 
-	SDL_Delay(2000)
+	SDL_Event ev
+	int quitFlag = 256
+	bool running = true
+
+	while running {
+		while SDL_PollEvent(*ev) {
+			//exit loop
+			if ev.type == quitFlag then running = false
+		}
+		SDL_UpdateWindowSurface(window)
+		SDL_Delay(33)	//sleep for 33ms
+	}
+
+	printf("Exiting...\n")
+
 	SDL_DestroyWindow(window)
 	SDL_Quit()
 }

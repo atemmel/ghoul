@@ -150,6 +150,7 @@ void SymTable::visit(LinkAstNode &node) {
 void SymTable::visit(StructAstNode &node) {
 	Type type;
 	type.name = node.name;
+	insideStructDecl = true;
 	Locals structMembers;
 	locals = &structMembers;
 
@@ -157,14 +158,13 @@ void SymTable::visit(StructAstNode &node) {
 		child->accept(*this);
 	}
 
-	locals = nullptr;
+	insideStructDecl = false;
 
-	Member member;
-	for(const auto &visited : structMembers) {
-		member.identifier = visited.first;
-		member.type = *visited.second.type;
-		type.members.push_back(member);
-	}
+	locals = nullptr;
+	
+	type.members.resize(visitedMembers.size() );
+	std::copy(visitedMembers.begin(), visitedMembers.end(), type.members.begin() );
+	visitedMembers.clear();
 
 	structs[node.name] = type;
 }
@@ -249,6 +249,10 @@ void SymTable::visit(VariableDeclareAstNode &node) {
 	} else {
 		Global::errStack.push("Redefinition of variable '"
 				+ node.identifier + '\'', node.token);
+	}
+
+	if(insideStructDecl) {
+		visitedMembers.push_back({node.identifier, node.type});
 	}
 }
 

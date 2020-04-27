@@ -65,6 +65,8 @@ private:
 	Locals *locals;
 
 	std::vector<Type> callArgTypes;
+	std::vector<Member> visitedMembers;
 	unsigned blockDepth = 0;
 	bool foundEarlyReturn = false;
+	bool insideStructDecl = false;
 };
