@@ -1,7 +1,6 @@
 import "io"
 import "sdl"
-
-extern fn exit(int) int
+import "os"
 
 fn main() {
 	var bmp = SDL_LoadBMP("dvd.bmp")
@@ -27,7 +26,6 @@ fn main() {
 	printf("Creating mapping...\n")
 	int mapping = SDL_MapRGB(surface.format, 0, 0, 0)
 	printf("Mapping created!\n")
-
 
 	SDL_Rect pos
 
