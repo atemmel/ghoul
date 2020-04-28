@@ -47,6 +47,7 @@ void LLVMCodeGen::visit(ToplevelAstNode &node) {
 }
 
 void LLVMCodeGen::visit(StructAstNode &node) {
+
 	std::vector<llvm::Type*> types;
 	Type *struc = mi->symtable->hasStruct(node.name);
 
@@ -62,7 +63,6 @@ void LLVMCodeGen::visit(StructAstNode &node) {
 		types.push_back(translateType(it->type) );
 	}
 
-	//TODO: Sort members for compact layout
 	structTypes[node.name]->setBody(types);
 }
 
@@ -268,8 +268,6 @@ void LLVMCodeGen::visit(BinExpressionAstNode &node) {
 				assignArray();
 			}
 		} else if(lhsType->isStruct() && rhsType->isStruct() ) {
-			std::cerr << "Assigning struct at " << node.token << '\n';
-			std::cerr << "lhs: " << lhsType->string() << " rhs: " << rhsType->string() << '\n';
 			auto inst = instructions.front();
 			assignStruct(inst, rhs, lhsLLVMType);
 		} else {
@@ -479,7 +477,12 @@ llvm::Type *LLVMCodeGen::translateType(const Type &ghoulType, std::string &name)
 		auto it = structTypes.find(ghoulType.name);
 		if(it == structTypes.end() ) {
 			std::cerr << ghoulType.string() << '\n';
-			std::cerr << "UHOH\n";
+			mi->module->print(llvm::errs(), nullptr);
+			for(auto &s : structTypes) {
+				std::cerr << s.first << '\n';
+			}
+			std::cerr << "Could not convert type successfully, aborting...\n";
+			std::abort();
 			return nullptr;
 		}
 		type = it->second;
@@ -510,14 +513,13 @@ llvm::Type *LLVMCodeGen::translateType(const Type &ghoulType, std::string &name)
 
 void LLVMCodeGen::prepareToplevelNode(ToplevelAstNode &node) {
 	buildStructDefinitions(node.structs);
-	buildFunctionDefinitions(node.functions);
-	for(auto ext : node.externs) {
-		visit(*ext);
-	}
-
 	for(auto toplevel : node.toplevels) {
 		prepareToplevelNode(*toplevel);
 	}
+	for(auto ext : node.externs) {
+		visit(*ext);
+	}
+	buildFunctionDefinitions(node.functions);
 }
 
 void LLVMCodeGen::buildFunctionDefinitions(const std::vector<FunctionAstNode*> &funcs) {

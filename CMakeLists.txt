@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.5)
 
 project(ghoul)
 
+# Set a default build type if none was specified
+set(default_build_type "Release")
+message(STATUS, ${CMAKE_BUILD_TYPE})
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${default_build_type}")
+endif()
+
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp")
 find_package(LLVM REQUIRED CONFIG)
 
@@ -16,3 +24,6 @@ add_executable(ghoul ${SOURCES})
 set_property(TARGET ghoul PROPERTY CXX_STANDARD 17)
 add_compile_options(-Wall -Wextra -Wpedantic)
 target_link_libraries(ghoul LLVM)
+
+include(GNUInstallDirs)
+install(TARGETS ghoul DESTINATION ${CMAKE_INSTALL_BINDIR})

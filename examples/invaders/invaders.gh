@@ -1,0 +1,10 @@
+import "io"
+import "sdl"
+import "os"
+
+
+fn main() {
+	var heroSurf = SDL_LoadBMP("img/hero.bmp")
+	var invaderSurf = SDL_LoadBMP("img/invader.bmp")
+
+}
