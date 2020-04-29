@@ -330,8 +330,10 @@ void LLVMCodeGen::visit(UnaryExpressionAstNode &node) {
 		callParams.back() = ctx->builder.CreateLoad(gep);
 	} else if(node.type == TokenType::Ternary) {
 		if(lhsIsRAArray) {
+			instructions.back() = loadUntilLastPtr(instructions.back() );
 			callParams.back() = getRAArrayLength(instructions.back() );
 		} else {
+			instructions.back() = loadUntilLastPtr(instructions.back() );
 			callParams.back() = getArrayLength(instructions.back() );
 		}
 		instructions.pop_back();
@@ -373,6 +375,7 @@ void LLVMCodeGen::visit(ArrayAstNode &node) {
 }
 
 void LLVMCodeGen::visit(IndexAstNode &node) {
+	instructions.back() = loadUntilLastPtr(instructions.back() );
 	if(lhsIsRAArray) {
 		indexRAArray(node);
 	} else {
@@ -494,9 +497,9 @@ llvm::Type *LLVMCodeGen::translateType(const Type &ghoulType, std::string &name)
 
 	if(ghoulType.arrayOf) {
 		int isPtr = ghoulType.arrayOf->isPtr;
-		ghoulType.arrayOf->isPtr = 0;	//Get underlying type if ptr
+		//ghoulType.arrayOf->isPtr = 0;	//Get underlying type if ptr
 		type = translateType(*ghoulType.arrayOf, name);
-		ghoulType.arrayOf->isPtr = isPtr;
+		//ghoulType.arrayOf->isPtr = isPtr;
 		if(ghoulType.realignedArray) {
 			type = getRAArrayType(type, ghoulType);
 		} else {
@@ -1036,8 +1039,8 @@ void LLVMCodeGen::assignStruct(llvm::Instruction *lhs, llvm::Value *rhs, llvm::T
 		auto lhsGep = llvm::GetElementPtrInst::CreateInBounds(lhs, { llvmZero, gepIndex } );
 		auto rhsGep = llvm::GetElementPtrInst::CreateInBounds(rhs, { llvmZero, gepIndex } );
 
-		ctx->builder.Insert(lhsGep, "jens");
-		ctx->builder.Insert(rhsGep, "jonte");
+		ctx->builder.Insert(lhsGep);
+		ctx->builder.Insert(rhsGep);
 
 		auto rhsLoad = ctx->builder.CreateLoad(rhsGep);
 
@@ -1047,6 +1050,28 @@ void LLVMCodeGen::assignStruct(llvm::Instruction *lhs, llvm::Value *rhs, llvm::T
 			ctx->builder.CreateStore(rhsLoad, lhsGep);
 		}
 	}
+}
+
+llvm::Instruction *LLVMCodeGen::loadUntilLastPtr(llvm::Instruction *inst) {
+	//return inst;
+
+	llvm::Type *ty = llvm::cast<llvm::PointerType>(inst->getType() )->getElementType();
+
+	int i = 0;
+	while(auto subTy = llvm::dyn_cast<llvm::PointerType>(ty) ) {
+		if(!llvm::isa<llvm::StructType>(subTy->getElementType() ) ) {
+			break;
+		}
+		std::cerr << i++ << "  ";
+		inst->print(llvm::errs() );
+		std::cerr << '\n';
+		inst = ctx->builder.CreateLoad(inst);
+		inst->print(llvm::errs() );
+		std::cerr << '\n';
+		ty = subTy->getElementType();
+	}
+
+	return inst;
 }
 
 bool gen(ModuleInfo *mi, Context *ctx) {

@@ -93,6 +93,8 @@ private:
 
 	//Struct related
 	void assignStruct(llvm::Instruction *lhs, llvm::Value *rhs, llvm::Type *type);
+
+	llvm::Instruction *loadUntilLastPtr(llvm::Instruction *inst);
 	
 
 	ModuleInfo *mi = nullptr;

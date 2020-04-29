@@ -1,3 +1,8 @@
 extern fn malloc(int) char*
 extern fn free(void*)
 extern fn exit(int)
+
+fn die(char* str) {
+	printf("%s", str)
+	exit(1)
+}
