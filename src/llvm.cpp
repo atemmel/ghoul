@@ -1057,17 +1057,11 @@ llvm::Instruction *LLVMCodeGen::loadUntilLastPtr(llvm::Instruction *inst) {
 
 	llvm::Type *ty = llvm::cast<llvm::PointerType>(inst->getType() )->getElementType();
 
-	int i = 0;
 	while(auto subTy = llvm::dyn_cast<llvm::PointerType>(ty) ) {
 		if(!llvm::isa<llvm::StructType>(subTy->getElementType() ) ) {
 			break;
 		}
-		std::cerr << i++ << "  ";
-		inst->print(llvm::errs() );
-		std::cerr << '\n';
 		inst = ctx->builder.CreateLoad(inst);
-		inst->print(llvm::errs() );
-		std::cerr << '\n';
 		ty = subTy->getElementType();
 	}
 
