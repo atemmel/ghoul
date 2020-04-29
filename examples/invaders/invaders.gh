@@ -2,26 +2,35 @@ import "io"
 import "sdl"
 import "os"
 
-fn load([]*SDL_Surface* surfs, []*char* strs) bool {
-	//&surfs <- SDL_LoadBMP("img/hero.bmp")
-	//&surfs <- SDL_LoadBMP("img/invader.bmp")
-	for int i = 0; i < strs? ; i = i + 1 {
-		surfs[i] = SDL_LoadBMP(strs[i])
-		if surfs[i] == <SDL_Surface*>0 {
-			printf("Could not load %s\n", strs[i] )
+fn load([]*SDL_Surface* surfaces, []*char* strings) bool {
+	//&surfaces <- SDL_LoadBMP("img/hero.bmp")
+	//&surfaces <- SDL_LoadBMP("img/invader.bmp")
+	for int i = 0; i < strings? ; i = i + 1 {
+		surfaces[i] = SDL_LoadBMP(strings[i])
+		if surfaces[i] == <SDL_Surface*>0 {
+			printf("Could not load image: %s\n", strings[i] )
 			return false
 		}
 	}
 	return true
 }
 
+fn cleanup([]*SDL_Surface* surfaces) {
+	for int i = 0; i < surfaces? ; i = i + 1 {
+		SDL_FreeSurface(surfaces[i])
+	}
+}
 
 fn main() {
-	var strs = [2] char*
-	var surfs = [2] SDL_Surface*
-	strs[0] = "img/hero.bmp"
-	strs[1] = "img/invader.bmp"
+	var strings  = [2] char*
+	var surfaces = [2] SDL_Surface*
+	strings[0] = "img/hero.bmp"
+	strings[1] = "img/invader.bmp"
 
-	if load(*surfs, *strs) == false then die("Aborting...\n")
+	if load(*surfaces, *strings) == false then die("Aborting...\n")
 
+	cleanup(*surfaces)
+
+	~ strings
+	~ surfaces
 }
