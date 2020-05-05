@@ -12,13 +12,14 @@ fn load([]*SDL_Surface* surfaces, []*char* strings) bool {
 			return false
 		}
 	}
-	return true
+	return SDL_Init() == 0
 }
 
 fn cleanup([]*SDL_Surface* surfaces) {
 	for int i = 0; i < surfaces? ; i = i + 1 {
 		SDL_FreeSurface(surfaces[i])
 	}
+	SDL_Quit()
 }
 
 fn main() {
@@ -29,8 +30,37 @@ fn main() {
 
 	if load(*surfaces, *strings) == false then die("Aborting...\n")
 
+	int n_invaders = 11 * 5
+	int windowW = 800
+	int windowH = 600
+
+	var window = SDL_CreateWindow("Invaders", 0, 0, windowW, windowH, 0)
+	var windowSurface = SDL_GetWindowSurface(window)
+	var invaders = [n_invaders] SDL_Rect
+	SDL_Event event
+	int quitFlag = 256
+	bool running = true
+
+
+	while running {
+		while SDL_PollEvent(*event) {
+			if event.type == quitFlag then running = false
+		}
+
+		updateInvaders(*invaders)
+
+
+	}
+
 	cleanup(*surfaces)
 
 	~ strings
 	~ surfaces
+	~ invaders
+
+	printf("Clean exit...\n")
+}
+
+fn updateInvaders([]*SDL_Rect invaders) {
+	
 }
