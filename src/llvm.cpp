@@ -915,9 +915,14 @@ void LLVMCodeGen::createRAArray(ArrayAstNode &node) {
 	} 
 
 	//TODO: This
+	auto oldVals = std::move(callParams);
+	auto oldInsts = std::move(instructions);
+	auto oldLhs = lhsIsRAArray;
 	node.length->accept(*this);
 	arrayLength = callParams.back();
-	callParams.pop_back();
+	callParams = std::move(oldVals);
+	instructions = std::move(oldInsts);
+	lhsIsRAArray = oldLhs;
 
 	for(int i = 2; i < arrayType->getStructNumElements(); i++) {
 		llvm::Type *underlyingType = arrayType->getStructElementType(i);

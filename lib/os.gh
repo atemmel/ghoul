@@ -1,6 +1,7 @@
 extern fn malloc(int) char*
 extern fn free(void*)
 extern fn exit(int)
+extern fn atoi(char*) int
 
 fn die(char* str) {
 	printf("%s", str)
