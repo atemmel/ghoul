@@ -1,0 +1,82 @@
+import "io"
+import "os"
+import "time"
+
+struct RGBA {
+	char r
+	char g
+	char b
+	char a
+}
+
+fn main() {
+	int n = 0
+
+	printf("Enter a valid integer: ")
+	scanf("%d", *n)
+	printf("Allocating %d bytes of memory...\n", n * 4)
+
+	Timeval start
+	Timeval end
+
+	// Normal array -----
+
+	gettimeofday(*start, 0)
+	[]RGBA array = [n] RGBA
+	gettimeofday(*end, 0)
+
+	printf("Normal array construction: %ld ns\n", timevalDiff(*start, *end) )
+
+	gettimeofday(*start, 0)
+
+	for int i = 0; i < array?; i = i + 1 {
+		array[i].a = <char>255
+	}
+
+	gettimeofday(*end, 0)
+
+	printf("Normal array single access iteration: %ld ns\n", timevalDiff(*start, *end) )
+
+	gettimeofday(*start, 0)
+
+	for int j = 0; j < array?; j = j + 1 {
+		array[j].r = <char>255
+		array[j].g = <char>0
+	}
+
+	gettimeofday(*end, 0)
+
+	printf("Normal array multiple access iteration: %ld ns\n", timevalDiff(*start, *end) )
+
+	// Realigned array -----
+
+	gettimeofday(*start, 0)
+	[]@RGBA reaarray = [n] RGBA
+	gettimeofday(*end, 0)
+
+	printf("Realigned array construction: %ld ns\n", timevalDiff(*start, *end) )
+
+	gettimeofday(*start, 0)
+
+	for int k = 0; k < reaarray?; k = k + 1 {
+		reaarray[k].a = <char>255
+	}
+
+	gettimeofday(*end, 0)
+
+	printf("Realigned array single access iteration: %ld ns\n", timevalDiff(*start, *end) )
+
+	gettimeofday(*start, 0)
+
+	for int l = 0; l < reaarray?; l = l + 1 {
+		reaarray[l].r = <char>255
+		reaarray[l].g = <char>0
+	}
+
+	gettimeofday(*end, 0)
+
+	printf("Realigned array multiple access iteration: %ld ns\n", timevalDiff(*start, *end) )
+
+	~array
+	~reaarray
+}

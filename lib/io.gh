@@ -1,1 +1,2 @@
 extern fn printf(char *str, ...) int
+extern fn scanf(char*, ...) int

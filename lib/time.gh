@@ -1,0 +1,10 @@
+extern fn gettimeofday(Timeval *ts, int base) int
+
+struct Timeval volatile {
+	int tv_sec
+	void *tv_usec	// Read as if it was 64 bit integer
+}
+
+fn timevalDiff(Timeval *start, Timeval *end) void* {
+	return end.tv_usec - start.tv_usec
+}
