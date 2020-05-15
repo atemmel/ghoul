@@ -45,6 +45,8 @@ fn main() {
 	while running {
 		while SDL_PollEvent(*event) {
 			if event.type == quitFlag then running = false
+
+			if event.type == 768 then printf("Keypress!\n")
 		}
 
 		updateInvaders(*invaders)

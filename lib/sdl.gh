@@ -68,19 +68,30 @@ struct SDL_Surface volatile {
 
 struct SDL_Event volatile {	//wip
 	int type
-	int dummyA
-	int dummyB
-	int dummyC
+	int timestamp
+	int windowId
+	char state
+	char repeat
+	char dummyBA
+	char dummyBB
+	SDL_Keysym keysym
 	int dummyD
 	int dummyE
 	int dummyF
 	int dummyG
 	int dummyH
-    int dummyI
-    int dummyJ
-    int dummyK
-    int dummyL
-    int dummyM
+	int dummyI
+	//int dummyJ
+	//int dummyK
+	//int dummyL
+	//int dummyM
+}
+
+struct SDL_Keysym volatile {
+	int scancode
+	int sym
+	int mod
+	int unused
 }
 
 //Internal
