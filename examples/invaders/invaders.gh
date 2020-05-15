@@ -37,21 +37,48 @@ fn main() {
 	var window = SDL_CreateWindow("Invaders", 0, 0, windowW, windowH, 0)
 	var windowSurface = SDL_GetWindowSurface(window)
 	var invaders = [n_invaders] SDL_Rect
+	var projectiles = [] SDL_Rect
+	int black = SDL_MapRGB(windowSurface.format, 0, 0, 0)
+	int red = SDL_MapRGB(windowSurface.format, 255, 0, 0)
 	SDL_Event event
 	int quitFlag = 256
 	bool running = true
 
+	SDL_Rect hero
+
+	hero.x = windowW / 2 - surfaces[0].w / 2
+	hero.y = 500
 
 	while running {
 		while SDL_PollEvent(*event) {
 			if event.type == quitFlag then running = false
 
-			if event.type == 768 then printf("Keypress!\n")
+			//Keypress event
+			if event.type == 768 {
+				//if event.keysym.sym == 1073741903 then printf("Right!\n")
+				//if event.keysym.sym == 1073741904 then printf("Left!\n")
+				//if event.keysym.sym == 1073741905 then printf("Down!\n")
+				//if event.keysym.sym == 1073741906 then printf("Up!\n")
+				//if event.keysym.sym == 32 then printf("Space!\n")
+
+				if event.keysym.sym == 1073741903 then hero.x = hero.x + 7	//Right
+				if event.keysym.sym == 1073741904 then hero.x = hero.x - 7	//Left
+
+				if event.keysym.sym == 32 {
+					SDL_Rect newProjectile
+					newProjectile.x = hero.x + surfaces[0].w / 2
+					newProjectile.y = hero.y
+					//projectiles <- newProjectile //inspect this
+				}
+			}
 		}
 
 		updateInvaders(*invaders)
 
-
+		clear(windowSurface, black)
+		draw(*invaders, *hero, *surfaces, windowSurface)
+		SDL_UpdateWindowSurface(window)
+		SDL_Delay(17)
 	}
 
 	cleanup(*surfaces)
@@ -65,4 +92,12 @@ fn main() {
 
 fn updateInvaders([]*SDL_Rect invaders) {
 	
+}
+
+fn clear(SDL_Surface* surface, int mapping) {
+	SDL_FillRect(surface, <SDL_Rect*>0, mapping)
+}
+
+fn draw([]*SDL_Rect invaders, SDL_Rect* hero, []*SDL_Surface* surfaces, SDL_Surface* windowSurface) {
+	SDL_BlitSurface(surfaces[0], <SDL_Rect*>0, windowSurface, hero)
 }
